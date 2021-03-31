@@ -1,6 +1,6 @@
-var version = "300 es";
+var version : string = "300 es";
 
-var vertShader3D = `#version ${version}
+export var vertShader3D : string = `#version ${version}
 precision highp float;
 
 layout (location = 0) in vec4 vertexPosition;
@@ -33,7 +33,7 @@ void main () {
     }
 }
 `;
-var fragShader3D = `#version ${version}
+export var fragShader3D : string = `#version ${version}
 precision mediump float;
 
 #define NR_POINT_LIGHTS 1
