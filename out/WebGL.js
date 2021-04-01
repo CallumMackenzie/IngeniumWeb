@@ -29,18 +29,24 @@ export class Time {
             IngeniumWeb.terminate("Error: FPS cannot be less than or equal to 0.");
         Time.targetFixedDeltaTime = 1000 / newfps;
     }
+    static updateDeltaTime() {
+        Time.deltaTime = Date.now() - Time.lastFrame;
+        Time.lastFrame = Date.now();
+    }
+    static updateFixedDeltaTime() {
+        Time.fixedDeltaTime = Date.now() - Time.lastFixedFrame;
+        Time.lastFixedFrame = Date.now();
+    }
     static nextFixedFrameReady() {
         if (Date.now() - Time.lastFixedFrame >= Time.targetFixedDeltaTime) {
-            Time.fixedDeltaTime = Date.now() - Time.lastFixedFrame;
-            Time.lastFixedFrame = Date.now();
+            Time.updateFixedDeltaTime();
             return true;
         }
         return false;
     }
     static nextFrameReady() {
         if (Date.now() - Time.lastFrame >= Time.targetDeltaTime) {
-            Time.deltaTime = Date.now() - Time.lastFrame;
-            Time.lastFrame = Date.now();
+            Time.updateDeltaTime();
             return true;
         }
         return false;
@@ -84,17 +90,24 @@ export class WebGLWindow {
         var b = (hex & 0x0000FF);
         gl.clearColor(r / 255, g / 255, b / 255, alpha);
     }
-    swapBuffers() {
-    }
     clear() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 }
 ;
+export class Scene {
+    constructor(onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }) {
+        this.onCreate = onCreate;
+        this.onClose = onClose;
+        this.onUpdate = onUpdate;
+        this.onFixedUpdate = onFixedUpdate;
+    }
+}
 export class IngeniumWeb {
-    static start(onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }, webGL = "webgl2") {
+    static start(scenes, onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }, webGL = "webgl2") {
         IngeniumWeb.window = null;
         IngeniumWeb.running = true;
+        IngeniumWeb.scenes = scenes;
         IngeniumWeb.onCreate = onCreate;
         IngeniumWeb.onUpdate = onUpdate;
         IngeniumWeb.onClose = onClose;
@@ -104,29 +117,52 @@ export class IngeniumWeb {
         IngeniumWeb.init();
     }
     ;
-    static refresh() {
-        if (Time.nextFrameReady())
-            IngeniumWeb.onUpdate();
-        if (Time.nextFixedFrameReady())
-            IngeniumWeb.onFixedUpdate();
+    static createWindow(width, height, id, parentName) {
+        IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
+    }
+    ;
+    static update() {
+        Time.updateDeltaTime();
+        IngeniumWeb.onUpdate();
+        IngeniumWeb.scenes[IngeniumWeb.currentScene].onUpdate();
+    }
+    static fixedUpdate() {
+        Time.updateFixedDeltaTime();
+        IngeniumWeb.onFixedUpdate();
+        IngeniumWeb.scenes[IngeniumWeb.currentScene].onFixedUpdate();
         if (!IngeniumWeb.running) {
+            IngeniumWeb.scenes[IngeniumWeb.currentScene].onClose();
             IngeniumWeb.onClose();
             clearInterval(IngeniumWeb.intervalCode);
+            clearInterval(IngeniumWeb.fixedIntervalCode);
         }
     }
     static init() {
+        Time.updateDeltaTime();
+        Time.updateFixedDeltaTime();
         IngeniumWeb.onCreate();
-        IngeniumWeb.intervalCode = setInterval(IngeniumWeb.refresh, Time.targetDeltaTime);
+        IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
+        IngeniumWeb.refreshLoops();
+    }
+    static refreshLoops() {
+        clearInterval(IngeniumWeb.intervalCode);
+        clearInterval(IngeniumWeb.fixedIntervalCode);
+        IngeniumWeb.intervalCode = setInterval(IngeniumWeb.update, Time.targetDeltaTime);
+        IngeniumWeb.fixedIntervalCode = setInterval(IngeniumWeb.fixedUpdate, Time.targetFixedDeltaTime);
     }
     static terminate(message) {
         console.error("Fatal: " + message);
         IngeniumWeb.running = false;
         clearInterval(IngeniumWeb.intervalCode);
+        clearInterval(IngeniumWeb.fixedIntervalCode);
+    }
+    static enterScene(index) {
+        IngeniumWeb.currentScene = index;
+        IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
     }
 }
-IngeniumWeb.createWindow = function (width, height, id, parentName) {
-    IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
-};
+IngeniumWeb.scenes = [];
+IngeniumWeb.currentScene = 0;
 ;
 export class Shader {
     constructor(vertSource, fragSource) {

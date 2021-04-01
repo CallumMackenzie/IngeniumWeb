@@ -16,6 +16,8 @@ export declare class Time {
     static lastFixedFrame: number;
     static setFPS(newfps: number): void;
     static setFixedFPS(newfps: number): void;
+    static updateDeltaTime(): void;
+    static updateFixedDeltaTime(): void;
     static nextFixedFrameReady(): boolean;
     static nextFrameReady(): boolean;
 }
@@ -28,23 +30,35 @@ export declare class WebGLWindow {
     constructor(width: number, height: number, parentName: string, name: string);
     setGL(): void;
     setClearColour(hex: number, alpha: number): void;
-    swapBuffers(): void;
     clear(): void;
+}
+export declare class Scene {
+    onCreate: Function;
+    onUpdate: Function;
+    onFixedUpdate: Function;
+    onClose: Function;
+    constructor(onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function);
 }
 export declare class IngeniumWeb {
     static window: WebGLWindow | null;
     static running: boolean;
     static glVersion: string;
-    static intervalCode: any;
+    static intervalCode: number;
+    static fixedIntervalCode: number;
     static onCreate: Function;
     static onUpdate: Function;
     static onClose: Function;
     static onFixedUpdate: Function;
-    static start(onCreate?: () => void, onUpdate?: () => void, onClose?: () => void, onFixedUpdate?: () => void, webGL?: string): void;
-    static createWindow: (width: number, height: number, id: string, parentName: string) => void;
-    static refresh(): void;
+    static scenes: Scene[];
+    static currentScene: number;
+    static start(scenes: Scene[], onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function, webGL?: string): void;
+    static createWindow(width: number, height: number, id: string, parentName: string): void;
+    static update(): void;
+    static fixedUpdate(): void;
     static init(): void;
+    static refreshLoops(): void;
     static terminate(message: string): void;
+    static enterScene(index: number): void;
 }
 export declare class Shader {
     program: WebGLProgram;

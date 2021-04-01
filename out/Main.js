@@ -1,34 +1,34 @@
 "use strict";
 import { vertShader3D, fragShader3D } from "./shaders.js";
-import { Time, IngeniumWeb, Shader, Input } from "./WebGL.js";
-import { Vec3, Mesh, Camera, DirectionalLight } from "./3D.js";
+import { Time, IngeniumWeb, Shader, Input, Scene } from "./WebGL.js";
+import { Vec3, Mesh, Camera, DirectionalLight, PointLight } from "./3D.js";
 var aspect = 9 / 16;
-var camera;
+var camera = new Camera();
 var m;
 var shader;
 var dLight;
 var pLights = [];
-function onCreate() {
-    Time.setFPS(45);
-    Time.setFixedFPS(1);
+function onGlobalCreate() {
+    Time.setFPS(60);
+    Time.setFixedFPS(7);
     IngeniumWeb.createWindow(1066, 600, "root", "Ingenium");
     IngeniumWeb.window.setGL();
     IngeniumWeb.window.setClearColour(0x000000, 1);
-    camera = new Camera();
-    camera.FOV = 75;
-    m = new Mesh();
     shader = new Shader(vertShader3D, fragShader3D);
+    dLight = new DirectionalLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.0, 0.0, 0.0), new Vec3(0, 0, 0), new Vec3(0, 0, 0), 0);
+    pLights.push(new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 2, 3.2)));
+    camera.FOV = 75;
     shader.use();
+}
+function onCreateDefScene() {
+    m = new Mesh();
     m.loadFromObj("./resource/cubenormaltex.obj");
     m.setTexture("./resource/brick.png", "./resource/brick.png");
     m.load();
     m.scale = new Vec3(2, 2, 2);
     m.position = new Vec3(0, 0, 3);
-    dLight = new DirectionalLight(new Vec3(0.1, 0.1, 0.1), new Vec3(0.4, 0.4, 0.4), new Vec3(0.2, 0.2, 0.1), new Vec3(0.25, -1, 0.25), 0);
-    // pLights.push(new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.3, 0.3, 0.3),
-    //    new Vec3(0.2, 0.2, 0.2), new Vec3(0, 2, 1)));
 }
-function onUpdate() {
+function onUpdateDefScene() {
     var speed = 0.03;
     var cameraMoveSpeed = 0.001;
     var cLV = camera.lookVector();
@@ -59,7 +59,7 @@ function onUpdate() {
         speed *= 5;
     camera.rotation = Vec3.add(camera.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
     camera.position = Vec3.add(camera.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
-    m.rotation = Vec3.add(m.rotation, Vec3.mulFloat(new Vec3(0.001, 0.001, 0.0015), Time.deltaTime));
+    m.rotation = Vec3.add(m.rotation, Vec3.mulFloat(new Vec3(0.000, 0.0001, 0.000), Time.deltaTime));
     if (Math.abs(m.rotation.x) > 360)
         m.rotation.x = 0;
     if (Math.abs(m.rotation.y) > 360)
@@ -69,9 +69,16 @@ function onUpdate() {
     IngeniumWeb.window.clear();
     Mesh.renderAll(shader, camera, camera.perspective(aspect), [m], dLight, pLights);
 }
-function onFixedUpdate() {
+function onCreateMonkeyScene() {
+    m = new Mesh();
+    m.loadFromObj("./resource/monkeynormal.obj");
+    m.setTexture("./resource/brick.png", "./resource/brick.png");
+    m.load();
+    m.material.shininess = 1;
+    m.position = new Vec3(0, 0, 3);
+    m.scale = new Vec3(2, 2, 2);
 }
-function onClose() {
-}
-IngeniumWeb.start(onCreate, onUpdate, onClose, onFixedUpdate);
+var defScene = new Scene(onCreateDefScene, onUpdateDefScene);
+var monkeyScene = new Scene(onCreateMonkeyScene, onUpdateDefScene);
+IngeniumWeb.start([defScene], onGlobalCreate);
 //# sourceMappingURL=Main.js.map

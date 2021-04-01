@@ -6,9 +6,10 @@
     "configurations": [
         {
             "type": "firefox",
-            "request": "attach",
-            "name": "Attach firefox",
-            "port": 5500
+            "request": "launch",
+            "name": "Launch firefox",
+            "url": "http://localhost:5500",
+            "webRoot": "${workspaceFolder}"
         },
         {
             "name": "Launch server",
