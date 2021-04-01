@@ -90,7 +90,6 @@ export class Mat4 {
     constructor() {
         this.m = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
     }
-    ;
     static perspective(fovDeg, aspectRatio, near, far) {
         var fovRad = 1.0 / Math.tan(degToRad(fovDeg * 0.5));
         var matrix = new Mat4();
@@ -365,20 +364,22 @@ export class Mesh {
     }
     createTextureFromData(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
         var tex = gl.NONE;
-        var image = new Image();
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
-        image.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+        var image = new Image();
+        image.src = path;
+        image.addEventListener('load', function () {
+            gl.activeTexture(texSlot);
             gl.bindTexture(gl.TEXTURE_2D, tex);
-            var image = this;
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
             gl.generateMipmap(gl.TEXTURE_2D);
-        };
-        image.src = path;
+        });
         return tex;
     }
     setTexture(diffusePath, specularPath = "NONE") {
@@ -408,11 +409,11 @@ export class Mesh {
             var stride = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(0);
-            gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 3 * floatSize);
+            gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 4 * floatSize);
             gl.enableVertexAttribArray(1);
-            gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 5 * floatSize);
+            gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 7 * floatSize);
             gl.enableVertexAttribArray(2);
-            gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 8 * floatSize);
+            gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 11 * floatSize);
             gl.enableVertexAttribArray(3);
             gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind buffer
             this.loaded = true;
@@ -424,19 +425,20 @@ export class Mesh {
         shader.setUInt("material.specular", 1);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
+        shader.setUVec3("viewPos", camera.position);
         shader.setUMat4("projection", projection);
         shader.setUVec3("dirLight.direction", dirLight.direction);
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
         shader.setUVec3("dirLight.specular", dirLight.specular);
         shader.setUVec3("dirLight.diffuse", dirLight.diffuse);
         for (var j = 0; j < pointLights.length; j++) {
-            shader.setUVec3("pointLights[" + i + "].position", pointLights[i].position);
-            shader.setUVec3("pointLights[" + j + "].ambient", pointLights[i].ambient);
-            shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[i].diffuse, pointLights[i].intensity));
-            shader.setUVec3("pointLights[" + j + "].specular", pointLights[i].specular);
-            shader.setUFloat("pointLights[" + j + "].constant", pointLights[i].constant);
-            shader.setUFloat("pointLights[" + j + "].linear)", pointLights[i].linear);
-            shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[i].quadratic);
+            shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
+            shader.setUVec3("pointLights[" + j + "].ambient", pointLights[j].ambient);
+            shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[j].diffuse, pointLights[j].intensity));
+            shader.setUVec3("pointLights[" + j + "].specular", pointLights[j].specular);
+            shader.setUFloat("pointLights[" + j + "].constant", pointLights[j].constant);
+            shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
+            shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
         }
         for (var i = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
@@ -444,14 +446,18 @@ export class Mesh {
             shader.setUMat4("model", model);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
+            gl.activeTexture(gl.TEXTURE0);
             if (meshes[i].material.diffuseTexture != gl.NONE) {
-                gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
             }
+            else
+                console.warn("Diffuse texture not loaded");
+            gl.activeTexture(gl.TEXTURE1);
             if (meshes[i].material.specularTexture != gl.NONE) {
-                gl.activeTexture(gl.TEXTURE1);
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
             }
+            else
+                console.warn("Specular texture not loaded");
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
     }

@@ -2,14 +2,16 @@
 import { vertShader3D, fragShader3D } from "./shaders.js";
 import { Time, IngeniumWeb, Shader, Input } from "./WebGL.js";
 import { Vec3, Mesh, Camera, DirectionalLight } from "./3D.js";
+var aspect = 9 / 16;
 var camera;
 var m;
 var shader;
 var dLight;
+var pLights = [];
 function onCreate() {
-    Time.setFPS(60);
-    Time.setFixedFPS(20);
-    IngeniumWeb.createWindow(800, 500, "root", "Ingenium");
+    Time.setFPS(45);
+    Time.setFixedFPS(1);
+    IngeniumWeb.createWindow(1066, 600, "root", "Ingenium");
     IngeniumWeb.window.setGL();
     IngeniumWeb.window.setClearColour(0x000000, 1);
     camera = new Camera();
@@ -18,11 +20,13 @@ function onCreate() {
     shader = new Shader(vertShader3D, fragShader3D);
     shader.use();
     m.loadFromObj("./resource/cubenormaltex.obj");
-    m.setTexture("./resource/Cube Map.png", "./resource/Cube Map.png");
+    m.setTexture("./resource/brick.png", "./resource/brick.png");
     m.load();
     m.scale = new Vec3(2, 2, 2);
     m.position = new Vec3(0, 0, 3);
-    dLight = new DirectionalLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.7, 0.7, 0.7), new Vec3(0.1, 0.1, 0.1), new Vec3(0, -1, 0.1));
+    dLight = new DirectionalLight(new Vec3(0.1, 0.1, 0.1), new Vec3(0.4, 0.4, 0.4), new Vec3(0.2, 0.2, 0.1), new Vec3(0.25, -1, 0.25), 0);
+    // pLights.push(new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.3, 0.3, 0.3),
+    //    new Vec3(0.2, 0.2, 0.2), new Vec3(0, 2, 1)));
 }
 function onUpdate() {
     var speed = 0.03;
@@ -55,8 +59,15 @@ function onUpdate() {
         speed *= 5;
     camera.rotation = Vec3.add(camera.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
     camera.position = Vec3.add(camera.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
+    m.rotation = Vec3.add(m.rotation, Vec3.mulFloat(new Vec3(0.001, 0.001, 0.0015), Time.deltaTime));
+    if (Math.abs(m.rotation.x) > 360)
+        m.rotation.x = 0;
+    if (Math.abs(m.rotation.y) > 360)
+        m.rotation.y = 0;
+    if (Math.abs(m.rotation.z) > 360)
+        m.rotation.z = 0;
     IngeniumWeb.window.clear();
-    Mesh.renderAll(shader, camera, camera.perspective(3 / 4), [m], dLight);
+    Mesh.renderAll(shader, camera, camera.perspective(aspect), [m], dLight, pLights);
 }
 function onFixedUpdate() {
 }
