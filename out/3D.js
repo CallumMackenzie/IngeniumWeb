@@ -1,5 +1,5 @@
 "use strict";
-import { gl } from "./WebGL.js";
+import { gl, IngeniumWeb } from "./WebGL.js";
 import { degToRad, loadFile } from "./Utils.js";
 export class Vec2 {
     constructor(x = 0, y = 0, w = 1) {
@@ -255,8 +255,8 @@ export class Camera {
         target = Vec3.mulMat(target, mRotation);
         return target;
     }
-    perspective(aspectRatio) {
-        return Mat4.perspective(this.FOV, aspectRatio, this.clipNear, this.clipFar);
+    perspective() {
+        return Mat4.perspective(this.FOV, IngeniumWeb.window.aspectRatio, this.clipNear, this.clipFar);
     }
     cameraMatrix() {
         var vUp = new Vec3(0, 1, 0);
@@ -407,26 +407,26 @@ export class Mesh {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
             var floatSize = 4;
             var stride = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
-            gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0);
+            gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0); // Vertex data
             gl.enableVertexAttribArray(0);
-            gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 4 * floatSize);
+            gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 4 * floatSize); // UV data
             gl.enableVertexAttribArray(1);
-            gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 7 * floatSize);
+            gl.vertexAttribPointer(2, 4, gl.FLOAT, false, stride, 7 * floatSize); // RGB tint data
             gl.enableVertexAttribArray(2);
-            gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 11 * floatSize);
+            gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 11 * floatSize); // Normal data
             gl.enableVertexAttribArray(3);
             gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind buffer
             this.loaded = true;
         }
     }
-    static renderAll(shader, camera, projection, meshes, dirLight, pointLights = []) {
+    static renderAll(shader, camera, meshes, dirLight, pointLights = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
-        shader.setUMat4("projection", projection);
+        shader.setUMat4("projection", camera.perspective());
         shader.setUVec3("dirLight.direction", dirLight.direction);
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
         shader.setUVec3("dirLight.specular", dirLight.specular);

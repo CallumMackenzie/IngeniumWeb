@@ -62,15 +62,16 @@ Time.lastFixedFrame = Date.now();
 ;
 export class WebGLWindow {
     constructor(width, height, parentName, name) {
+        this.takeUpAsepct = true;
         this.parent = document.getElementById(parentName);
         this.canvas = document.createElement("canvas");
-        this.canvas.setAttribute("width", width.toString());
-        this.canvas.setAttribute("height", height.toString());
+        this.canvas.setAttribute("width", width.toString() + "px");
+        this.canvas.setAttribute("height", height.toString() + "px");
         this.canvas.setAttribute("id", name);
         this.parent.appendChild(this.canvas);
         this.width = width;
         this.height = height;
-        this.aspectRatio = width / height;
+        this.aspectRatio = height / width;
         this.setGL();
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.enable(gl.BLEND);
@@ -80,6 +81,29 @@ export class WebGLWindow {
         gl.depthRange(0.0, 1.0);
     }
     ;
+    sizeToWindow(aspect) {
+        aspect = 1 / aspect;
+        var main = this.parent;
+        var win_width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+        var win_height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        if (win_width / win_height != aspect) {
+            if (win_height * aspect < win_width) {
+                this.canvas.width = win_height * aspect;
+                this.canvas.height = win_height;
+                this.canvas.style.setProperty("height", this.canvas.height + "px");
+                this.canvas.style.setProperty("width", this.canvas.width.toString() + "px");
+            }
+            else if (win_height * aspect > win_width) {
+                this.canvas.width = win_width;
+                this.canvas.height = win_width / aspect;
+                this.canvas.style.setProperty("width", this.canvas.width + "px");
+                this.canvas.style.setProperty("height", this.canvas.height.toString() + "px");
+            }
+            this.width = this.canvas.width;
+            this.height = this.canvas.height;
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        }
+    }
     setGL() {
         gl = this.canvas.getContext(IngeniumWeb.glVersion);
     }
@@ -117,8 +141,14 @@ export class IngeniumWeb {
         IngeniumWeb.init();
     }
     ;
-    static createWindow(width, height, id, parentName) {
+    static createWindow(width, height, id, parentName, takeUpAsepct = true) {
         IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
+        IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
+        if (takeUpAsepct) {
+            window.addEventListener('resize', function () {
+                IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
+            });
+        }
     }
     ;
     static update() {
@@ -143,6 +173,9 @@ export class IngeniumWeb {
         IngeniumWeb.onCreate();
         IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
         IngeniumWeb.refreshLoops();
+        if (IngeniumWeb.window.takeUpAsepct) {
+            IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
+        }
     }
     static refreshLoops() {
         clearInterval(IngeniumWeb.intervalCode);

@@ -63,22 +63,23 @@ export class Time {
 };
 
 export class WebGLWindow {
-    parent: Element | null;
+    parent: HTMLElement | null;
     canvas: HTMLCanvasElement;
     width: number;
     height: number;
     aspectRatio: number;
+    takeUpAsepct: boolean = true;
 
     constructor(width: number, height: number, parentName: string, name: string) {
         this.parent = document.getElementById(parentName);
         this.canvas = document.createElement("canvas");
-        this.canvas.setAttribute("width", width.toString());
-        this.canvas.setAttribute("height", height.toString());
+        this.canvas.setAttribute("width", width.toString() + "px");
+        this.canvas.setAttribute("height", height.toString() + "px");
         this.canvas.setAttribute("id", name);
         this.parent.appendChild(this.canvas);
         this.width = width;
         this.height = height;
-        this.aspectRatio = width / height;
+        this.aspectRatio = height / width;
 
         this.setGL();
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -88,6 +89,28 @@ export class WebGLWindow {
         gl.depthFunc(gl.LEQUAL);
         gl.depthRange(0.0, 1.0);
     };
+    sizeToWindow(aspect: number) {
+        aspect = 1 / aspect;
+        var main: HTMLElement = this.parent;
+        var win_width: number = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+        var win_height: number = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        if (win_width / win_height != aspect) {
+            if (win_height * aspect < win_width) {
+                this.canvas.width = win_height * aspect;
+                this.canvas.height = win_height;
+                this.canvas.style.setProperty("height", this.canvas.height + "px");
+                this.canvas.style.setProperty("width", this.canvas.width.toString() + "px");
+            } else if (win_height * aspect > win_width) {
+                this.canvas.width = win_width;
+                this.canvas.height = win_width / aspect;
+                this.canvas.style.setProperty("width", this.canvas.width + "px");
+                this.canvas.style.setProperty("height", this.canvas.height.toString() + "px");
+            }
+            this.width = this.canvas.width;
+            this.height = this.canvas.height;
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        }
+    }
     setGL(): void {
         gl = <WebGL2RenderingContext>this.canvas.getContext(IngeniumWeb.glVersion);
     }
@@ -148,8 +171,14 @@ export class IngeniumWeb {
         Input.setup();
         IngeniumWeb.init();
     };
-    static createWindow(width: number, height: number, id: string, parentName: string): void {
+    static createWindow(width: number, height: number, id: string, parentName: string, takeUpAsepct: boolean = true): void {
         IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
+        IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
+        if (takeUpAsepct) {
+            window.addEventListener('resize', function () {
+                IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
+            });
+        }
     };
     static update(): void {
         Time.updateDeltaTime();
@@ -173,6 +202,9 @@ export class IngeniumWeb {
         IngeniumWeb.onCreate();
         IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
         IngeniumWeb.refreshLoops();
+        if (IngeniumWeb.window.takeUpAsepct) {
+            IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
+        }
     }
     static refreshLoops(): void {
         clearInterval(IngeniumWeb.intervalCode);

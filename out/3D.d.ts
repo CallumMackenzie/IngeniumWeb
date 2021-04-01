@@ -71,7 +71,7 @@ export declare class Camera {
     clipNear: number;
     clipFar: number;
     lookVector(): Vec3;
-    perspective(aspectRatio: number): Mat4;
+    perspective(): Mat4;
     cameraMatrix(): Mat4;
 }
 export declare class Mesh {
@@ -93,7 +93,7 @@ export declare class Mesh {
     setTexture(diffusePath: string, specularPath?: string): void;
     modelMatrix(): Mat4;
     load(drawType?: number): void;
-    static renderAll(shader: Shader, camera: Camera, projection: Mat4, meshes: Mesh[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
+    static renderAll(shader: Shader, camera: Camera, meshes: Mesh[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
 }
 export declare class PointLight {
     intensity: number;
