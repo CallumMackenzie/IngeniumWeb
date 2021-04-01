@@ -47,6 +47,7 @@ export declare class Mat4 {
     constructor();
 }
 export declare class Vert {
+    static tSize: number;
     p: Vec3;
     t: Vec2;
     rgb: Vec3;
@@ -70,6 +71,7 @@ export declare class Camera {
     clipNear: number;
     clipFar: number;
     lookVector(): Vec3;
+    perspective(aspectRatio: number): Mat4;
     cameraMatrix(): Mat4;
 }
 export declare class Mesh {

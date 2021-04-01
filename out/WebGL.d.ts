@@ -1,5 +1,12 @@
 import { Mat4, Vec3 } from "./3D.js";
 export declare var gl: WebGL2RenderingContext;
+export declare class Input {
+    static keys: {
+        [id: string]: boolean;
+    };
+    static setup(): void;
+    static getKeyState(key: string): boolean;
+}
 export declare class Time {
     static deltaTime: number;
     static fixedDeltaTime: number;
@@ -18,8 +25,11 @@ export declare class WebGLWindow {
     width: number;
     height: number;
     aspectRatio: number;
-    constructor(width: number, height: number, parentName: string, name: string, set?: boolean);
+    constructor(width: number, height: number, parentName: string, name: string);
     setGL(): void;
+    setClearColour(hex: number, alpha: number): void;
+    swapBuffers(): void;
+    clear(): void;
 }
 export declare class IngeniumWeb {
     static window: WebGLWindow | null;

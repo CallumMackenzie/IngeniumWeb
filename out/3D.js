@@ -223,6 +223,7 @@ export class Vert {
         this.n = normal;
     }
 }
+Vert.tSize = 15;
 export class Tri {
     constructor(points = [new Vert(), new Vert(), new Vert()]) {
         this.v = [points[0], points[1], points[2]];
@@ -230,6 +231,8 @@ export class Tri {
 }
 export class Material {
     constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
+        this.diffuseTexture = gl.NONE;
+        this.specularTexture = gl.NONE;
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.shininess = shininess;
@@ -237,6 +240,8 @@ export class Material {
 }
 export class Camera {
     constructor() {
+        this.position = new Vec3();
+        this.rotation = new Vec3();
         this.FOV = 80;
         this.clipNear = 0.1;
         this.clipFar = 100;
@@ -247,6 +252,9 @@ export class Camera {
         var mRotation = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
         target = Vec3.mulMat(target, mRotation);
         return target;
+    }
+    perspective(aspectRatio) {
+        return Mat4.perspective(this.FOV, aspectRatio, this.clipNear, this.clipFar);
     }
     cameraMatrix() {
         var vUp = new Vec3(0, 1, 0);
@@ -353,19 +361,14 @@ export class Mesh {
         }
     }
     createTextureFromData(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
-        var tex;
+        var tex = gl.NONE;
         var image = new Image();
-        tex = gl.createTexture();
-        gl.activeTexture(texSlot);
-        gl.bindTexture(gl.TEXTURE_2D, tex);
         image.onload = function () {
-            var canvas = document.createElement("canvas");
-            var ctx = canvas.getContext("2d");
+            tex = gl.createTexture();
+            gl.activeTexture(texSlot);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
             var image = this;
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
-            var diffData = ctx.getImageData(0, 0, image.width, image.height).data;
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
@@ -373,7 +376,6 @@ export class Mesh {
             function p2(value) {
                 return (value & (value - 1)) == 0;
             }
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
             if (p2(image.width) && p2(image.height))
                 gl.generateMipmap(gl.TEXTURE_2D);
         };
@@ -404,7 +406,7 @@ export class Mesh {
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
             var floatSize = 4;
-            var stride = 11 * floatSize; // Num of array elements resulting from a Vert
+            var stride = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(0);
             gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 3 * floatSize);
@@ -426,11 +428,19 @@ export class Mesh {
         shader.setUMat4("projection", projection);
         for (var i = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
-            gl.drawArrays(gl.TRIANGLES, 0);
+            var model = meshes[i].modelMatrix();
+            shader.setUMat4("model", model);
+            shader.setUMat4("invModel", Mat4.inverse(model));
+            shader.setUFloat("material.shininess", meshes[i].material.shininess);
+            if (meshes[i].material.diffuseTexture != gl.NONE) {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
+            }
+            if (meshes[i].material.specularTexture != gl.NONE) {
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
+            }
+            gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
     }
 }

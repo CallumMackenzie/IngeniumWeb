@@ -1,8 +1,25 @@
 "use strict";
 
 import { Mat4, Vec3, Vec2 } from "./3D.js";
-
 export var gl: WebGL2RenderingContext;
+
+export class Input {
+    static keys: { [id: string] : boolean; } = {};
+    static setup(): void {
+        window.addEventListener("keydown", function (event) {
+            if (event.ctrlKey == true && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
+                event.preventDefault();
+            }
+            Input.keys[event.key] = true;
+        }, true);
+        window.addEventListener("keyup", function (event) {
+            Input.keys[event.key] = false;
+        }, true);
+    }
+    static getKeyState(key: string): boolean {
+        return (Input.keys[key] === undefined ? false : Input.keys[key]);
+    }
+}
 
 export class Time {
     static deltaTime = 0.1;
@@ -46,7 +63,7 @@ export class WebGLWindow {
     height: number;
     aspectRatio: number;
 
-    constructor(width: number, height: number, parentName: string, name: string, set: boolean = true) {
+    constructor(width: number, height: number, parentName: string, name: string) {
         this.parent = document.getElementById(parentName);
         this.canvas = document.createElement("canvas");
         this.canvas.setAttribute("width", width.toString());
@@ -57,11 +74,29 @@ export class WebGLWindow {
         this.height = height;
         this.aspectRatio = width / height;
 
-        if (set)
-            this.setGL();
+        this.setGL();
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		gl.enable(gl.BLEND);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthMask(true);
+		gl.depthFunc(gl.LEQUAL);
+		gl.depthRange(0.0, 1.0);
     };
     setGL(): void {
         gl = <WebGL2RenderingContext>this.canvas.getContext(IngeniumWeb.glVersion);
+    }
+    setClearColour (hex : number, alpha : number) : void {
+        gl.clearDepth(1.0);
+        var r = (hex & 0xFF0000) >> 16;
+        var g = (hex & 0x00FF00) >> 8;
+        var b = (hex & 0x0000FF);
+        gl.clearColor(r / 255, g / 255, b / 255, alpha);
+    }
+    swapBuffers () : void {
+
+    }
+    clear () : void {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 };
 
@@ -83,6 +118,8 @@ export class IngeniumWeb {
         IngeniumWeb.onClose = onClose;
         IngeniumWeb.onFixedUpdate = onFixedUpdate;
         IngeniumWeb.glVersion = webGL;
+
+        Input.setup();
 
         IngeniumWeb.init();
     };

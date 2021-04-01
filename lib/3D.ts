@@ -113,8 +113,8 @@ export class Mat4 {
         matrix.m[3][3] = 0.0;
         return matrix;
     };
-    static inverse (m : Mat4) : Mat4 {
-        var matrix : Mat4 = new Mat4();
+    static inverse(m: Mat4): Mat4 {
+        var matrix: Mat4 = new Mat4();
         matrix.m[0][0] = m.m[0][0]; matrix.m[0][1] = m.m[1][0]; matrix.m[0][2] = m.m[2][0]; matrix.m[0][3] = 0.0;
         matrix.m[1][0] = m.m[0][1]; matrix.m[1][1] = m.m[1][1]; matrix.m[1][2] = m.m[2][1]; matrix.m[1][3] = 0.0;
         matrix.m[2][0] = m.m[0][2]; matrix.m[2][1] = m.m[1][2]; matrix.m[2][2] = m.m[2][2]; matrix.m[2][3] = 0.0;
@@ -217,8 +217,8 @@ export class Mat4 {
 }
 
 export class Vert {
-    static tSize : number = 15;
-    
+    static tSize: number = 15;
+
     p: Vec3;
     t: Vec2;
     rgb: Vec3;
@@ -241,8 +241,8 @@ export class Tri {
 }
 
 export class Material {
-    diffuseTexture: WebGLTexture;
-    specularTexture: WebGLTexture;
+    diffuseTexture: WebGLTexture = gl.NONE;
+    specularTexture: WebGLTexture = gl.NONE;
     shininess: number;
     constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
         this.diffuseTexture = diffuseTexture;
@@ -252,8 +252,8 @@ export class Material {
 }
 
 export class Camera {
-    position: Vec3;
-    rotation: Vec3;
+    position: Vec3 = new Vec3();
+    rotation: Vec3 = new Vec3();
 
     FOV: number = 80;
     clipNear: number = 0.1;
@@ -265,6 +265,9 @@ export class Camera {
         var mRotation: Mat4 = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
         target = Vec3.mulMat(target, mRotation);
         return target;
+    }
+    perspective(aspectRatio: number): Mat4 {
+        return Mat4.perspective(this.FOV, aspectRatio, this.clipNear, this.clipFar);
     }
     cameraMatrix(): Mat4 {
         var vUp: Vec3 = new Vec3(0, 1, 0);
@@ -393,19 +396,16 @@ export class Mesh {
     }
     createTextureFromData(path: string, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {
-        var tex: WebGLTexture;
+        var tex: WebGLTexture = gl.NONE;
         var image: HTMLImageElement = new Image();
-        tex = gl.createTexture();
-        gl.activeTexture(texSlot);
-        gl.bindTexture(gl.TEXTURE_2D, tex);
         image.onload = function () {
-            var canvas: HTMLCanvasElement = document.createElement("canvas");
-            var ctx = canvas.getContext("2d");
+            tex = gl.createTexture();
+            gl.activeTexture(texSlot);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+
             var image: HTMLImageElement = (<HTMLImageElement>this);
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
-            var diffData: Uint8ClampedArray = ctx.getImageData(0, 0, image.width, image.height).data;
+
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
@@ -416,7 +416,6 @@ export class Mesh {
                 return (value & (value - 1)) == 0;
             }
 
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
             if (p2(image.width) && p2(image.height))
                 gl.generateMipmap(gl.TEXTURE_2D);
         }
@@ -448,7 +447,7 @@ export class Mesh {
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
 
-            var floatSize : number = 4;
+            var floatSize: number = 4;
             var stride: number = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
 
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0);
@@ -478,10 +477,19 @@ export class Mesh {
 
         for (var i: number = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
+
+            var model : Mat4 = meshes[i].modelMatrix();
+            shader.setUMat4("model", model);
+            shader.setUMat4("invModel", Mat4.inverse(model));
+            shader.setUFloat("material.shininess", meshes[i].material.shininess);
+            if (meshes[i].material.diffuseTexture != gl.NONE) {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
+            }
+            if (meshes[i].material.specularTexture != gl.NONE) {
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
+            }
 
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
