@@ -1,10 +1,7 @@
 "use strict";
-
 import { IngeniumWeb } from "./WebGL.js";
-
-var PI: number = 355 / 113;
-
-export function loadFile(filePath: string): string | null {
+var PI = 355 / 113;
+export function loadFile(filePath) {
     var result = null;
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", filePath, false);
@@ -14,25 +11,27 @@ export function loadFile(filePath: string): string | null {
     }
     return result;
 }
-export function typeCheck(value: any, type: any, loc: string): boolean {
+export function typeCheck(value, type, loc) {
     if (!(value instanceof type)) {
         IngeniumWeb.terminate("Error in " + loc + ": Cannot convert " + typeof (value) + " to " + type.name);
         return true;
     }
     return false;
 }
-export function argCheck(fargs: any, loc: string, types: any): boolean {
+export function argCheck(fargs, loc, types) {
     var ret = false;
     for (var arg = 0; arg < fargs.length; arg++) {
         var arr = fargs[arg];
         ret = ret || typeCheck(arr, types[arg], loc);
-        if (ret) return ret;
+        if (ret)
+            return ret;
     }
     return ret;
 }
-export function radToDeg(rad: number): number {
+export function radToDeg(rad) {
     return rad * 180 / PI;
 }
-export function degToRad(deg: number): number {
+export function degToRad(deg) {
     return deg * PI / 180;
 }
+//# sourceMappingURL=Utils.js.map

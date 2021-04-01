@@ -5,14 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch server",
+            "program": "${workspaceFolder}\\out\\Main.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
+        },
+        
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "pwa-chrome",
+            "url": "http://localhost:5500",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
             "type": "node",
             "request": "launch",
-            "name": "Launch program",
+            "name": "Compile TS",
             "program": "${workspaceFolder}\\lib\\Main.ts",
-            "preLaunchTask": "tsc --build ${workspaceFolder}\\lib\\tsconfig.json",
+            "preLaunchTask": "tsc: build - ${workspaceFolder}\\tsconfig.json",
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
             ]
         }
     ]
-}
+} 

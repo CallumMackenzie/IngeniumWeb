@@ -1,6 +1,5 @@
-var version: string = "300 es";
-
-export var vertShader3D: string = `#version ${version}
+var version = "300 es";
+export var vertShader3D = `#version ${version}
 precision highp float;
 
 layout (location = 0) in vec4 vertexPosition;
@@ -33,7 +32,7 @@ void main () {
     }
 }
 `;
-export var fragShader3D: string = `#version ${version}
+export var fragShader3D = `#version ${version}
 precision mediump float;
 
 #define NR_POINT_LIGHTS 1
@@ -133,3 +132,4 @@ vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     return (ambient + diffuse + specular);
 } 
 `;
+//# sourceMappingURL=shaders.js.map

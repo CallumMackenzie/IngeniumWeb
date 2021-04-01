@@ -1,27 +1,18 @@
 "use strict";
-
-import { Mat4, Vec3, Vec2 } from "./3D.js";
-
-export var gl: WebGL2RenderingContext;
-
+export var gl;
 export class Time {
-    static deltaTime = 0.1;
-    static fixedDeltaTime = 0.1;
-    static targetDeltaTime = 1000 / 45;
-    static targetFixedDeltaTime = 1000 / 35;
-    static lastFrame = Date.now();
-    static lastFixedFrame = Date.now();
-    static setFPS(newfps: number): void {
+    static setFPS(newfps) {
         if (newfps <= 0)
             IngeniumWeb.terminate("Error: FPS cannot be less than or equal to 0.");
         Time.targetDeltaTime = 1000 / newfps;
-    };
-    static setFixedFPS(newfps: number): void {
+    }
+    ;
+    static setFixedFPS(newfps) {
         if (newfps <= 0)
             IngeniumWeb.terminate("Error: FPS cannot be less than or equal to 0.");
         Time.targetFixedDeltaTime = 1000 / newfps;
     }
-    static nextFixedFrameReady(): boolean {
+    static nextFixedFrameReady() {
         if (Date.now() - Time.lastFixedFrame >= Time.targetFixedDeltaTime) {
             Time.fixedDeltaTime = Date.now() - Time.lastFixedFrame;
             Time.lastFixedFrame = Date.now();
@@ -29,24 +20,25 @@ export class Time {
         }
         return false;
     }
-    static nextFrameReady(): boolean {
+    static nextFrameReady() {
         if (Date.now() - Time.lastFrame >= Time.targetDeltaTime) {
             Time.deltaTime = Date.now() - Time.lastFrame;
             Time.lastFrame = Date.now();
             return true;
         }
         return false;
-    };
-};
-
+    }
+    ;
+}
+Time.deltaTime = 0.1;
+Time.fixedDeltaTime = 0.1;
+Time.targetDeltaTime = 1000 / 45;
+Time.targetFixedDeltaTime = 1000 / 35;
+Time.lastFrame = Date.now();
+Time.lastFixedFrame = Date.now();
+;
 export class WebGLWindow {
-    parent: Element | null;
-    canvas: HTMLCanvasElement;
-    width: number;
-    height: number;
-    aspectRatio: number;
-
-    constructor(width: number, height: number, parentName: string, name: string, set: boolean = true) {
+    constructor(width, height, parentName, name, set = true) {
         this.parent = document.getElementById(parentName);
         this.canvas = document.createElement("canvas");
         this.canvas.setAttribute("width", width.toString());
@@ -56,26 +48,17 @@ export class WebGLWindow {
         this.width = width;
         this.height = height;
         this.aspectRatio = width / height;
-
         if (set)
             this.setGL();
-    };
-    setGL(): void {
-        gl = <WebGL2RenderingContext>this.canvas.getContext(IngeniumWeb.glVersion);
     }
-};
-
+    ;
+    setGL() {
+        gl = this.canvas.getContext(IngeniumWeb.glVersion);
+    }
+}
+;
 export class IngeniumWeb {
-    static window: WebGLWindow | null;
-    static running: boolean;
-    static glVersion: string;
-    static intervalCode: any;
-    static onCreate: Function;
-    static onUpdate: Function;
-    static onClose: Function;
-    static onFixedUpdate: Function;
-
-    static start(onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }, webGL = "webgl2"): void {
+    static start(onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }, webGL = "webgl2") {
         IngeniumWeb.window = null;
         IngeniumWeb.running = true;
         IngeniumWeb.onCreate = onCreate;
@@ -83,13 +66,10 @@ export class IngeniumWeb {
         IngeniumWeb.onClose = onClose;
         IngeniumWeb.onFixedUpdate = onFixedUpdate;
         IngeniumWeb.glVersion = webGL;
-
         IngeniumWeb.init();
-    };
-    static createWindow = function (width: number, height: number, id: string, parentName: string) {
-        IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
-    };
-    static refresh(): void {
+    }
+    ;
+    static refresh() {
         if (Time.nextFrameReady())
             IngeniumWeb.onUpdate();
         if (Time.nextFixedFrameReady())
@@ -99,22 +79,32 @@ export class IngeniumWeb {
             clearInterval(IngeniumWeb.intervalCode);
         }
     }
-    static init(): void {
+    static init() {
         IngeniumWeb.onCreate();
         IngeniumWeb.intervalCode = setInterval(IngeniumWeb.refresh, Time.targetDeltaTime);
     }
-    static terminate(message: string): void {
+    static terminate(message) {
         console.error("Fatal: " + message);
         IngeniumWeb.running = false;
         clearInterval(IngeniumWeb.intervalCode);
     }
+}
+IngeniumWeb.createWindow = function (width, height, id, parentName) {
+    IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
 };
-
+;
 export class Shader {
-    program: WebGLProgram = gl.NONE;
-
-    static compile(source: string, type: number): WebGLShader | null {
-        var shader: WebGLShader = gl.createShader(type);
+    constructor(vertSource, fragSource) {
+        this.program = gl.NONE;
+        var vShader = Shader.compile(vertSource, gl.VERTEX_SHADER);
+        var fShader = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vShader);
+        gl.attachShader(this.program, fShader);
+        gl.linkProgram(this.program);
+    }
+    static compile(source, type) {
+        var shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -129,58 +119,50 @@ export class Shader {
         }
         return shader;
     }
-
-    constructor(vertSource: string, fragSource: string) {
-        var vShader: WebGLShader | null = Shader.compile(vertSource, gl.VERTEX_SHADER);
-        var fShader: WebGLShader | null = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
-        this.program = gl.createProgram();
-        gl.attachShader(this.program, vShader);
-        gl.attachShader(this.program, fShader);
-        gl.linkProgram(this.program);
-    }
-    use(): void {
+    use() {
         gl.useProgram(this.program);
     }
-    getULoc(name: string): WebGLUniformLocation {
+    getULoc(name) {
         return gl.getUniformLocation(this.program, name);
     }
-    setUInt(name: string, value: number): void {
+    setUInt(name, value) {
         gl.uniform1i(this.getULoc(name), value);
     }
-    setUInt2(name: string, value1: number, value2: number): void {
+    setUInt2(name, value1, value2) {
         gl.uniform2i(this.getULoc(name), value1, value2);
     }
-    setUInt3(name: string, value1: number, value2: number, value3: number): void {
+    setUInt3(name, value1, value2, value3) {
         gl.uniform3i(this.getULoc(name), value1, value2, value3);
     }
-    setUInt4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+    setUInt4(name, value1, value2, value3, value4) {
         gl.uniform4i(this.getULoc(name), value1, value2, value3, value4);
     }
-    setUFloat(name: string, value: number): void {
+    setUFloat(name, value) {
         gl.uniform1f(this.getULoc(name), value);
     }
-    setUFloat2(name: string, value1: number, value2: number): void {
+    setUFloat2(name, value1, value2) {
         gl.uniform2f(this.getULoc(name), value1, value2);
     }
-    setUFloat3(name: string, value1: number, value2: number, value3: number): void {
+    setUFloat3(name, value1, value2, value3) {
         gl.uniform3f(this.getULoc(name), value1, value2, value3);
     }
-    setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+    setUFloat4(name, value1, value2, value3, value4) {
         gl.uniform4f(this.getULoc(name), value1, value2, value3, value4);
     }
-    setUMat4(name: string, mat4: Mat4): void {
+    setUMat4(name, mat4) {
         gl.uniformMatrix4fv(this.getULoc(name), false, mat4.m.flat());
     }
-    setUVec2(name: string, v: Vec3): void {
+    setUVec2(name, v) {
         this.setUFloat2(name, v.x, v.y);
     }
-    setUVec3(name: string, v: Vec3): void {
+    setUVec3(name, v) {
         this.setUFloat3(name, v.x, v.y, v.z);
     }
-    setUVec4(name: string, v: Vec3): void {
+    setUVec4(name, v) {
         this.setUFloat4(name, v.x, v.y, v.z, v.w);
     }
-    setUBool(name: string, b: boolean): void {
+    setUBool(name, b) {
         this.setUInt(name, b ? 1 : 0);
     }
 }
+//# sourceMappingURL=WebGL.js.map
