@@ -1,10 +1,11 @@
 "use strict";
 import { vertShader3D, fragShader3D } from "./shaders.js";
 import { Time, IngeniumWeb, Shader, Input } from "./WebGL.js";
-import { Vec3, Mesh, Camera } from "./3D.js";
+import { Vec3, Mesh, Camera, DirectionalLight } from "./3D.js";
 var camera;
 var m;
 var shader;
+var dLight;
 function onCreate() {
     Time.setFPS(60);
     Time.setFixedFPS(20);
@@ -21,6 +22,7 @@ function onCreate() {
     m.load();
     m.scale = new Vec3(2, 2, 2);
     m.position = new Vec3(0, 0, 3);
+    dLight = new DirectionalLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.7, 0.7, 0.7), new Vec3(0.1, 0.1, 0.1), new Vec3(0, -1, 0.1));
 }
 function onUpdate() {
     var speed = 0.03;
@@ -54,11 +56,7 @@ function onUpdate() {
     camera.rotation = Vec3.add(camera.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
     camera.position = Vec3.add(camera.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
     IngeniumWeb.window.clear();
-    shader.setUVec3("dirLight.direction", new Vec3(0, -1, 0));
-    shader.setUVec3("dirLight.ambient", new Vec3(0.01, 0.01, 0.01));
-    shader.setUVec3("dirLight.specular", new Vec3(0.2, 0.2, 0.2));
-    shader.setUVec3("dirLight.diffuse", new Vec3(1, 1, 1));
-    Mesh.renderAll(shader, camera, camera.perspective(3 / 4), [m]);
+    Mesh.renderAll(shader, camera, camera.perspective(3 / 4), [m], dLight);
 }
 function onFixedUpdate() {
 }

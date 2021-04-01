@@ -93,5 +93,24 @@ export declare class Mesh {
     setTexture(diffusePath: string, specularPath?: string): void;
     modelMatrix(): Mat4;
     load(drawType?: number): void;
-    static renderAll(shader: Shader, camera: Camera, projection: Mat4, meshes: Mesh[]): void;
+    static renderAll(shader: Shader, camera: Camera, projection: Mat4, meshes: Mesh[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
+}
+export declare class PointLight {
+    intensity: number;
+    ambient: Vec3;
+    diffuse: Vec3;
+    specular: Vec3;
+    position: Vec3;
+    constant: number;
+    linear: number;
+    quadratic: number;
+    constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, position?: Vec3, intensity?: number);
+}
+export declare class DirectionalLight {
+    intensity: number;
+    ambient: Vec3;
+    diffuse: Vec3;
+    specular: Vec3;
+    direction: Vec3;
+    constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, direction?: Vec3, intensity?: number);
 }

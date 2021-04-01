@@ -464,7 +464,8 @@ export class Mesh {
         }
     }
 
-    static renderAll(shader: Shader, camera: Camera, projection: Mat4, meshes: Mesh[]) {
+    static renderAll(shader: Shader, camera: Camera, projection: Mat4, meshes: Mesh[], 
+        dirLight : DirectionalLight, pointLights : PointLight[] = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
@@ -472,10 +473,26 @@ export class Mesh {
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUMat4("projection", projection);
 
+        shader.setUVec3("dirLight.direction", dirLight.direction);
+        shader.setUVec3("dirLight.ambient", dirLight.ambient);
+        shader.setUVec3("dirLight.specular",dirLight.specular);
+        shader.setUVec3("dirLight.diffuse", dirLight.diffuse);
+
+        for (var j :number = 0; j < pointLights.length; j++)
+        {
+            shader.setUVec3("pointLights[" + i + "].position", pointLights[i].position);
+            shader.setUVec3("pointLights[" +  j + "].ambient", pointLights[i].ambient);
+            shader.setUVec3("pointLights[" +  j + "].diffuse", Vec3.mulFloat(pointLights[i].diffuse, pointLights[i].intensity));
+            shader.setUVec3("pointLights[" +  j + "].specular", pointLights[i].specular);
+            shader.setUFloat("pointLights[" + j + "].constant", pointLights[i].constant);
+            shader.setUFloat("pointLights[" + j + "].linear)", pointLights[i].linear);
+            shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[i].quadratic);
+        }
+
         for (var i: number = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
 
-            var model : Mat4 = meshes[i].modelMatrix();
+            var model: Mat4 = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
@@ -490,5 +507,49 @@ export class Mesh {
 
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
+    }
+}
+
+export class PointLight {
+    intensity: number;
+    ambient: Vec3;
+    diffuse: Vec3;
+    specular: Vec3;
+    position: Vec3;
+
+    constant : number = 1;
+    linear : number = 0.09;
+    quadratic : number = 0.032;
+
+    constructor(ambient: Vec3 = new Vec3(0.05, 0.05, 0.05),
+        diffuse: Vec3 = new Vec3(0.8, 0.8, 0.8),
+        specular: Vec3 = new Vec3(0.2, 0.2, 0.2),
+        position: Vec3 = new Vec3(), intensity: number = 1) {
+
+            this.ambient = ambient;
+            this.diffuse = diffuse;
+            this.specular = specular;
+            this.position = position;
+            this.intensity = intensity;
+    }
+}
+
+export class DirectionalLight {
+
+    intensity: number = 1;
+    ambient: Vec3;
+    diffuse: Vec3;
+    specular: Vec3;
+    direction: Vec3;
+
+    constructor(ambient: Vec3 = new Vec3(0.05, 0.05, 0.05),
+        diffuse: Vec3 = new Vec3(0.8, 0.8, 0.8),
+        specular: Vec3 = new Vec3(0.2, 0.2, 0.2),
+        direction: Vec3 = new Vec3( 0, 1, 0), intensity: number = 1) {
+            this.ambient = ambient;
+            this.diffuse = diffuse;
+            this.specular = specular;
+            this.direction = direction;
+            this.intensity = intensity;
     }
 }

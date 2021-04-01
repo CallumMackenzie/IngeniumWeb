@@ -418,13 +418,26 @@ export class Mesh {
             this.loaded = true;
         }
     }
-    static renderAll(shader, camera, projection, meshes) {
+    static renderAll(shader, camera, projection, meshes, dirLight, pointLights = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUMat4("projection", projection);
+        shader.setUVec3("dirLight.direction", dirLight.direction);
+        shader.setUVec3("dirLight.ambient", dirLight.ambient);
+        shader.setUVec3("dirLight.specular", dirLight.specular);
+        shader.setUVec3("dirLight.diffuse", dirLight.diffuse);
+        for (var j = 0; j < pointLights.length; j++) {
+            shader.setUVec3("pointLights[" + i + "].position", pointLights[i].position);
+            shader.setUVec3("pointLights[" + j + "].ambient", pointLights[i].ambient);
+            shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[i].diffuse, pointLights[i].intensity));
+            shader.setUVec3("pointLights[" + j + "].specular", pointLights[i].specular);
+            shader.setUFloat("pointLights[" + j + "].constant", pointLights[i].constant);
+            shader.setUFloat("pointLights[" + j + "].linear)", pointLights[i].linear);
+            shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[i].quadratic);
+        }
         for (var i = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
             var model = meshes[i].modelMatrix();
@@ -441,6 +454,28 @@ export class Mesh {
             }
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
+    }
+}
+export class PointLight {
+    constructor(ambient = new Vec3(0.05, 0.05, 0.05), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), position = new Vec3(), intensity = 1) {
+        this.constant = 1;
+        this.linear = 0.09;
+        this.quadratic = 0.032;
+        this.ambient = ambient;
+        this.diffuse = diffuse;
+        this.specular = specular;
+        this.position = position;
+        this.intensity = intensity;
+    }
+}
+export class DirectionalLight {
+    constructor(ambient = new Vec3(0.05, 0.05, 0.05), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), direction = new Vec3(0, 1, 0), intensity = 1) {
+        this.intensity = 1;
+        this.ambient = ambient;
+        this.diffuse = diffuse;
+        this.specular = specular;
+        this.direction = direction;
+        this.intensity = intensity;
     }
 }
 //# sourceMappingURL=3D.js.map

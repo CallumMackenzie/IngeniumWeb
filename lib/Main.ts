@@ -2,13 +2,14 @@
 
 import { vertShader3D, fragShader3D } from "./shaders.js";
 import { Time, IngeniumWeb, Shader, gl, Input } from "./WebGL.js";
-import { Tri, Vert, Vec2, Vec3, Mesh, Mat4, Material, Camera } from "./3D.js";
+import { Tri, Vert, Vec2, Vec3, Mesh, Mat4, Material, Camera, DirectionalLight } from "./3D.js";
 
-var camera : Camera;
-var m : Mesh;
-var shader : Shader;
+var camera: Camera;
+var m: Mesh;
+var shader: Shader;
+var dLight: DirectionalLight;
 
-function onCreate () {
+function onCreate() {
     Time.setFPS(60);
     Time.setFixedFPS(20);
     IngeniumWeb.createWindow(800, 500, "root", "Ingenium");
@@ -27,56 +28,55 @@ function onCreate () {
     m.load();
 
     m.scale = new Vec3(2, 2, 2);
-    m.position = new Vec3 (0, 0, 3);
-}
-function onUpdate () {
-    var speed : number = 0.03;
-    var cameraMoveSpeed : number = 0.001;
-    var cLV : Vec3 = camera.lookVector();
+    m.position = new Vec3(0, 0, 3);
 
-    var forward : Vec3 = new Vec3();
-    var up : Vec3 = new Vec3( 0, 1, 0 );
-    var rotate : Vec3 = new Vec3();
-    if (Input.getKeyState('w')) 
+    dLight = new DirectionalLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.7, 0.7, 0.7)
+        , new Vec3(0.1, 0.1, 0.1), new Vec3(0, -1, 0.1));
+}
+function onUpdate() {
+    var speed: number = 0.03;
+    var cameraMoveSpeed: number = 0.001;
+    var cLV: Vec3 = camera.lookVector();
+
+    var forward: Vec3 = new Vec3();
+    var up: Vec3 = new Vec3(0, 1, 0);
+    var rotate: Vec3 = new Vec3();
+    if (Input.getKeyState('w'))
         forward = Vec3.add(forward, cLV);
-    if (Input.getKeyState('s')) 
+    if (Input.getKeyState('s'))
         forward = Vec3.mulFloat(Vec3.add(forward, cLV), -1);
-    if (Input.getKeyState('d')) 
+    if (Input.getKeyState('d'))
         forward = Vec3.add(forward, Vec3.cross(cLV, up));
-    if (Input.getKeyState('a')) 
+    if (Input.getKeyState('a'))
         forward = Vec3.add(forward, Vec3.mulFloat(Vec3.cross(cLV, up), -1));
-    if (Input.getKeyState('q') || Input.getKeyState(' ')) 
+    if (Input.getKeyState('q') || Input.getKeyState(' '))
         forward.y = forward.y + 1;
-    if (Input.getKeyState('e')) 
+    if (Input.getKeyState('e'))
         forward.y = forward.y - 1;
 
-    if (Input.getKeyState('ArrowLeft')) 
+    if (Input.getKeyState('ArrowLeft'))
         rotate.y = -cameraMoveSpeed;
-    if (Input.getKeyState('ArrowRight')) 
+    if (Input.getKeyState('ArrowRight'))
         rotate.y = cameraMoveSpeed;
-    if (Input.getKeyState('ArrowUp')) 
+    if (Input.getKeyState('ArrowUp'))
         rotate.x = -cameraMoveSpeed;
-    if (Input.getKeyState('ArrowDown')) 
+    if (Input.getKeyState('ArrowDown'))
         rotate.x = cameraMoveSpeed;
-    if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft')) 
+    if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
         speed *= 5;
 
 
     camera.rotation = Vec3.add(camera.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
-    camera.position = Vec3.add(camera.position, 
+    camera.position = Vec3.add(camera.position,
         Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
 
     IngeniumWeb.window.clear();
-    shader.setUVec3("dirLight.direction", new Vec3(0, -1, 0));
-    shader.setUVec3("dirLight.ambient", new Vec3(0.01, 0.01, 0.01));
-    shader.setUVec3("dirLight.specular", new Vec3(0.2, 0.2, 0.2));
-    shader.setUVec3("dirLight.diffuse", new Vec3(1, 1, 1));
-    Mesh.renderAll(shader, camera, camera.perspective(3 / 4), [m]);
+    Mesh.renderAll(shader, camera, camera.perspective(3 / 4), [m], dLight);
 }
-function onFixedUpdate () {
+function onFixedUpdate() {
 
 }
-function onClose () {
+function onClose() {
 
 }
 
