@@ -217,6 +217,8 @@ export class Mat4 {
 }
 
 export class Vert {
+    static tSize : number = 15;
+    
     p: Vec3;
     t: Vec2;
     rgb: Vec3;
@@ -447,7 +449,7 @@ export class Mesh {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
 
             var floatSize : number = 4;
-            var stride: number = 11 * floatSize; // Num of array elements resulting from a Vert
+            var stride: number = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
 
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(0);
@@ -481,7 +483,7 @@ export class Mesh {
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
 
-            gl.drawArrays(gl.TRIANGLES, 0, );
+            gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
     }
 }
