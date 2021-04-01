@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "firefox",
+            "request": "attach",
+            "name": "Attach firefox",
+            "port": 5500
+        },
+        {
             "name": "Launch server",
             "program": "${workspaceFolder}\\out\\Main.js",
             "request": "launch",

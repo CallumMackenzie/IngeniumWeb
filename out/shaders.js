@@ -35,7 +35,7 @@ void main () {
 export var fragShader3D = `#version ${version}
 precision mediump float;
 
-#define NR_POINT_LIGHTS 1
+#define NR_POINT_LIGHTS 0
 
 struct Material {
     sampler2D diffuse;

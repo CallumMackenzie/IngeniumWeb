@@ -66,7 +66,9 @@ export class Vec3 {
     }
     static normalize(v) {
         var l = Vec3.len(v);
-        return new Vec3(v.x / l, v.y / l, v.z / l);
+        if (l != 0)
+            return new Vec3(v.x / l, v.y / l, v.z / l);
+        return new Vec3();
     }
     static cross(v1, v2) {
         var v = new Vec3();
@@ -233,6 +235,7 @@ export class Material {
     constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
         this.diffuseTexture = gl.NONE;
         this.specularTexture = gl.NONE;
+        this.shininess = 0.5;
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.shininess = shininess;
@@ -363,9 +366,9 @@ export class Mesh {
     createTextureFromData(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
         var tex = gl.NONE;
         var image = new Image();
+        tex = gl.createTexture();
+        gl.activeTexture(texSlot);
         image.onload = function () {
-            tex = gl.createTexture();
-            gl.activeTexture(texSlot);
             gl.bindTexture(gl.TEXTURE_2D, tex);
             var image = this;
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, image.width, image.height, 0, gl.RGB, gl.UNSIGNED_BYTE, image);
@@ -373,11 +376,7 @@ export class Mesh {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-            function p2(value) {
-                return (value & (value - 1)) == 0;
-            }
-            if (p2(image.width) && p2(image.height))
-                gl.generateMipmap(gl.TEXTURE_2D);
+            gl.generateMipmap(gl.TEXTURE_2D);
         };
         image.src = path;
         return tex;

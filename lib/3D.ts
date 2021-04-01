@@ -73,7 +73,9 @@ export class Vec3 {
     }
     static normalize(v: Vec3): Vec3 {
         var l = Vec3.len(v);
-        return new Vec3(v.x / l, v.y / l, v.z / l);
+        if (l != 0)
+            return new Vec3(v.x / l, v.y / l, v.z / l);
+        return new Vec3();
     }
     static cross(v1: Vec3, v2: Vec3): Vec3 {
         var v = new Vec3();
@@ -243,7 +245,7 @@ export class Tri {
 export class Material {
     diffuseTexture: WebGLTexture = gl.NONE;
     specularTexture: WebGLTexture = gl.NONE;
-    shininess: number;
+    shininess: number = 0.5;
     constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
@@ -398,9 +400,9 @@ export class Mesh {
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {
         var tex: WebGLTexture = gl.NONE;
         var image: HTMLImageElement = new Image();
+        tex = gl.createTexture();
+        gl.activeTexture(texSlot);
         image.onload = function () {
-            tex = gl.createTexture();
-            gl.activeTexture(texSlot);
             gl.bindTexture(gl.TEXTURE_2D, tex);
 
             var image: HTMLImageElement = (<HTMLImageElement>this);
@@ -412,12 +414,7 @@ export class Mesh {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
 
-            function p2(value: number): boolean {
-                return (value & (value - 1)) == 0;
-            }
-
-            if (p2(image.width) && p2(image.height))
-                gl.generateMipmap(gl.TEXTURE_2D);
+            gl.generateMipmap(gl.TEXTURE_2D);
         }
         image.src = path;
         return tex;
