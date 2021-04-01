@@ -4,7 +4,7 @@ import { IngeniumWeb } from "./WebGL";
 
 var PI = 355 / 113;
 
-function loadFile(filePath: string) {
+export function loadFile(filePath: string) {
     var result = null;
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", filePath, false);
@@ -14,14 +14,14 @@ function loadFile(filePath: string) {
     }
     return result;
 }
-function typeCheck(value: any, type: any, loc: string) {
+export function typeCheck(value: any, type: any, loc: string) {
     if (!(value instanceof type)) {
         IngeniumWeb.terminate("Error in " + loc + ": Cannot convert " + typeof (value) + " to " + type.name);
         return true;
     }
     return false;
 }
-function argCheck(fargs: any, loc: string, types: any) {
+export function argCheck(fargs: any, loc: string, types: any) {
     var ret = false;
     for (var arg = 0; arg < fargs.length; arg++) {
         var arr = fargs[arg];
@@ -30,9 +30,9 @@ function argCheck(fargs: any, loc: string, types: any) {
     }
     return ret;
 }
-function radToDeg(rad: number) {
+export function radToDeg(rad: number) {
     return rad * 180 / PI;
 }
-function degToRad(deg: number) {
+export function degToRad(deg: number) {
     return deg * PI / 180;
 }

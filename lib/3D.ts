@@ -1,6 +1,7 @@
 "use strict";
 
 import { gl } from "./WebGL";
+import { degToRad } from "./Utils";
 
 export class Vec2 {
     x: number;
