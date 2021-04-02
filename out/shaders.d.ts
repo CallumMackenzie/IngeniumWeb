@@ -10,7 +10,7 @@ export declare class ShaderSource {
     static getShader(name: string): ShaderSource;
     static getAllShaderNames(): string[];
     static defVert(): string;
-    static defFrag(nLights?: string | number): string;
+    static defFrag(numLights?: string | number): string;
     source: string;
     type: string;
     params: any[];

@@ -5,21 +5,29 @@ import { Vec3, Mesh, Camera, DirectionalLight, PointLight } from "./3D.js";
 var shader;
 var camera = new Camera(70);
 var d = new DirectionalLight();
-var p = [new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.0, 0.0, 0.0), new Vec3(0.2, 0.2, 0.2), new Vec3(0, 1, 2.5))];
+var p = [new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(1, 0.1, 0.6), new Vec3(1, 0.1, 0.6), new Vec3(0, 0, -3))];
 var m = [];
 function onGlobalCreate() {
-    Time.setFPS(45);
+    Time.setFPS(60);
     IngeniumWeb.createWindow(16, 9, "My App");
-    IngeniumWeb.window.setClearColour(0x000000, 1);
-    shader = new Shader(ShaderSource.defVert(), ShaderSource.shaderWithParams("phong", { nLights: 1 }));
-    d.specular = new Vec3(0.5, 0, 0.4);
-    d.diffuse = new Vec3();
+    IngeniumWeb.window.setClearColour(0x303030, 1);
+    shader = new Shader(ShaderSource.shaderWithParams("vert3d"), ShaderSource.shaderWithParams("phong", { nLights: 1 }));
+    d.ambient = new Vec3(0.2, 0.2, 0.2);
     var objPath = "./resource/uvsmoothnt.obj";
-    m.push(new Mesh(new Vec3(-1, 0, 3)));
-    m[0].material.shininess = 0.01;
+    m.push(new Mesh(new Vec3(-1.5, 0, 3)));
+    m[0].material.shininess = 0.4;
     m[0].make(objPath, "./resource/sbrick/basecolour.jpg", "./resource/sbrick/height.png", "./resource/sbrick/normal.jpg");
-    m.push(new Mesh(new Vec3(1, 0, 3)));
+    m.push(new Mesh(new Vec3(1.5, 0, 3)));
+    m[1].material.shininess = 0.1;
     m[1].make(objPath, "./resource/metal/basecolour.jpg", "./resource/metal/specular.jpg", "./resource/metal/normal.jpg");
+    m.push(new Mesh(new Vec3(-4.5, 0, 3)));
+    m[2].material.shininess = 0.2;
+    m[2].make(objPath, "./resource/paper/base.jpg", "./resource/paper/rough.png", "./resource/paper/normal.jpg");
+    m.push(new Mesh(new Vec3(4.5, 0, 3)));
+    m[3].material.shininess = 50;
+    m[3].make(objPath, "./resource/scrmetal/base.jpg", "./resource/scrmetal/specular.jpg", "./resource/scrmetal/normal.jpg");
+    m.push(new Mesh(new Vec3(-1.5, 3, 3)));
+    m[4].make(objPath, "./resource/gate/base.jpg", "./resource/gate/specular.jpg", "./resource/gate/normal.jpg");
 }
 function onUpdate() {
     camera.stdControl();

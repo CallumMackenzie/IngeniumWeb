@@ -443,7 +443,7 @@ export class Mesh {
         var matRot = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
         var matTrans = Mat4.translation(this.position.x, this.position.y, this.position.z);
         var matScale = Mat4.scale(this.scale.x, this.scale.y, this.scale.z);
-        var matWorld = Mat4.mul(Mat4.mul(matRot, matTrans), matScale);
+        var matWorld = Mat4.mul(Mat4.mul(matScale, matRot), matTrans);
         return matWorld;
     }
     load(drawType = gl.DYNAMIC_DRAW) {
