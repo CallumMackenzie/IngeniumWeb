@@ -54,7 +54,7 @@ export declare class IngeniumWeb {
     static scenes: Scene[];
     static currentScene: number;
     static start(scenes: Scene[], onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function, webGL?: string): void;
-    static createWindow(width: number, height: number, id: string, parentName: string, takeUpAsepct?: boolean): void;
+    static createWindow(width: number, height: number, id: string, parentName?: string, takeUpAsepct?: boolean): void;
     static update(): void;
     static fixedUpdate(): void;
     static init(): void;

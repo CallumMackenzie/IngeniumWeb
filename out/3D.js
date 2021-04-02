@@ -1,5 +1,5 @@
 "use strict";
-import { gl, IngeniumWeb } from "./WebGL.js";
+import { gl, IngeniumWeb, Time, Input } from "./WebGL.js";
 import { degToRad, loadFile } from "./Utils.js";
 export class Vec2 {
     constructor(x = 0, y = 0, w = 1) {
@@ -241,12 +241,12 @@ export class Material {
     }
 }
 export class Camera {
-    constructor() {
+    constructor(fov = 75, clipNear = 0.1, clipFar = 500) {
         this.position = new Vec3();
         this.rotation = new Vec3();
-        this.FOV = 80;
-        this.clipNear = 0.1;
-        this.clipFar = 100;
+        this.FOV = fov;
+        this.clipNear = clipNear;
+        this.clipFar = clipFar;
     }
     lookVector() {
         var target = new Vec3(0, 0, 1);
@@ -269,6 +269,44 @@ export class Camera {
         var matCamera = Mat4.pointedAt(this.position, vTarget, vUp);
         return matCamera;
     }
+    stdControl(speed = 0.01, cameraMoveSpeed = 0.0015) {
+        var cLV = this.lookVector();
+        var forward = new Vec3();
+        var up = new Vec3(0, 1, 0);
+        var rotate = new Vec3();
+        if (Input.getKeyState('w'))
+            forward = Vec3.add(forward, cLV);
+        if (Input.getKeyState('s'))
+            forward = Vec3.mulFloat(Vec3.add(forward, cLV), -1);
+        if (Input.getKeyState('d'))
+            forward = Vec3.add(forward, Vec3.cross(cLV, up));
+        if (Input.getKeyState('a'))
+            forward = Vec3.add(forward, Vec3.mulFloat(Vec3.cross(cLV, up), -1));
+        if (Input.getKeyState('q') || Input.getKeyState(' '))
+            forward.y = forward.y + 1;
+        if (Input.getKeyState('e'))
+            forward.y = forward.y - 1;
+        if (Input.getKeyState('ArrowLeft'))
+            rotate.y = -cameraMoveSpeed;
+        if (Input.getKeyState('ArrowRight'))
+            rotate.y = cameraMoveSpeed;
+        if (Input.getKeyState('ArrowUp'))
+            rotate.x = -cameraMoveSpeed;
+        if (Input.getKeyState('ArrowDown'))
+            rotate.x = cameraMoveSpeed;
+        // if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
+        //     speed *= 5;
+        this.rotation = Vec3.add(this.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
+        this.position = Vec3.add(this.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
+        if (this.rotation.x >= degToRad(87))
+            this.rotation.x = degToRad(87);
+        if (this.rotation.x <= -degToRad(87))
+            this.rotation.x = -degToRad(87);
+        if (Math.abs(this.rotation.y) >= degToRad(360))
+            this.rotation.y = 0;
+        if (Math.abs(this.rotation.z) >= degToRad(360))
+            this.rotation.z = 0;
+    }
 }
 export class Mesh {
     constructor(position = new Vec3(), rotation = new Vec3(), rotationCenter = new Vec3(), scale = new Vec3(1, 1, 1), material = new Material()) {
@@ -283,6 +321,11 @@ export class Mesh {
         this.mVAO = gl.NONE;
         this.mTVBO = gl.NONE;
         this.data = [];
+    }
+    make(objPath, diffTexPath = "NONE", specTexPath = "NONE") {
+        this.loadFromObj(objPath);
+        this.setTexture(diffTexPath, specTexPath);
+        this.load();
     }
     loadFromObj(path) {
         var raw = loadFile(path);
@@ -475,7 +518,7 @@ export class PointLight {
     }
 }
 export class DirectionalLight {
-    constructor(ambient = new Vec3(0.05, 0.05, 0.05), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), direction = new Vec3(0, 1, 0), intensity = 1) {
+    constructor(ambient = new Vec3(0.05, 0.05, 0.05), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), direction = new Vec3(0, -1, 0.2), intensity = 1) {
         this.intensity = 1;
         this.ambient = ambient;
         this.diffuse = diffuse;

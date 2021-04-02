@@ -70,9 +70,11 @@ export declare class Camera {
     FOV: number;
     clipNear: number;
     clipFar: number;
+    constructor(fov?: number, clipNear?: number, clipFar?: number);
     lookVector(): Vec3;
     perspective(): Mat4;
     cameraMatrix(): Mat4;
+    stdControl(speed?: number, cameraMoveSpeed?: number): void;
 }
 export declare class Mesh {
     rotation: Vec3;
@@ -87,6 +89,7 @@ export declare class Mesh {
     data: number[];
     imageLoaded: boolean;
     constructor(position?: Vec3, rotation?: Vec3, rotationCenter?: Vec3, scale?: Vec3, material?: Material);
+    make(objPath: string, diffTexPath?: string, specTexPath?: string): void;
     loadFromObj(path: string): void;
     addTriangle(triangle: Tri): void;
     createTextureFromData(path: string, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;

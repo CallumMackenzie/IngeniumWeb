@@ -120,6 +120,12 @@ export class WebGLWindow {
         var g = (hex & 0x00FF00) >> 8;
         var b = (hex & 0x0000FF);
         gl.clearColor(r / 255, g / 255, b / 255, alpha);
+        var col = {
+            prop : "background",
+            val : "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")"
+        };
+        this.parent.style.setProperty(col.prop, col.val);
+        document.body.style.setProperty(col.prop, col.val);
     }
     clear(): void {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -171,8 +177,8 @@ export class IngeniumWeb {
         Input.setup();
         IngeniumWeb.init();
     };
-    static createWindow(width: number, height: number, id: string, parentName: string, takeUpAsepct: boolean = true): void {
-        IngeniumWeb.window = new WebGLWindow(width, height, id, parentName);
+    static createWindow(width: number, height: number, id: string, parentName: string = "root", takeUpAsepct: boolean = true): void {
+        IngeniumWeb.window = new WebGLWindow(width, height, parentName, id);
         IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
         if (takeUpAsepct) {
             window.addEventListener('resize', function () {
