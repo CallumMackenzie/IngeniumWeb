@@ -78,7 +78,7 @@ in vec3 fragPos;
 
 void main () 
 {
-    vec2 cUV = vec2(UV.x / UV.z, 1.0 - (UV.y / UV.z));
+    vec2 cUV = vec2(UV.x, 1.0 - UV.y);
     vec3 norm = normalize(normal);
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 result = CalcDirLight(dirLight, norm, viewDir, cUV);
