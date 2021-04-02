@@ -1,6 +1,13 @@
-# Blender v2.92.0 OBJ File: ''
-# www.blender.org
-o Cube.001
+export class Geometry {
+    constructor(data, name = "NONE") {
+        this.data = data;
+        this.name = name;
+    }
+    static makeCube() {
+        return new Geometry(cubeData, "Default Cube");
+    }
+}
+var cubeData = `
 v -1.000000 1.000000 -1.000000
 v 1.000000 1.000000 1.000000
 v 1.000000 1.000000 -1.000000
@@ -51,3 +58,5 @@ f 6/7/3 1/20/3 7/8/3
 f 8/10/4 5/21/4 4/9/4
 f 3/12/5 2/22/5 5/13/5
 f 1/15/6 3/23/6 8/16/6
+`;
+//# sourceMappingURL=geometry.js.map

@@ -1,4 +1,5 @@
 import { Shader } from "./WebGL.js";
+import { Geometry } from "./geometry.js";
 export declare class Vec2 {
     x: number;
     y: number;
@@ -52,6 +53,7 @@ export declare class Vert {
     t: Vec2;
     rgb: Vec3;
     n: Vec3;
+    tan: Vec3;
     constructor(point?: Vec3, UV?: Vec2, rgb?: Vec3, normal?: Vec3);
 }
 export declare class Tri {
@@ -61,8 +63,10 @@ export declare class Tri {
 export declare class Material {
     diffuseTexture: WebGLTexture;
     specularTexture: WebGLTexture;
+    normalTexture: WebGLTexture;
+    hasNormalTexture: boolean;
     shininess: number;
-    constructor(diffuseTexture?: number, specularTexture?: number, shininess?: number);
+    constructor(diffuseTexture?: WebGLTexture, specularTexture?: WebGLTexture, normalTexture?: WebGLTexture, shininess?: number);
 }
 export declare class Camera {
     position: Vec3;
@@ -87,15 +91,17 @@ export declare class Mesh {
     mVAO: WebGLVertexArrayObject;
     mTVBO: WebGLBuffer;
     data: number[];
-    imageLoaded: boolean;
+    tint: Vec3;
     constructor(position?: Vec3, rotation?: Vec3, rotationCenter?: Vec3, scale?: Vec3, material?: Material);
-    make(objPath: string, diffTexPath?: string, specTexPath?: string): void;
-    loadFromObj(path: string): void;
+    make(objPath: string, diffTexPath?: string, specTexPath?: string, normalPath?: string): void;
+    makeFromGeometry(geom: Geometry, diffTexPath?: string, specTexPath?: string, normalPath?: string): void;
+    loadFromObjData(raw: string): void;
     addTriangle(triangle: Tri): void;
-    createTextureFromData(path: string, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
-    setTexture(diffusePath: string, specularPath?: string): void;
+    createTextureFromPath(path: string, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
+    setTexture(diffusePath: string, specularPath?: string, normalPath?: string): void;
     modelMatrix(): Mat4;
     load(drawType?: number): void;
+    static calcTangents(triangle: Tri): Vec3[];
     static renderAll(shader: Shader, camera: Camera, meshes: Mesh[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
 }
 export declare class PointLight {

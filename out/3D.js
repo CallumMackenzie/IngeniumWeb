@@ -1,6 +1,7 @@
 "use strict";
 import { gl, IngeniumWeb, Time, Input } from "./WebGL.js";
 import { degToRad, loadFile } from "./Utils.js";
+import { Geometry } from "./geometry.js";
 export class Vec2 {
     constructor(x = 0, y = 0, w = 1) {
         this.x = x;
@@ -224,19 +225,19 @@ export class Vert {
         this.n = normal;
     }
 }
-Vert.tSize = 15;
+Vert.tSize = 17;
 export class Tri {
     constructor(points = [new Vert(), new Vert(), new Vert()]) {
         this.v = [points[0], points[1], points[2]];
     }
 }
 export class Material {
-    constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
-        this.diffuseTexture = gl.NONE;
-        this.specularTexture = gl.NONE;
+    constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, normalTexture = gl.NONE, shininess = 0.5) {
+        this.hasNormalTexture = false;
         this.shininess = 0.5;
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
+        this.normalTexture = normalTexture;
         this.shininess = shininess;
     }
 }
@@ -310,7 +311,7 @@ export class Camera {
 }
 export class Mesh {
     constructor(position = new Vec3(), rotation = new Vec3(), rotationCenter = new Vec3(), scale = new Vec3(1, 1, 1), material = new Material()) {
-        this.imageLoaded = false;
+        this.tint = new Vec3();
         this.rotation = rotation;
         this.rotationCenter = rotationCenter;
         this.position = position;
@@ -322,13 +323,15 @@ export class Mesh {
         this.mTVBO = gl.NONE;
         this.data = [];
     }
-    make(objPath, diffTexPath = "NONE", specTexPath = "NONE") {
-        this.loadFromObj(objPath);
-        this.setTexture(diffTexPath, specTexPath);
+    make(objPath, diffTexPath = "NONE", specTexPath = "NONE", normalPath = "NONE") {
+        this.makeFromGeometry(new Geometry(loadFile(objPath), "USER_GEOMETRY"), diffTexPath, specTexPath, normalPath);
+    }
+    makeFromGeometry(geom, diffTexPath = "NONE", specTexPath = "NONE", normalPath = "NONE") {
+        this.loadFromObjData(geom.data);
+        this.setTexture(diffTexPath, specTexPath, normalPath);
         this.load();
     }
-    loadFromObj(path) {
-        var raw = loadFile(path);
+    loadFromObjData(raw) {
         var verts = [];
         var normals = [];
         var texs = [];
@@ -387,6 +390,7 @@ export class Mesh {
         }
     }
     addTriangle(triangle) {
+        var tangent = Mesh.calcTangents(triangle); // Calculate tangent and bittangent
         for (var i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
             this.data.push(triangle.v[i].p.y);
@@ -395,43 +399,45 @@ export class Mesh {
             this.data.push(triangle.v[i].t.x);
             this.data.push(triangle.v[i].t.y);
             this.data.push(triangle.v[i].t.w);
-            this.data.push(triangle.v[i].rgb.x);
-            this.data.push(triangle.v[i].rgb.y);
-            this.data.push(triangle.v[i].rgb.z);
+            this.data.push(triangle.v[i].rgb.x + this.tint.x);
+            this.data.push(triangle.v[i].rgb.y + this.tint.y);
+            this.data.push(triangle.v[i].rgb.z + this.tint.z);
             this.data.push(triangle.v[i].rgb.w);
             this.data.push(triangle.v[i].n.x);
             this.data.push(triangle.v[i].n.y);
             this.data.push(triangle.v[i].n.z);
-            this.data.push(triangle.v[i].n.w);
+            this.data.push(tangent[0].x);
+            this.data.push(tangent[0].y);
+            this.data.push(tangent[0].z);
         }
     }
-    createTextureFromData(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
+    createTextureFromPath(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
         var tex = gl.NONE;
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
-        var image = new Image();
-        image.src = path;
-        image.addEventListener('load', function () {
-            gl.activeTexture(texSlot);
-            gl.bindTexture(gl.TEXTURE_2D, tex);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-            gl.generateMipmap(gl.TEXTURE_2D);
-        });
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 255]));
+        if (path != "NONE") {
+            var image = new Image();
+            image.src = path;
+            image.addEventListener('load', function () {
+                gl.activeTexture(texSlot);
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+                gl.generateMipmap(gl.TEXTURE_2D);
+            });
+        }
         return tex;
     }
-    setTexture(diffusePath, specularPath = "NONE") {
-        if (diffusePath != "NONE") {
-            this.material.diffuseTexture = this.createTextureFromData(diffusePath, gl.TEXTURE0);
-        }
-        if (specularPath != "NONE") {
-            this.material.specularTexture = this.createTextureFromData(specularPath, gl.TEXTURE1);
-        }
+    setTexture(diffusePath, specularPath = "NONE", normalPath = "NONE") {
+        this.material.diffuseTexture = this.createTextureFromPath(diffusePath, gl.TEXTURE0);
+        this.material.specularTexture = this.createTextureFromPath(specularPath, gl.TEXTURE1);
+        this.material.normalTexture = this.createTextureFromPath(normalPath, gl.TEXTURE2);
+        this.material.hasNormalTexture = normalPath != "NONE";
     }
     modelMatrix() {
         var matRot = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
@@ -458,14 +464,33 @@ export class Mesh {
             gl.enableVertexAttribArray(2);
             gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 11 * floatSize); // Normal data
             gl.enableVertexAttribArray(3);
+            gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 14 * floatSize); // Tangent data
+            gl.enableVertexAttribArray(4);
             gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind buffer
             this.loaded = true;
         }
+    }
+    static calcTangents(triangle) {
+        var edge1 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
+        var edge2 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
+        var dUV1 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
+        var dUV2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
+        var f = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
+        var tan = new Vec3();
+        tan.x = f * (dUV2.y * edge1.x - dUV1.y * edge2.x);
+        tan.y = f * (dUV2.y * edge1.y - dUV1.y * edge2.y);
+        tan.z = f * (dUV2.y * edge1.z - dUV1.y * edge2.z);
+        var bitTan = new Vec3();
+        bitTan.x = f * (-dUV2.x * edge1.x + dUV1.x * edge2.x);
+        bitTan.y = f * (-dUV2.x * edge1.y + dUV1.x * edge2.y);
+        bitTan.z = f * (-dUV2.x * edge1.z + dUV1.x * edge2.z);
+        return [tan, bitTan];
     }
     static renderAll(shader, camera, meshes, dirLight, pointLights = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
+        shader.setUInt("material.normal", 2);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
@@ -478,7 +503,7 @@ export class Mesh {
             shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
             shader.setUVec3("pointLights[" + j + "].ambient", pointLights[j].ambient);
             shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[j].diffuse, pointLights[j].intensity));
-            shader.setUVec3("pointLights[" + j + "].specular", pointLights[j].specular);
+            shader.setUVec3("pointLights[" + j + "].specular", Vec3.mulFloat(pointLights[j].specular, pointLights[j].intensity));
             shader.setUFloat("pointLights[" + j + "].constant", pointLights[j].constant);
             shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
             shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
@@ -487,20 +512,21 @@ export class Mesh {
             gl.bindVertexArray(meshes[i].mVAO);
             var model = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
+            shader.setUBool("hasNormalTexture", meshes[i].material.hasNormalTexture);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
             gl.activeTexture(gl.TEXTURE0);
             if (meshes[i].material.diffuseTexture != gl.NONE) {
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
             }
-            else
-                console.warn("Diffuse texture not loaded");
             gl.activeTexture(gl.TEXTURE1);
             if (meshes[i].material.specularTexture != gl.NONE) {
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
             }
-            else
-                console.warn("Specular texture not loaded");
+            gl.activeTexture(gl.TEXTURE2);
+            if (meshes[i].material.normalTexture != gl.NONE) {
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.normalTexture);
+            }
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }
     }

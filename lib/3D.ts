@@ -2,6 +2,7 @@
 
 import { gl, Shader, IngeniumWeb, Time, Input } from "./WebGL.js";
 import { degToRad, loadFile, radToDeg } from "./Utils.js";
+import { Geometry } from "./geometry.js";
 
 export class Vec2 {
     x: number;
@@ -219,12 +220,13 @@ export class Mat4 {
 }
 
 export class Vert {
-    static tSize: number = 15;
+    static tSize: number = 17;
 
     p: Vec3;
     t: Vec2;
     rgb: Vec3;
     n: Vec3;
+    tan : Vec3;
 
     constructor(point: Vec3 = new Vec3(), UV: Vec2 = new Vec2(), rgb: Vec3 = new Vec3(), normal: Vec3 = new Vec3()) {
         this.p = point;
@@ -243,12 +245,15 @@ export class Tri {
 }
 
 export class Material {
-    diffuseTexture: WebGLTexture = gl.NONE;
-    specularTexture: WebGLTexture = gl.NONE;
+    diffuseTexture: WebGLTexture;
+    specularTexture: WebGLTexture;
+    normalTexture: WebGLTexture;
+    hasNormalTexture : boolean = false;
     shininess: number = 0.5;
-    constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, shininess = 0.5) {
+    constructor(diffuseTexture: WebGLTexture = gl.NONE, specularTexture: WebGLTexture = gl.NONE, normalTexture: WebGLTexture = gl.NONE, shininess: number = 0.5) {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
+        this.normalTexture = normalTexture;
         this.shininess = shininess;
     }
 }
@@ -261,7 +266,7 @@ export class Camera {
     clipNear: number;
     clipFar: number;
 
-    constructor (fov : number = 75, clipNear : number = 0.1, clipFar : number = 500) {
+    constructor(fov: number = 75, clipNear: number = 0.1, clipFar: number = 500) {
         this.FOV = fov;
         this.clipNear = clipNear;
         this.clipFar = clipFar;
@@ -287,9 +292,9 @@ export class Camera {
         var matCamera: Mat4 = Mat4.pointedAt(this.position, vTarget, vUp);
         return matCamera;
     }
-    stdControl (speed : number = 0.01, cameraMoveSpeed : number = 0.0015) : void {
+    stdControl(speed: number = 0.01, cameraMoveSpeed: number = 0.0015): void {
         var cLV: Vec3 = this.lookVector();
-    
+
         var forward: Vec3 = new Vec3();
         var up: Vec3 = new Vec3(0, 1, 0);
         var rotate: Vec3 = new Vec3();
@@ -305,7 +310,7 @@ export class Camera {
             forward.y = forward.y + 1;
         if (Input.getKeyState('e'))
             forward.y = forward.y - 1;
-    
+
         if (Input.getKeyState('ArrowLeft'))
             rotate.y = -cameraMoveSpeed;
         if (Input.getKeyState('ArrowRight'))
@@ -316,7 +321,7 @@ export class Camera {
             rotate.x = cameraMoveSpeed;
         // if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
         //     speed *= 5;
-    
+
         this.rotation = Vec3.add(this.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
         this.position = Vec3.add(this.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
 
@@ -338,7 +343,7 @@ export class Mesh {
     mVAO: WebGLVertexArrayObject;
     mTVBO: WebGLBuffer;
     data: number[];
-    imageLoaded: boolean = false;
+    tint: Vec3 = new Vec3();
 
     constructor(position: Vec3 = new Vec3(), rotation: Vec3 = new Vec3(), rotationCenter: Vec3 = new Vec3(), scale: Vec3 = new Vec3(1, 1, 1), material: Material = new Material()) {
         this.rotation = rotation;
@@ -352,13 +357,15 @@ export class Mesh {
         this.mTVBO = gl.NONE;
         this.data = [];
     }
-    make (objPath : string, diffTexPath : string = "NONE", specTexPath : string = "NONE") {
-        this.loadFromObj(objPath);
-        this.setTexture(diffTexPath, specTexPath);
+    make(objPath: string, diffTexPath: string = "NONE", specTexPath: string = "NONE", normalPath: string = "NONE") {
+        this.makeFromGeometry(new Geometry(loadFile(objPath), "USER_GEOMETRY"), diffTexPath, specTexPath, normalPath);
+    }
+    makeFromGeometry(geom: Geometry, diffTexPath: string = "NONE", specTexPath: string = "NONE", normalPath: string = "NONE") {
+        this.loadFromObjData(geom.data);
+        this.setTexture(diffTexPath, specTexPath, normalPath);
         this.load();
     }
-    loadFromObj(path: string): void {
-        var raw: string = loadFile(path);
+    loadFromObjData(raw: string): void {
         var verts: Vec3[] = [];
         var normals: Vec3[] = [];
         var texs: Vec2[] = [];
@@ -423,6 +430,7 @@ export class Mesh {
         }
     }
     addTriangle(triangle: Tri): void {
+        var tangent : Vec3[] = Mesh.calcTangents(triangle); // Calculate tangent and bittangent
         for (var i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
             this.data.push(triangle.v[i].p.y);
@@ -433,50 +441,53 @@ export class Mesh {
             this.data.push(triangle.v[i].t.y);
             this.data.push(triangle.v[i].t.w);
 
-            this.data.push(triangle.v[i].rgb.x);
-            this.data.push(triangle.v[i].rgb.y);
-            this.data.push(triangle.v[i].rgb.z);
+            this.data.push(triangle.v[i].rgb.x + this.tint.x);
+            this.data.push(triangle.v[i].rgb.y + this.tint.y);
+            this.data.push(triangle.v[i].rgb.z + this.tint.z);
             this.data.push(triangle.v[i].rgb.w);
 
             this.data.push(triangle.v[i].n.x);
             this.data.push(triangle.v[i].n.y);
             this.data.push(triangle.v[i].n.z);
-            this.data.push(triangle.v[i].n.w);
+
+            this.data.push(tangent[0].x);
+            this.data.push(tangent[0].y);
+            this.data.push(tangent[0].z);
         }
     }
-    createTextureFromData(path: string, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
+    createTextureFromPath(path: string, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {
 
         var tex: WebGLTexture = gl.NONE;
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 255]));
 
-        var image: HTMLImageElement = new Image();
-        image.src = path;
-        image.addEventListener('load', function () {
-            gl.activeTexture(texSlot);
-            gl.bindTexture(gl.TEXTURE_2D, tex);
-
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-
-            gl.generateMipmap(gl.TEXTURE_2D);
-        });
+        if (path != "NONE") {
+            var image: HTMLImageElement = new Image();
+            image.src = path;
+            image.addEventListener('load', function () {
+                gl.activeTexture(texSlot);
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+    
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+    
+                gl.generateMipmap(gl.TEXTURE_2D);
+            });
+        }
         return tex;
     }
-    setTexture(diffusePath: string, specularPath: string = "NONE"): void {
-        if (diffusePath != "NONE") {
-            this.material.diffuseTexture = this.createTextureFromData(diffusePath, gl.TEXTURE0);
-        }
-        if (specularPath != "NONE") {
-            this.material.specularTexture = this.createTextureFromData(specularPath, gl.TEXTURE1);
-        }
+    setTexture(diffusePath: string, specularPath: string = "NONE", normalPath: string = "NONE"): void {
+        this.material.diffuseTexture = this.createTextureFromPath(diffusePath, gl.TEXTURE0);
+        this.material.specularTexture = this.createTextureFromPath(specularPath, gl.TEXTURE1);
+        this.material.normalTexture = this.createTextureFromPath(normalPath, gl.TEXTURE2);
+        this.material.hasNormalTexture = normalPath != "NONE";
     }
     modelMatrix(): Mat4 {
         var matRot: Mat4 = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
@@ -510,16 +521,41 @@ export class Mesh {
             gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 11 * floatSize); // Normal data
             gl.enableVertexAttribArray(3);
 
+            gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 14 * floatSize); // Tangent data
+            gl.enableVertexAttribArray(4);
+
             gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind buffer
             this.loaded = true;
         }
     }
 
-    static renderAll(shader: Shader, camera: Camera, meshes: Mesh[],
-        dirLight: DirectionalLight, pointLights: PointLight[] = []) {
+    static calcTangents (triangle : Tri) : Vec3[] {
+        var edge1 : Vec3 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
+        var edge2 : Vec3 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
+        var dUV1 : Vec2 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
+        var dUV2 : Vec2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
+
+        var f : number = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y); 
+
+        var tan : Vec3 = new Vec3();
+
+        tan.x = f * (dUV2.y * edge1.x - dUV1.y * edge2.x);
+        tan.y = f * (dUV2.y * edge1.y - dUV1.y * edge2.y);
+        tan.z = f * (dUV2.y * edge1.z - dUV1.y * edge2.z);
+
+        var bitTan : Vec3 = new Vec3();
+        bitTan.x = f * (-dUV2.x * edge1.x + dUV1.x * edge2.x);
+        bitTan.y = f * (-dUV2.x * edge1.y + dUV1.x * edge2.y);
+        bitTan.z = f * (-dUV2.x * edge1.z + dUV1.x * edge2.z);
+
+        return [tan, bitTan];
+    }
+
+    static renderAll(shader: Shader, camera: Camera, meshes: Mesh[], dirLight: DirectionalLight, pointLights: PointLight[] = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
+        shader.setUInt("material.normal", 2);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
@@ -534,7 +570,7 @@ export class Mesh {
             shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
             shader.setUVec3("pointLights[" + j + "].ambient", pointLights[j].ambient);
             shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[j].diffuse, pointLights[j].intensity));
-            shader.setUVec3("pointLights[" + j + "].specular", pointLights[j].specular);
+            shader.setUVec3("pointLights[" + j + "].specular", Vec3.mulFloat(pointLights[j].specular, pointLights[j].intensity));
             shader.setUFloat("pointLights[" + j + "].constant", pointLights[j].constant);
             shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
             shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
@@ -545,16 +581,21 @@ export class Mesh {
 
             var model: Mat4 = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
+            shader.setUBool("hasNormalTexture", meshes[i].material.hasNormalTexture);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
             gl.activeTexture(gl.TEXTURE0);
             if (meshes[i].material.diffuseTexture != gl.NONE) {
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
-            } else console.warn("Diffuse texture not loaded");
+            }
             gl.activeTexture(gl.TEXTURE1);
             if (meshes[i].material.specularTexture != gl.NONE) {
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture)
-            } else console.warn("Specular texture not loaded");
+            }
+            gl.activeTexture(gl.TEXTURE2);
+            if (meshes[i].material.normalTexture != gl.NONE) {
+                gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.normalTexture)
+            }
 
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].data.length / Vert.tSize);
         }

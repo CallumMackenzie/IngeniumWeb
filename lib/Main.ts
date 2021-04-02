@@ -3,38 +3,40 @@
 import { ShaderSource, ShaderSourceTypes } from "./shaders.js";
 import { Time, IngeniumWeb, Shader, gl, Input, Scene } from "./WebGL.js";
 import { Tri, Vert, Vec2, Vec3, Mesh, Mat4, Material, Camera, DirectionalLight, PointLight } from "./3D.js";
+import { Geometry } from "./geometry.js";
+import { degToRad } from "./Utils.js";
 
 
 var shader: Shader;
 var camera: Camera = new Camera(70);
 var d: DirectionalLight = new DirectionalLight();
-var m: Mesh;
-var lastTransition = Date.now();
+var p : PointLight[] = [ new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(0.0, 0.0, 0.0), new Vec3(0.2, 0.2, 0.2), new Vec3(0, 1, 2.5)) ];
+var m: Mesh[] = [];
 
 function onGlobalCreate () {
     Time.setFPS(45);
     IngeniumWeb.createWindow(16, 9, "My App");
-    IngeniumWeb.window.setClearColour(0xffa500, 1);
-    shader = new Shader(ShaderSource.defVert(), ShaderSource.defFrag());
+    IngeniumWeb.window.setClearColour(0x000000, 1);
+    shader = new Shader(ShaderSource.defVert(), ShaderSource.shaderWithParams("phong", { nLights : 1 }));
+    d.specular = new Vec3(0.5, 0, 0.4);
+    d.diffuse = new Vec3();
 
-    m = new Mesh(new Vec3(0, 0, 3));
-    m.make("./resource/cubenormaltex.obj", "./resource/brick.png", "./resource/brick.png");
+    var objPath : string = "./resource/uvsmoothnt.obj";
+
+    m.push(new Mesh(new Vec3(-1, 0, 3)));
+    m[0].material.shininess = 0.01;
+    m[0].make(objPath, "./resource/sbrick/basecolour.jpg", "./resource/sbrick/height.png", "./resource/sbrick/normal.jpg");
+
+    m.push(new Mesh(new Vec3(1, 0, 3)));
+    m[1].make(objPath, "./resource/metal/basecolour.jpg", "./resource/metal/specular.jpg", "./resource/metal/normal.jpg");
 }
 function onUpdate() {
     camera.stdControl();
-    m.rotation = Vec3.add(m.rotation, Vec3.mulFloat(new Vec3(0.01, 0.01, 0.01), Time.deltaTime * 0.07));
-    Mesh.renderAll(shader, camera, [m], d);
-
-    if (Input.getKeyState("r") && Date.now() - lastTransition > 1000) {
-        lastTransition = Date.now();
-        IngeniumWeb.enterScene(IngeniumWeb.currentScene == 0 ? 1 : 0);
+    for (var i : number = 0; i < m.length; i++) {
+        m[i].rotation = Vec3.add(m[i].rotation, Vec3.mulFloat(new Vec3(0.01, 0.015, 0.01), Time.deltaTime * 0.07));
     }
+    Mesh.renderAll(shader, camera, m, d, p);
 }
 
-var s: Scene = new Scene(function () { 
-    IngeniumWeb.window.setClearColour(0xffa500, 1); 
-}, onUpdate);
-var s2 :Scene = new Scene(function () {
-    IngeniumWeb.window.setClearColour(0x000000, 1);
-}, onUpdate);
-IngeniumWeb.start([s, s2], onGlobalCreate);
+var scene: Scene = new Scene(function () {}, onUpdate);
+IngeniumWeb.start([scene], onGlobalCreate);
