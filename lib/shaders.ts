@@ -20,17 +20,12 @@ out vec3 fragPos;
 
 void main () {
     vec4 transformed = projection * view * model * vertexPosition;
-
-    if (transformed.w > 0.0) {
-        float w = transformed.w;
-        transformed /= transformed.w;
-        transformed.x *= -1.0;
-        gl_Position = transformed;
-        UV = vec3(vertexUV.x / w, vertexUV.y / w, 1.0 / w);
-        tint = vertexRGB.rgba;
-        normal =  mat3(transpose(invModel)) * vertexNormal.xyz;
-        fragPos = vec3(model * vertexPosition);
-    }
+    transformed.x = - transformed.x;
+    gl_Position = transformed;
+    UV = vec3(vertexUV.x, vertexUV.y, 1);
+    tint = vertexRGB.rgba;
+    normal =  mat3(transpose(invModel)) * vertexNormal.xyz;
+    fragPos = vec3(model * vertexPosition);
 }
 `;
 export var fragShader3D: string = `#version ${version}

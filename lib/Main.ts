@@ -43,8 +43,8 @@ function onCreateDefScene() {
     new Vec3(0.1, 0.1, 0.1), new Vec3(1, 1, 3)));
 }
 function onUpdateDefScene() {
-    var speed: number = 0.03;
-    var cameraMoveSpeed: number = 0.001;
+    var speed: number = 0.01;
+    var cameraMoveSpeed: number = 0.0015;
     var cLV: Vec3 = camera.lookVector();
 
     var forward: Vec3 = new Vec3();
@@ -71,8 +71,8 @@ function onUpdateDefScene() {
         rotate.x = -cameraMoveSpeed;
     if (Input.getKeyState('ArrowDown'))
         rotate.x = cameraMoveSpeed;
-    if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
-        speed *= 5;
+    // if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
+    //     speed *= 5;
 
     camera.rotation = Vec3.add(camera.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
     camera.position = Vec3.add(camera.position,
@@ -104,4 +104,4 @@ function onCreateMonkeyScene() {
 
 var defScene: Scene = new Scene(onCreateDefScene, onUpdateDefScene);
 var monkeyScene: Scene = new Scene(onCreateMonkeyScene, onUpdateDefScene);
-IngeniumWeb.start([monkeyScene], onGlobalCreate, function () { }, function () { });
+IngeniumWeb.start([defScene], onGlobalCreate, function () { }, function () { });
