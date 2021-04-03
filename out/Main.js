@@ -14,7 +14,7 @@ function onGlobalCreate() {
     shader = new Shader(ShaderSource.shaderWithParams("vert3d"), ShaderSource.shaderWithParams("phong", { nLights: 1 }));
     d.intensity = 0;
     p[0].intensity = 1;
-    var objPath = "./resource/uvsmoothnt.obj";
+    var objPath = "./resource/suzanne.obj";
     m.push(new Mesh(new Vec3(-1.5, 0, 3)));
     m[0].material.shininess = 0.4;
     m[0].material.parallaxScale = 1;
