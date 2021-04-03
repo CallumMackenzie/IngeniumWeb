@@ -100,6 +100,21 @@ export class Vec3 {
         this.z = z;
         this.w = w;
     }
+    add (v : Vec3) : Vec3 {
+        return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
+    }
+    sub (v : Vec3) : Vec3 {
+        return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
+    }
+    mul (v : Vec3) : Vec3 {
+        return new Vec3(this.x * v.x, this.y * v.y, this.z * v.z);
+    }
+    div (v : Vec3) : Vec3 {
+        return new Vec3(this.x / v.x, this.y / v.y, this.z / v.z);
+    }
+    mulFloat (n : number) : Vec3 {
+        return new Vec3(this.x * n, this.y * n, this.z * n);
+    }
 }
 
 export class Mat4 {
@@ -222,11 +237,11 @@ export class Mat4 {
 export class Vert {
     static tSize: number = 17;
 
-    p: Vec3;
-    t: Vec2;
-    rgb: Vec3;
-    n: Vec3;
-    tan : Vec3;
+    p: Vec3; // 4
+    t: Vec2; // 3
+    rgb: Vec3; // 4
+    n: Vec3; // 3
+    tan: Vec3; // 3
 
     constructor(point: Vec3 = new Vec3(), UV: Vec2 = new Vec2(), rgb: Vec3 = new Vec3(), normal: Vec3 = new Vec3()) {
         this.p = point;
@@ -248,8 +263,11 @@ export class Material {
     diffuseTexture: WebGLTexture;
     specularTexture: WebGLTexture;
     normalTexture: WebGLTexture;
-    hasNormalTexture : boolean = false;
+    parallaxTexture: WebGLTexture = gl.NONE;
+    hasNormalTexture: boolean = false;
+    hasParallaxTexture: boolean = false;
     shininess: number = 0.5;
+    parallaxScale: number = 0;
     constructor(diffuseTexture: WebGLTexture = gl.NONE, specularTexture: WebGLTexture = gl.NONE, normalTexture: WebGLTexture = gl.NONE, shininess: number = 0.5) {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
@@ -332,6 +350,9 @@ export class Camera {
     }
 }
 
+var loadedImages: { [id: string]: HTMLImageElement } = {};
+var loadedGeometry: { [id: string]: Geometry } = {};
+
 export class Mesh {
     rotation: Vec3;
     rotationCenter: Vec3;
@@ -357,12 +378,22 @@ export class Mesh {
         this.mTVBO = gl.NONE;
         this.data = [];
     }
-    make(objPath: string, diffTexPath: string = "NONE", specTexPath: string = "NONE", normalPath: string = "NONE") {
-        this.makeFromGeometry(new Geometry(loadFile(objPath), "USER_GEOMETRY"), diffTexPath, specTexPath, normalPath);
+    make(objPath: string, diffTexPath: string = "NONE", specTexPath: string = "NONE",
+        normalPath: string = "NONE", parallaxPath = "NONE") {
+        var obGeometry: Geometry;
+        if (Object.keys(loadedGeometry).includes(objPath))
+            obGeometry = loadedGeometry[objPath];
+        else {
+            obGeometry = new Geometry(loadFile(objPath), "USER_GEOMETRY");
+            loadedGeometry[objPath] = obGeometry;
+        }
+        this.makeFromGeometry(obGeometry, diffTexPath, specTexPath, normalPath, parallaxPath);
     }
-    makeFromGeometry(geom: Geometry, diffTexPath: string = "NONE", specTexPath: string = "NONE", normalPath: string = "NONE") {
+    makeFromGeometry(geom: Geometry, diffTexPath: string = "NONE",
+        specTexPath: string = "NONE", normalPath: string = "NONE",
+        parallaxPath: string = "NONE") {
         this.loadFromObjData(geom.data);
-        this.setTexture(diffTexPath, specTexPath, normalPath);
+        this.setTexture(diffTexPath, specTexPath, normalPath, parallaxPath);
         this.load();
     }
     loadFromObjData(raw: string): void {
@@ -430,7 +461,7 @@ export class Mesh {
         }
     }
     addTriangle(triangle: Tri): void {
-        var tangent : Vec3[] = Mesh.calcTangents(triangle); // Calculate tangent and bittangent
+        var tangent: Vec3[] = Mesh.calcTangents(triangle); // Calculate tangent and bittangent
         for (var i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
             this.data.push(triangle.v[i].p.y);
@@ -465,29 +496,49 @@ export class Mesh {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 255]));
 
         if (path != "NONE") {
-            var image: HTMLImageElement = new Image();
-            image.src = path;
-            image.addEventListener('load', function () {
+            var image: HTMLImageElement;
+            if (Object.keys(loadedImages).includes(path) && loadedImages[path].complete) {
+                image = loadedImages[path];
                 gl.activeTexture(texSlot);
                 gl.bindTexture(gl.TEXTURE_2D, tex);
-    
+
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    
+
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-    
+
                 gl.generateMipmap(gl.TEXTURE_2D);
-            });
+            } else {
+                image = new Image();
+                image.src = path;
+                loadedImages[path] = image;
+                image.addEventListener('load', function () {
+                    gl.activeTexture(texSlot);
+                    gl.bindTexture(gl.TEXTURE_2D, tex);
+
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+
+                    gl.generateMipmap(gl.TEXTURE_2D);
+                })
+            };
         }
         return tex;
     }
-    setTexture(diffusePath: string, specularPath: string = "NONE", normalPath: string = "NONE"): void {
+    setTexture(diffusePath: string, specularPath: string = "NONE", normalPath: string = "NONE",
+        parallaxPath: string = "NONE"): void {
         this.material.diffuseTexture = this.createTextureFromPath(diffusePath, gl.TEXTURE0);
         this.material.specularTexture = this.createTextureFromPath(specularPath, gl.TEXTURE1);
         this.material.normalTexture = this.createTextureFromPath(normalPath, gl.TEXTURE2);
+        this.material.parallaxTexture = this.createTextureFromPath(specularPath, gl.TEXTURE3);
         this.material.hasNormalTexture = normalPath != "NONE";
+        this.material.hasParallaxTexture = parallaxPath != "NONE";
     }
     modelMatrix(): Mat4 {
         var matRot: Mat4 = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
@@ -506,8 +557,10 @@ export class Mesh {
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
 
+            var size: number = Vert.tSize;
+
             var floatSize: number = 4;
-            var stride: number = Vert.tSize * floatSize; // Num of array elements resulting from a Vert
+            var stride: number = size * floatSize; // Num of array elements resulting from a Vert
 
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0); // Vertex data
             gl.enableVertexAttribArray(0);
@@ -529,21 +582,21 @@ export class Mesh {
         }
     }
 
-    static calcTangents (triangle : Tri) : Vec3[] {
-        var edge1 : Vec3 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
-        var edge2 : Vec3 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
-        var dUV1 : Vec2 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
-        var dUV2 : Vec2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
+    static calcTangents(triangle: Tri): Vec3[] {
+        var edge1: Vec3 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
+        var edge2: Vec3 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
+        var dUV1: Vec2 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
+        var dUV2: Vec2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
 
-        var f : number = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y); 
+        var f: number = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
 
-        var tan : Vec3 = new Vec3();
+        var tan: Vec3 = new Vec3();
 
         tan.x = f * (dUV2.y * edge1.x - dUV1.y * edge2.x);
         tan.y = f * (dUV2.y * edge1.y - dUV1.y * edge2.y);
         tan.z = f * (dUV2.y * edge1.z - dUV1.y * edge2.z);
 
-        var bitTan : Vec3 = new Vec3();
+        var bitTan: Vec3 = new Vec3();
         bitTan.x = f * (-dUV2.x * edge1.x + dUV1.x * edge2.x);
         bitTan.y = f * (-dUV2.x * edge1.y + dUV1.x * edge2.y);
         bitTan.z = f * (-dUV2.x * edge1.z + dUV1.x * edge2.z);
@@ -556,6 +609,7 @@ export class Mesh {
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
         shader.setUInt("material.normal", 2);
+        shader.setUInt("material.parallax", 3);
         shader.setUFloat("u_time", Date.now());
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
@@ -563,8 +617,9 @@ export class Mesh {
 
         shader.setUVec3("dirLight.direction", dirLight.direction);
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
-        shader.setUVec3("dirLight.specular", dirLight.specular);
-        shader.setUVec3("dirLight.diffuse", dirLight.diffuse);
+        shader.setUVec3("dirLight.specular", dirLight.specular.mulFloat(dirLight.intensity));
+        shader.setUVec3("dirLight.diffuse", dirLight.diffuse.mulFloat(dirLight.intensity));
+
 
         for (var j: number = 0; j < pointLights.length; j++) {
             shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
@@ -582,8 +637,10 @@ export class Mesh {
             var model: Mat4 = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
             shader.setUBool("hasNormalTexture", meshes[i].material.hasNormalTexture);
+            shader.setUBool("hasParallaxTexture", meshes[i].material.hasParallaxTexture);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
+            shader.setUFloat("heightScale", meshes[i].material.parallaxScale);
             gl.activeTexture(gl.TEXTURE0);
             if (meshes[i].material.diffuseTexture != gl.NONE) {
                 gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);

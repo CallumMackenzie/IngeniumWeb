@@ -31,6 +31,11 @@ export declare class Vec3 {
     static cross(v1: Vec3, v2: Vec3): Vec3;
     static mulMat(i: Vec3, m: Mat4): Vec3;
     constructor(x?: number, y?: number, z?: number, w?: number);
+    add(v: Vec3): Vec3;
+    sub(v: Vec3): Vec3;
+    mul(v: Vec3): Vec3;
+    div(v: Vec3): Vec3;
+    mulFloat(n: number): Vec3;
 }
 export declare class Mat4 {
     m: number[][];
@@ -64,8 +69,11 @@ export declare class Material {
     diffuseTexture: WebGLTexture;
     specularTexture: WebGLTexture;
     normalTexture: WebGLTexture;
+    parallaxTexture: WebGLTexture;
     hasNormalTexture: boolean;
+    hasParallaxTexture: boolean;
     shininess: number;
+    parallaxScale: number;
     constructor(diffuseTexture?: WebGLTexture, specularTexture?: WebGLTexture, normalTexture?: WebGLTexture, shininess?: number);
 }
 export declare class Camera {
@@ -93,12 +101,12 @@ export declare class Mesh {
     data: number[];
     tint: Vec3;
     constructor(position?: Vec3, rotation?: Vec3, rotationCenter?: Vec3, scale?: Vec3, material?: Material);
-    make(objPath: string, diffTexPath?: string, specTexPath?: string, normalPath?: string): void;
-    makeFromGeometry(geom: Geometry, diffTexPath?: string, specTexPath?: string, normalPath?: string): void;
+    make(objPath: string, diffTexPath?: string, specTexPath?: string, normalPath?: string, parallaxPath?: string): void;
+    makeFromGeometry(geom: Geometry, diffTexPath?: string, specTexPath?: string, normalPath?: string, parallaxPath?: string): void;
     loadFromObjData(raw: string): void;
     addTriangle(triangle: Tri): void;
     createTextureFromPath(path: string, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
-    setTexture(diffusePath: string, specularPath?: string, normalPath?: string): void;
+    setTexture(diffusePath: string, specularPath?: string, normalPath?: string, parallaxPath?: string): void;
     modelMatrix(): Mat4;
     load(drawType?: number): void;
     static calcTangents(triangle: Tri): Vec3[];
