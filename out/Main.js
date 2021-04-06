@@ -3,9 +3,9 @@ import { ShaderSource } from "./shaders.js";
 import { Time, IngeniumWeb, Shader, Input, Scene } from "./WebGL.js";
 import { Vec3, Mesh, Camera, DirectionalLight, PointLight } from "./3D.js";
 var shader;
-var camera = new Camera(70);
+var camera = new Camera(70, 0.1, 1000);
 var d = new DirectionalLight();
-var p = [new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, -3))];
+var p = [new PointLight(new Vec3(0.01, 0.01, 0.01), new Vec3(1, 0, 0), new Vec3(1, 0, 0.1), new Vec3(0, 0, -3))];
 var m = [];
 function onGlobalCreate() {
     Time.setFPS(25);
@@ -14,7 +14,7 @@ function onGlobalCreate() {
     shader = new Shader(ShaderSource.shaderWithParams("vert3d"), ShaderSource.shaderWithParams("phong", { nLights: 1 }));
     d.intensity = 0;
     p[0].intensity = 1;
-    var objPath = "./resource/suzanne.obj";
+    var objPath = "./resource/icont.obj";
     m.push(new Mesh(new Vec3(-1.5, 0, 3)));
     m[0].material.shininess = 0.4;
     m[0].material.parallaxScale = 1;
@@ -64,6 +64,8 @@ function onUpdate() {
     p[0].position = p[0].position.add(mv.mulFloat(Time.deltaTime * 0.5));
     p[0].intensity += int * Time.deltaTime * 0.5;
     for (var i = 0; i < m.length; i++) {
+        var scale = 0.5;
+        m[i].scale = new Vec3(scale, scale, scale);
         m[i].rotation = Vec3.add(m[i].rotation, Vec3.mulFloat(new Vec3(0.01, 0.015, 0.01), Time.deltaTime * 0.07));
     }
     Mesh.renderAll(shader, camera, m, d, p);

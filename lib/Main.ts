@@ -8,10 +8,10 @@ import { degToRad, loadFile } from "./Utils.js";
 
 
 var shader: Shader;
-var camera: Camera = new Camera(70);
+var camera: Camera = new Camera(70, 0.1, 1000);
 var d: DirectionalLight = new DirectionalLight();
 var p : PointLight[] = [ new PointLight(new Vec3(0.01, 0.01, 0.01), 
-    new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, -3)) ];
+    new Vec3(1, 0, 0), new Vec3(1, 0, 0.1), new Vec3(0, 0, -3)) ];
 var m: Mesh[] = [];
 
 function onGlobalCreate () {
@@ -23,7 +23,7 @@ function onGlobalCreate () {
     d.intensity = 0;
     p[0].intensity = 1;
 
-    var objPath : string = "./resource/uvsmoothnt.obj";
+    var objPath : string = "./resource/icont.obj";
 
     m.push(new Mesh(new Vec3(-1.5, 0, 3)));
     m[0].material.shininess = 0.4;
@@ -74,6 +74,8 @@ function onUpdate() {
     p[0].position = p[0].position.add(mv.mulFloat(Time.deltaTime * 0.5));
     p[0].intensity += int * Time.deltaTime * 0.5;
     for (var i : number = 0; i < m.length; i++) {
+        var scale = 0.5;
+        m[i].scale = new Vec3(scale, scale, scale);
         m[i].rotation = Vec3.add(m[i].rotation, Vec3.mulFloat(new Vec3(0.01, 0.015, 0.01), Time.deltaTime * 0.07));
     }
     Mesh.renderAll(shader, camera, m, d, p);

@@ -100,6 +100,7 @@ export declare class Mesh {
     mTVBO: WebGLBuffer;
     data: number[];
     tint: Vec3;
+    triangles: number;
     constructor(position?: Vec3, rotation?: Vec3, rotationCenter?: Vec3, scale?: Vec3, material?: Material);
     make(objPath: string, diffTexPath?: string, specTexPath?: string, normalPath?: string, parallaxPath?: string): void;
     makeFromGeometry(geom: Geometry, diffTexPath?: string, specTexPath?: string, normalPath?: string, parallaxPath?: string): void;

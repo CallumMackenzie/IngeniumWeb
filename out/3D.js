@@ -332,6 +332,7 @@ var loadedGeometry = {};
 export class Mesh {
     constructor(position = new Vec3(), rotation = new Vec3(), rotationCenter = new Vec3(), scale = new Vec3(1, 1, 1), material = new Material()) {
         this.tint = new Vec3();
+        this.triangles = 0;
         this.rotation = rotation;
         this.rotationCenter = rotationCenter;
         this.position = position;
@@ -437,6 +438,7 @@ export class Mesh {
             this.data.push(tangent[0].y);
             this.data.push(tangent[0].z);
         }
+        this.triangles++;
     }
     createTextureFromPath(path, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
         var tex = gl.NONE;

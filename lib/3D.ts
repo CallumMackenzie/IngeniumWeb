@@ -365,6 +365,7 @@ export class Mesh {
     mTVBO: WebGLBuffer;
     data: number[];
     tint: Vec3 = new Vec3();
+    triangles : number = 0;
 
     constructor(position: Vec3 = new Vec3(), rotation: Vec3 = new Vec3(), rotationCenter: Vec3 = new Vec3(), scale: Vec3 = new Vec3(1, 1, 1), material: Material = new Material()) {
         this.rotation = rotation;
@@ -485,6 +486,7 @@ export class Mesh {
             this.data.push(tangent[0].y);
             this.data.push(tangent[0].z);
         }
+        this.triangles++;
     }
     createTextureFromPath(path: string, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {

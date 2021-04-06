@@ -83,7 +83,6 @@ export class WebGLWindow {
     ;
     sizeToWindow(aspect) {
         aspect = 1 / aspect;
-        var main = this.parent;
         var win_width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
         var win_height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
         if (win_width / win_height != aspect) {
