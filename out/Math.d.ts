@@ -34,6 +34,7 @@ export declare class Vec3 {
     mul(v: Vec3): Vec3;
     div(v: Vec3): Vec3;
     mulFloat(n: number): Vec3;
+    divFloat(n: number): Vec3;
 }
 export declare class Mat4 {
     m: number[][];

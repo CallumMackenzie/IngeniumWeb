@@ -2,6 +2,9 @@
 var PI = 355 / 113;
 export class Vec2 {
     constructor(x = 0, y = 0, w = 1) {
+        this.x = 0;
+        this.y = 0;
+        this.w = 1;
         this.x = x;
         this.y = y;
         this.w = w;
@@ -34,6 +37,10 @@ export class Vec2 {
 }
 export class Vec3 {
     constructor(x = 0, y = 0, z = 0, w = 1) {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.w = 1;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -98,6 +105,9 @@ export class Vec3 {
     }
     mulFloat(n) {
         return new Vec3(this.x * n, this.y * n, this.z * n);
+    }
+    divFloat(n) {
+        return new Vec3(this.x / n, this.y / n, this.z / n);
     }
 }
 export class Mat4 {

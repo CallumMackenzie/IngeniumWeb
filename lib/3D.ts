@@ -10,11 +10,11 @@ export class Vert {
 
     p: Vec3; // 4
     t: Vec2; // 3
-    rgb: Vec3; // 4
+    rgb: Vec3 = new Vec3(1, 1, 1); // 4
     n: Vec3; // 3
     tan: Vec3; // 3
 
-    constructor(point: Vec3 = new Vec3(), UV: Vec2 = new Vec2(), rgb: Vec3 = new Vec3(), normal: Vec3 = new Vec3()) {
+    constructor(point: Vec3 = new Vec3(), UV: Vec2 = new Vec2(), rgb: Vec3 = new Vec3(1, 1, 1), normal: Vec3 = new Vec3()) {
         this.p = point;
         this.t = UV;
         this.rgb = rgb;
@@ -442,6 +442,7 @@ export class Mesh {
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
             shader.setUFloat("heightScale", meshes[i].material.parallaxScale);
+            shader.setUVec4("meshTint", meshes[i].tint);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
             gl.activeTexture(gl.TEXTURE1);

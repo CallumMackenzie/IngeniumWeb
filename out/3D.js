@@ -4,7 +4,8 @@ import { loadFile } from "./Utils.js";
 import { Geometry, ReferenceGeometry } from "./Geometry.js";
 import { Vec3, Vec2, Mat4, degToRad } from "./Math.js";
 export class Vert {
-    constructor(point = new Vec3(), UV = new Vec2(), rgb = new Vec3(), normal = new Vec3()) {
+    constructor(point = new Vec3(), UV = new Vec2(), rgb = new Vec3(1, 1, 1), normal = new Vec3()) {
+        this.rgb = new Vec3(1, 1, 1); // 4
         this.p = point;
         this.t = UV;
         this.rgb = rgb;
@@ -367,6 +368,7 @@ export class Mesh {
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
             shader.setUFloat("heightScale", meshes[i].material.parallaxScale);
+            shader.setUVec4("meshTint", meshes[i].tint);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
             gl.activeTexture(gl.TEXTURE1);
