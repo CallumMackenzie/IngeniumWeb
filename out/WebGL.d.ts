@@ -1,4 +1,4 @@
-import { Mat4, Vec3 } from "./3D.js";
+import { Mat4, Vec3 } from "./Math.js";
 export declare var gl: WebGL2RenderingContext;
 export declare class Input {
     static keys: {

@@ -1,59 +1,52 @@
-import { Shader } from "./WebGL";
-
-var version: string = "300 es";
-
+"use strict";
+var version = "300 es";
 export class ShaderSourceTypes {
-    static vert: string = "vertex";
-    static frag: string = "fragment";
-};
-
-var defaults: string[] = ["vert3d", "phong"];
-
+}
+ShaderSourceTypes.vert = "vertex";
+ShaderSourceTypes.frag = "fragment";
+;
+var defaults = ["vert3d", "phong"];
 export class ShaderSource {
-    static shaders: any = {};
-    static shaderWithParams(shaderName: string, paramDict: { [id: string]: any; } = {}): string {
-        var keys: string[] = Object.keys(paramDict);
-        var ss: ShaderSource = ShaderSource.shaders[shaderName];
-        var src: string = ss.source;
-        var exp = ss.getExpectedParams();
-        for (var j: number = 0; j < exp.length; j++) {
-            if (keys.includes(exp[j])) {
-                var pName: string = keys[keys.indexOf(exp[j])];
-                src = src.replace("$" + pName.toString() + "$", paramDict[pName.toString()].toString());
-            } else {
-                src = src.replace("$" + exp[j].toString() + "$", ss.params[exp[j]].toString());
-            }
-        }
-        return src;
-    }
-    static getShader(name: string): ShaderSource {
-        return ShaderSource.shaders[name];
-    }
-    static getAllShaderNames(): string[] {
-        return Object.keys(ShaderSource.shaders);
-    }
-    static defVert(): string {
-        return ShaderSource.shaderWithParams(defaults[0]);
-    }
-    static defFrag(numLights: string | number = 0): string {
-        return ShaderSource.shaderWithParams(defaults[1], { "nLights": numLights });
-    }
-
-    source: string;
-    type: string;
-    params: any[];
-    constructor(paramDict: any, type: string, name: string, src: string) {
+    constructor(paramDict, type, name, src) {
         this.params = paramDict;
         this.source = src;
         this.type = type;
         ShaderSource.shaders[name] = this;
     }
-    getExpectedParams(): string[] {
+    static shaderWithParams(shaderName, paramDict = {}) {
+        var keys = Object.keys(paramDict);
+        var ss = ShaderSource.shaders[shaderName];
+        var src = ss.source;
+        var exp = ss.getExpectedParams();
+        for (var j = 0; j < exp.length; j++) {
+            if (keys.includes(exp[j])) {
+                var pName = keys[keys.indexOf(exp[j])];
+                src = src.replace("$" + pName.toString() + "$", paramDict[pName.toString()].toString());
+            }
+            else {
+                src = src.replace("$" + exp[j].toString() + "$", ss.params[exp[j]].toString());
+            }
+        }
+        return src;
+    }
+    static getShader(name) {
+        return ShaderSource.shaders[name];
+    }
+    static getAllShaderNames() {
+        return Object.keys(ShaderSource.shaders);
+    }
+    static defVert() {
+        return ShaderSource.shaderWithParams(defaults[0]);
+    }
+    static defFrag(numLights = 0) {
+        return ShaderSource.shaderWithParams(defaults[1], { "nLights": numLights });
+    }
+    getExpectedParams() {
         return Object.keys(this.params);
     }
 }
-
-var vShaderHead: string = `#version ${version}
+ShaderSource.shaders = {};
+var vShaderHead = `#version ${version}
 precision $fPrecision$ float;
 
 layout (location = 0) in vec4 vertexPosition;
@@ -71,12 +64,12 @@ out vec4 tint;
 out vec3 normal;
 out vec3 fragPos;
 `;
-var nShaderHead: string = vShaderHead + `
+var nShaderHead = vShaderHead + `
 layout (location = 4) in vec3 vertexTangent;
 uniform bool hasNormalTexture;
 out vec3 Tangent0;
 `;
-var pShaderHead: string = vShaderHead + `
+var pShaderHead = vShaderHead + `
 layout (location = 4) in vec3 vertexTangent;
 
 uniform bool hasNormalTexture;
@@ -86,7 +79,6 @@ uniform vec3 viewPos;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
 `;
-
 new ShaderSource({ fPrecision: "highp" }, ShaderSourceTypes.vert, "vert3d", nShaderHead + `
 void main () {
     vec4 transformed = projection * view * model * vertexPosition;
@@ -140,8 +132,7 @@ void main () {
     viewPosF = viewPos;
 }
 `);
-
-var partialFragShaderPF: string = `#version ${version}
+var partialFragShaderPF = `#version ${version}
 precision $fPrecision$ float;
 
 #define NR_POINT_LIGHTS $nLights$
@@ -203,7 +194,7 @@ void main ()
     color = vec4(result, 1.0);
 }
 `;
-var partialFragShader: string = `#version ${version}
+var partialFragShader = `#version ${version}
 precision $fPrecision$ float;
 
 #define NR_POINT_LIGHTS $nLights$
@@ -289,7 +280,7 @@ vec3 CalcBumpedNormal(vec2 cUV)
     return NewNormal;
 }
 `;
-var partialFragShaderParallax: string = `#version ${version}
+var partialFragShaderParallax = `#version ${version}
 
 precision $fPrecision$ float;
 
@@ -427,7 +418,7 @@ vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     return (ambient + diffuse + specular);
 }
 `;
-var phongMethod: string = `
+var phongMethod = `
 vec3 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
 {
     vec3 lightDir = normalize(-light.direction);
@@ -457,7 +448,7 @@ vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     return (ambient + diffuse + specular);
 }
 `;
-var blinnPhongMethod: string = `
+var blinnPhongMethod = `
 vec3 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
 {
     vec3 lightDir = normalize(-light.direction);
@@ -487,24 +478,13 @@ vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     specular *= attenuation;
     return (ambient + diffuse + specular);
 }`;
-
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "blinnphongpf", partialFragShaderPF.concat(blinnPhongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "phongpf", partialFragShaderPF.concat(phongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "blinnphong", partialFragShader.concat(blinnPhongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "phong", partialFragShader.concat(phongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "phong+", partialFragShaderParallax.concat(phongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "blinnphong+", partialFragShaderParallax.concat(blinnPhongMethod));
-new ShaderSource({ nLights: 0, fPrecision: "mediump" },
-    ShaderSourceTypes.frag, "exp+", partialFragShaderParallax);
-
-
-
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "blinnphongpf", partialFragShaderPF.concat(blinnPhongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "phongpf", partialFragShaderPF.concat(phongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "blinnphong", partialFragShader.concat(blinnPhongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "phong", partialFragShader.concat(phongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "phong+", partialFragShaderParallax.concat(phongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "blinnphong+", partialFragShaderParallax.concat(blinnPhongMethod));
+new ShaderSource({ nLights: 0, fPrecision: "mediump" }, ShaderSourceTypes.frag, "exp+", partialFragShaderParallax);
 new ShaderSource({}, ShaderSourceTypes.vert, "vEXP+", `#version ${version}
 
 precision highp float;
@@ -641,3 +621,4 @@ void main()
     FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
 `);
+//# sourceMappingURL=Shaders.js.map

@@ -1,6 +1,7 @@
 "use strict";
 
-import { Mat4, Vec3, Vec2 } from "./3D.js";
+import { Mat4, Vec3, Vec2 } from "./Math.js";
+
 export var gl: WebGL2RenderingContext;
 
 export class Input {

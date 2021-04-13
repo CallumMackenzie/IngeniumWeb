@@ -2,8 +2,6 @@
 
 import { IngeniumWeb } from "./WebGL.js";
 
-var PI: number = 355 / 113;
-
 export function loadFile(filePath: string): string | null {
     var result = null;
     var xmlhttp = new XMLHttpRequest();
@@ -29,10 +27,4 @@ export function argCheck(fargs: any, loc: string, types: any): boolean {
         if (ret) return ret;
     }
     return ret;
-}
-export function radToDeg(rad: number): number {
-    return rad * 180 / PI;
-}
-export function degToRad(deg: number): number {
-    return deg * PI / 180;
 }

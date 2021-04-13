@@ -1,6 +1,5 @@
 "use strict";
 import { IngeniumWeb } from "./WebGL.js";
-var PI = 355 / 113;
 export function loadFile(filePath) {
     var result = null;
     var xmlhttp = new XMLHttpRequest();
@@ -27,11 +26,5 @@ export function argCheck(fargs, loc, types) {
             return ret;
     }
     return ret;
-}
-export function radToDeg(rad) {
-    return rad * 180 / PI;
-}
-export function degToRad(deg) {
-    return deg * PI / 180;
 }
 //# sourceMappingURL=Utils.js.map
