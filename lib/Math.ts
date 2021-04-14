@@ -1,6 +1,6 @@
 "use strict";
 
-var PI: number = 355 / 113;
+export var PI: number = 355 / 113;
 
 export class Vec2 {
     x: number = 0;

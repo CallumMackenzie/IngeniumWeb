@@ -1,3 +1,4 @@
+export declare var PI: number;
 export declare class Vec2 {
     x: number;
     y: number;

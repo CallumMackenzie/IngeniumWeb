@@ -1,5 +1,5 @@
 "use strict";
-var PI = 355 / 113;
+export var PI = 355 / 113;
 export class Vec2 {
     constructor(x = 0, y = 0, w = 1) {
         this.x = 0;
