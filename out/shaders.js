@@ -1,3 +1,4 @@
+"use strict";
 var version = "300 es";
 export class ShaderSourceTypes {
 }
@@ -620,4 +621,4 @@ void main()
     FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
 `);
-//# sourceMappingURL=shaders.js.map
+//# sourceMappingURL=Shaders.js.map

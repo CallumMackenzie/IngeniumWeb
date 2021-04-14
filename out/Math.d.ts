@@ -2,6 +2,7 @@ export declare class Vec2 {
     x: number;
     y: number;
     w: number;
+    static filledWith(num: number): Vec2;
     static sub(v1: Vec2, v2: Vec2): Vec2;
     static add(v1: Vec2, v2: Vec2): Vec2;
     static mul(v1: Vec2, v2: Vec2): Vec2;
@@ -17,6 +18,7 @@ export declare class Vec3 {
     y: number;
     z: number;
     w: number;
+    static filledWith(num: number): Vec3;
     static sub(v1: Vec3, v2: Vec3): Vec3;
     static add(v1: Vec3, v2: Vec3): Vec3;
     static mul(v1: Vec3, v2: Vec3): Vec3;

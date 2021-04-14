@@ -146,7 +146,7 @@ export class Mesh {
     mVAO: WebGLVertexArrayObject;
     mTVBO: WebGLBuffer;
     data: number[];
-    tint: Vec3 = new Vec3();
+    tint: Vec3 = new Vec3(1, 1, 1);
     triangles: number = 0;
 
     useGeometryReferenceCache: boolean = false;

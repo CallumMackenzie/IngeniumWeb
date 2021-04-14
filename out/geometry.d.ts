@@ -4,3 +4,8 @@ export declare class Geometry {
     data: string;
     constructor(data: string, name?: string);
 }
+export declare class ReferenceGeometry {
+    VBO: WebGLBuffer;
+    VAO: WebGLVertexArrayObject;
+    triangles: number;
+}

@@ -7,6 +7,11 @@ export class Vec2 {
     y: number = 0;
     w: number = 1;
 
+
+    static filledWith(num: number): Vec2 {
+        return new Vec2(num, num);
+    }
+
     static sub(v1: Vec2, v2: Vec2): Vec2 {
         return new Vec2(v1.x - v2.x, v1.y - v2.y);
     }
@@ -45,6 +50,10 @@ export class Vec3 {
     y: number = 0;
     z: number = 0;
     w: number = 1;
+
+    static filledWith(num: number): Vec3 {
+        return new Vec3(num, num, num);
+    }
 
     static sub(v1: Vec3, v2: Vec3): Vec3 {
         return new Vec3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
@@ -98,22 +107,22 @@ export class Vec3 {
         this.z = z;
         this.w = w;
     }
-    add (v : Vec3) : Vec3 {
+    add(v: Vec3): Vec3 {
         return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
     }
-    sub (v : Vec3) : Vec3 {
+    sub(v: Vec3): Vec3 {
         return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
     }
-    mul (v : Vec3) : Vec3 {
+    mul(v: Vec3): Vec3 {
         return new Vec3(this.x * v.x, this.y * v.y, this.z * v.z);
     }
-    div (v : Vec3) : Vec3 {
+    div(v: Vec3): Vec3 {
         return new Vec3(this.x / v.x, this.y / v.y, this.z / v.z);
     }
-    mulFloat (n : number) : Vec3 {
+    mulFloat(n: number): Vec3 {
         return new Vec3(this.x * n, this.y * n, this.z * n);
     }
-    divFloat(n : number) : Vec3  {
+    divFloat(n: number): Vec3 {
         return new Vec3(this.x / n, this.y / n, this.z / n);
     }
 }

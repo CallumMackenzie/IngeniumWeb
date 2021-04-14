@@ -9,6 +9,9 @@ export class Vec2 {
         this.y = y;
         this.w = w;
     }
+    static filledWith(num) {
+        return new Vec2(num, num);
+    }
     static sub(v1, v2) {
         return new Vec2(v1.x - v2.x, v1.y - v2.y);
     }
@@ -45,6 +48,9 @@ export class Vec3 {
         this.y = y;
         this.z = z;
         this.w = w;
+    }
+    static filledWith(num) {
+        return new Vec3(num, num, num);
     }
     static sub(v1, v2) {
         return new Vec3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);

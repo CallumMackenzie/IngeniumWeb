@@ -115,7 +115,7 @@ var loadedReferenceTextures = {};
 var loadedReferenceGeometry = {};
 export class Mesh {
     constructor(position = new Vec3(), rotation = new Vec3(), rotationCenter = new Vec3(), scale = new Vec3(1, 1, 1), material = new Material()) {
-        this.tint = new Vec3();
+        this.tint = new Vec3(1, 1, 1);
         this.triangles = 0;
         this.useGeometryReferenceCache = false;
         this.useTextureReferenceCache = true;
