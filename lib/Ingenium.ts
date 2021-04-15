@@ -243,91 +243,338 @@ export class IngeniumWeb {
     }
 };
 
+/**
+ * An approximation of PI (355 / 113);
+ */
 export var PI: number = 355 / 113;
 
+/**
+ * A 2 component vector with a third w component.
+ */
 export class Vec2 {
+    /**
+    * The x component of the vector.
+    */
     x: number = 0;
+    /**
+     * The y component of the vector.
+     */
     y: number = 0;
+    /**
+     * The w component of the vector.
+     */
     w: number = 1;
 
-
+    /**
+     * 
+     * @param num the number to fill the vector with.
+     * @returns a vector filled with num.
+     */
     static filledWith(num: number): Vec2 {
         return new Vec2(num, num);
     }
-
+    /**
+     * Subtracts 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the difference of the passed vectors.
+     */
     static sub(v1: Vec2, v2: Vec2): Vec2 {
         return new Vec2(v1.x - v2.x, v1.y - v2.y);
     }
+    /**
+     * Adds 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the sum of the passed vectors.
+     */
     static add(v1: Vec2, v2: Vec2): Vec2 {
         return new Vec2(v1.x + v2.x, v1.y + v2.y);
     }
+    /**
+     * Multiplies 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the product of the passed vectors.
+     */
     static mul(v1: Vec2, v2: Vec2): Vec2 {
         return new Vec2(v1.x * v2.x, v1.y * v2.y);
     }
+    /**
+     * Divides 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the quotient of the passed vectors.
+     */
     static div(v1: Vec2, v2: Vec2): Vec2 {
         return new Vec2(v1.x / v2.x, v1.y / v2.y);
     }
+    /**
+     * Multiplies all components of the vector by the passed number.
+     * 
+     * @param v1 the vector.
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
     static mulFloat(v1: Vec2, float: number): Vec2 {
         return new Vec2(v1.x * float, v1.y * float);
     }
+    /**
+     * Divides all components of the vector by the passed number.
+     * 
+     * @param v1 the vector.
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
     static divFloat(v1: Vec2, float: number): Vec2 {
         return new Vec2(v1.x / float, v1.y / float);
     }
+    /**
+     * 
+     * @param v a vector.
+     * @returns the length of the vector.
+     */
     static len(v: Vec2): number {
         return Math.sqrt(v.x * v.x + v.y * v.y);
     }
+    /**
+     * 
+     * @param v a vector.
+     * @returns the normalized vector.
+     */
     static normalize(v: Vec2): Vec2 {
         var l = Vec2.len(v);
         return new Vec2(v.x / l, v.y / l);
     }
 
+    /**
+     * Creates a new two component vector with a w component.
+     * 
+     * @param x the x component of the vector.
+     * @param y the y component of the vector.
+     * @param w the w component of the vector.
+     */
     constructor(x: number = 0, y: number = 0, w: number = 1) {
         this.x = x;
         this.y = y;
         this.w = w;
     }
+
+    /**
+     * 
+     * @param v2 the vector to subtract.
+     * @returns the difference.
+     */
+    sub(v2: Vec2): Vec2 {
+        return Vec2.sub(this, v2);
+    }
+    /**
+     * 
+     * @param v2 the vector to add.
+     * @returns the sum.
+     */
+    add(v2: Vec2): Vec2 {
+        return Vec2.add(this, v2);
+    }
+    /**
+     * 
+     * @param v2 the vector to multiply by.
+     * @returns the product.
+     */
+    mul(v2: Vec2): Vec2 {
+        return Vec2.mul(this, v2);
+    }
+    /**
+     * 
+     * @param v2 the vector to divide by.
+     * @returns the quotient.
+     */
+    div(v2: Vec2): Vec2 {
+        return Vec2.div(this, v2);
+    }
+    /**
+     * Multiplies all components of the vector by the passed number.
+     * 
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
+    mulFloat(float: number): Vec2 {
+        return Vec2.mulFloat(this, float);
+    }
+    /**
+     * Divides all components of the vector by the passed number.
+     * 
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
+    divFloat(float: number): Vec2 {
+        return Vec2.divFloat(this, float);
+    }
+    /**
+     * 
+     * @returns the length of the vector.
+     */
+    len(): number {
+        return Vec2.len(this);
+    }
+    /**
+     * 
+     * @returns the normalized vector.
+     */
+    normalized(): Vec2 {
+        return Vec2.normalize(this);
+    }
 }
 
+/**
+ * A 3 component vector with a fourth w component.
+ */
 export class Vec3 {
+    /**
+     * The x component of the vector.
+     */
     x: number = 0;
+    /**
+     * The y component of the vector.
+     */
     y: number = 0;
+    /**
+     * The z component of the vector.
+     */
     z: number = 0;
+    /**
+     * The w component of the vector.
+     */
     w: number = 1;
 
+    /**
+     * Creates a new vector with the number as the x, y, and z values.
+     * 
+     * @param num the number to fill the vector with.
+     * @returns a filed vector.
+     */
     static filledWith(num: number): Vec3 {
         return new Vec3(num, num, num);
     }
 
+    /**
+     * Subtracts 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the difference of the passed vectors.
+     */
     static sub(v1: Vec3, v2: Vec3): Vec3 {
         return new Vec3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     }
+    /**
+     * Adds 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the sum of the passed vectors.
+     */
     static add(v1: Vec3, v2: Vec3): Vec3 {
         return new Vec3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     }
+    /**
+     * Multiplies 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the product of the passed vectors.
+     */
     static mul(v1: Vec3, v2: Vec3): Vec3 {
         return new Vec3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
     }
+    /**
+     * Divides 2 vectors.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the quotient of the passed vectors.
+     */
     static div(v1: Vec3, v2: Vec3): Vec3 {
         return new Vec3(v1.x / v2.x, v1.y / v2.y, v1.z / v2.z);
     }
+    /**
+     * Multiplies all components of the vector by the passed number.
+     * 
+     * @param v1 the vector.
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
     static mulFloat(v1: Vec3, float: number): Vec3 {
         return new Vec3(v1.x * float, v1.y * float, v1.z * float);
     }
+    /**
+     * Divides all components of the vector by the passed number.
+     * 
+     * @param v1 the vector.
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
     static divFloat(v1: Vec3, float: number): Vec3 {
         return new Vec3(v1.x / float, v1.y / float, v1.z / float);
     }
+    /**
+     * Adds the passed number to all components of the vector.
+     * 
+     * @param v1 the vector.
+     * @param float the number to add.
+     * @returns the sum.
+     */
+    static addFloat(v1: Vec3, float: number): Vec3 {
+        return new Vec3(v1.x + float, v1.y + float, v1.z + float);
+    }
+    /**
+     * Subtracts the passed number from all components of the vector.
+     * 
+     * @param v1 the vector.
+     * @param float the number to subtract.
+     * @returns the difference.
+     */
+    static subFloat(v1: Vec3, float: number): Vec3 {
+        return new Vec3(v1.x - float, v1.y - float, v1.z - float);
+    }
+    /**
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the dot product of the passed vectors.
+     */
     static dot(v1: Vec3, v2: Vec3): number {
         return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
     }
+    /**
+     * 
+     * @param v a vector.
+     * @returns the length of the vector.
+     */
     static len(v: Vec3): number {
         return Math.sqrt(Vec3.dot(v, v));
     }
+    /**
+     * 
+     * @param v a vector.
+     * @returns the normalized vector.
+     */
     static normalize(v: Vec3): Vec3 {
         var l = Vec3.len(v);
         if (l != 0)
             return new Vec3(v.x / l, v.y / l, v.z / l);
         return new Vec3();
     }
+    /**
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the cross product of the passed vectors.
+     */
     static cross(v1: Vec3, v2: Vec3): Vec3 {
         var v = new Vec3();
         v.x = v1.y * v2.z - v1.z * v2.y;
@@ -335,6 +582,12 @@ export class Vec3 {
         v.z = v1.x * v2.y - v1.y * v2.x;
         return v;
     }
+    /**
+     * 
+     * @param i a vector.
+     * @param m a 4x4 matrix.
+     * @returns the product.
+     */
     static mulMat(i: Vec3, m: Mat4): Vec3 {
         var v = new Vec3();
         v.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + i.w * m.m[3][0];
@@ -344,53 +597,140 @@ export class Vec3 {
         return v;
     }
 
+    /**
+     * 
+     * @param x the x component of the vector.
+     * @param y the y component of the vector.
+     * @param z the z component of the vector.
+     * @param w the w component of the vector.
+     */
     constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 1) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.w = w;
     }
+    /**
+     * 
+     * @param v the vector to add.
+     * @returns a new vector with the sum.
+     */
     add(v: Vec3): Vec3 {
-        return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
+        return Vec3.add(this, v);
     }
+    /**
+     * 
+     * @param v the vector to subtract.
+     * @returns a new vector with the difference.
+     */
     sub(v: Vec3): Vec3 {
-        return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
+        return Vec3.sub(this, v);
     }
+    /**
+    * 
+    * @param v the vector to multiply with.
+    * @returns a new vector with the product.
+    */
     mul(v: Vec3): Vec3 {
-        return new Vec3(this.x * v.x, this.y * v.y, this.z * v.z);
+        return Vec3.mul(this, v);
     }
+    /**
+     * 
+     * @param v the vector to divide by.
+     * @returns a new vector with the quotient.
+     */
     div(v: Vec3): Vec3 {
-        return new Vec3(this.x / v.x, this.y / v.y, this.z / v.z);
+        return Vec3.div(this, v);
     }
+    /**
+     * 
+     * @param n the number to multiply with.
+     * @returns a new vector with the product.
+     */
     mulFloat(n: number): Vec3 {
-        return new Vec3(this.x * n, this.y * n, this.z * n);
+        return Vec3.mulFloat(this, n);
     }
+    /**
+     * 
+     * @param n the number to divide by.
+     * @returns a new vector with the quotient.
+     */
     divFloat(n: number): Vec3 {
-        return new Vec3(this.x / n, this.y / n, this.z / n);
+        return Vec3.divFloat(this, n);
     }
+    /**
+     * 
+     * @param n the number to add.
+     * @returns a new vector with the sum.
+     */
     addFloat(n: number): Vec3 {
-        return new Vec3(this.x + n, this.y + n, this.z + n);
+        return Vec3.addFloat(this, n);
     }
+    /**
+     * 
+     * @param n the number to subtract.
+     * @returns a new vector with the difference.
+     */
+    subFloat(n: number): Vec3 {
+        return Vec3.subFloat(this, n);
+    }
+    /**
+     * 
+     * @returns the length of the vector.
+     */
     len(): number {
         return Vec3.len(this);
     }
+    /**
+     * 
+     * @param mat the 4x4 matrix to multiply by.
+     * @returns the product.
+     */
     mulMat(mat: Mat4): Vec3 {
         return Vec3.mulMat(this, mat);
     }
+    /**
+     * 
+     * @returns the vector normalized.
+     */
     normalized(): Vec3 {
         return Vec3.normalize(this);
     }
+    /**
+     * 
+     * @returns whether the vector has components which are NaN.
+     */
     isNaN(): boolean {
         return isNaN(this.x) || isNaN(this.y) || isNaN(this.z) || isNaN(this.w);
     }
+    /**
+     * 
+     * @param v2 the vector to compare.
+     * @returns whether the vectors have equal x, y, and z components.
+     */
     equals(v2: Vec3): boolean {
         return this.x == v2.x && this.y == v2.y && this.z == v2.z;
     }
 }
 
+/**
+ * A 4x4 matrix.
+ */
 export class Mat4 {
+    /**
+     * The matrix in a 2 dimensional array.
+     */
     m: number[][];
 
+    /**
+     * Creates a perspective projection matrix.
+     * 
+     * @param fovDeg the field of view.
+     * @param aspectRatio the aspect ratio.
+     * @param near the near clip distance.
+     * @param far the far clip distance.
+     * @returns the perspective projection matrix.
+     */
     static perspective(fovDeg: number, aspectRatio: number, near: number, far: number): Mat4 {
         var fovRad = 1.0 / Math.tan(Rotation.degToRad(fovDeg * 0.5));
         var matrix = new Mat4();
@@ -402,6 +742,11 @@ export class Mat4 {
         matrix.m[3][3] = 0.0;
         return matrix;
     };
+    /**
+     * 
+     * @param m a matrix.
+     * @returns the inverse of the matrix.
+     */
     static inverse(m: Mat4): Mat4 {
         var matrix: Mat4 = new Mat4();
         matrix.m[0][0] = m.m[0][0]; matrix.m[0][1] = m.m[1][0]; matrix.m[0][2] = m.m[2][0]; matrix.m[0][3] = 0.0;
@@ -413,6 +758,10 @@ export class Mat4 {
         matrix.m[3][3] = 1.0;
         return matrix;
     }
+    /**
+     * 
+     * @returns an identity matrix.
+     */
     static identity(): Mat4 {
         var matrix = new Mat4();
         matrix.m[0][0] = 1.0;
@@ -421,6 +770,13 @@ export class Mat4 {
         matrix.m[3][3] = 1.0;
         return matrix;
     }
+    /**
+     * 
+     * @param pos the position to start at.
+     * @param target the target to point at.
+     * @param up the direction to use as up.
+     * @returns a matrix that repersents a transformation to point at a position.
+     */
     static pointedAt(pos: Vec3, target: Vec3, up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
         var newForward = Vec3.sub(target, pos);
         newForward = Vec3.normalize(newForward);
@@ -437,6 +793,13 @@ export class Mat4 {
         matrix.m[3][0] = pos.x; matrix.m[3][1] = pos.y; matrix.m[3][2] = pos.z; matrix.m[3][3] = 1.0;
         return matrix;
     }
+    /**
+     * 
+     * @param x the x scale.
+     * @param y the y scale.
+     * @param z the z scale.
+     * @returns a scaling matrix.
+     */
     static scale(x: number = 1, y: number = 1, z: number = 1): Mat4 {
         var matrix = Mat4.identity();
         matrix.m[0][0] = x;
@@ -444,6 +807,13 @@ export class Mat4 {
         matrix.m[2][2] = z;
         return matrix;
     }
+    /**
+     * 
+     * @param x the x translation.
+     * @param y the y translation.
+     * @param z the z translation.
+     * @returns a translation matrix.
+     */
     static translation(x: number = 0, y: number = 0, z: number = 0): Mat4 {
         var matrix = new Mat4();
         matrix.m[0][0] = 1.0;
@@ -455,6 +825,12 @@ export class Mat4 {
         matrix.m[3][2] = z;
         return matrix;
     }
+    /**
+     * 
+     * @param m1 the first matrix.
+     * @param m2 the second matrix.
+     * @returns the product of the matrices.
+     */
     static mul(m1: Mat4, m2: Mat4): Mat4 {
         var matrix: Mat4 = new Mat4();
         for (var c: number = 0; c < 4; c++)
@@ -462,6 +838,11 @@ export class Mat4 {
                 matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
         return matrix;
     }
+    /**
+     * 
+     * @param xRad the x rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationX(xRad: number): Mat4 {
         var matrix: Mat4 = new Mat4();
         matrix.m[0][0] = 1;
@@ -472,6 +853,11 @@ export class Mat4 {
         matrix.m[3][3] = 1;
         return matrix;
     }
+    /**
+     * 
+     * @param yRad the y rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationY(yRad: number): Mat4 {
         var matrix: Mat4 = new Mat4();
         matrix.m[0][0] = Math.cos(yRad);
@@ -482,6 +868,11 @@ export class Mat4 {
         matrix.m[3][3] = 1;
         return matrix;
     }
+    /**
+     * 
+     * @param zRad the z rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationZ(zRad: number): Mat4 {
         var matrix: Mat4 = new Mat4();
         matrix.m[0][0] = Math.cos(zRad);
@@ -492,6 +883,14 @@ export class Mat4 {
         matrix.m[3][3] = 1;
         return matrix;
     }
+    /**
+     * 
+     * @param xRad the x rotation in radians. 
+     * @param yRad the y rotation in radians. 
+     * @param zRad the z rotation in radians. 
+     * @param pt the point to rotate around.
+     * @returns a rotation matrix.
+     */
     static rotationOnPoint(xRad: number, yRad: number, zRad: number, pt: Vec3): Mat4 {
         var mat: Mat4 = Mat4.mul(
             Mat4.mul(Mat4.translation(pt.x, pt.y, pt.z),
@@ -500,24 +899,55 @@ export class Mat4 {
         return mat;
     }
 
+    /**
+     * Creates a new 4x4 matrix.
+     */
     constructor() {
         this.m = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
     }
 }
 
+/**
+ * Contains methods for manipulating rotations.
+ */
 export class Rotation {
+    /**
+     * Converts a radian measure to a degree measure.
+     * 
+     * @param rad the radian value.
+     * @returns the degree value.
+     */
     static radToDeg(rad: number): number {
         return rad * 180 / PI;
     }
 
+    /**
+    * Converts a degree measure to a radian measure.
+    * 
+    * @param deg the degree value.
+    * @returns the radian value.
+    */
     static degToRad(deg: number): number {
         return deg * PI / 180;
     }
 }
 
+/**
+ * Manage shaders and their uniforms.
+ */
 export class Shader {
+    /**
+     * The shader program.
+     */
     program: WebGLProgram = gl.NONE;
 
+    /**
+     * Compiles shader source code.
+     * 
+     * @param source the shader source code to compile.
+     * @param type the shader type.
+     * @returns the compiled shader location.
+     */
     static compile(source: string, type: number): WebGLShader | null {
         var shader: WebGLShader = gl.createShader(type);
         gl.shaderSource(shader, source);
@@ -535,6 +965,12 @@ export class Shader {
         return shader;
     }
 
+    /**
+     * Creates a new shader.
+     * 
+     * @param vertSource the vertex shader source code.
+     * @param fragSource the fragment shader source code.
+     */
     constructor(vertSource: string, fragSource: string) {
         var vShader: WebGLShader | null = Shader.compile(vertSource, gl.VERTEX_SHADER);
         var fShader: WebGLShader | null = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
@@ -543,9 +979,17 @@ export class Shader {
         gl.attachShader(this.program, fShader);
         gl.linkProgram(this.program);
     }
+    /**
+     * Sets the shader to be used in rendering.
+     */
     use(): void {
         gl.useProgram(this.program);
     }
+    /**
+     * 
+     * @param name the uniform name.
+     * @returns the location of the uniform.
+     */
     getULoc(name: string): WebGLUniformLocation {
         return gl.getUniformLocation(this.program, name);
     }
@@ -590,13 +1034,35 @@ export class Shader {
     }
 }
 
+/**
+ * The supported types of shaders.
+ */
 export class ShaderSourceTypes {
+    /**
+     * Vertex shader type.
+     */
     static vert: string = "vertex";
+    /**
+     * Fragment shader type.
+     */
     static frag: string = "fragment";
 };
 
+/**
+ * Shader source code manager.
+ */
 export class ShaderSource {
+    /**
+     * All shaders.
+     */
     static shaders: any = {};
+    /**
+     * Replaces keywords in a shader with others, allowing for more dynamic shaders.
+     * 
+     * @param shaderName the name of the shader.
+     * @param paramDict the parameters to pass to the shader. 
+     * @returns the proper shader source code.
+     */
     static shaderWithParams(shaderName: string, paramDict: { [id: string]: any; } = {}): string {
         var keys: string[] = Object.keys(paramDict);
         var ss: ShaderSource = ShaderSource.shaders[shaderName];
@@ -612,36 +1078,95 @@ export class ShaderSource {
         }
         return src;
     }
+    /**
+     * 
+     * @param name the name of the shader.
+     * @returns the shader under the passed name.
+     */
     static getShader(name: string): ShaderSource {
         return ShaderSource.shaders[name];
     }
+    /**
+     * 
+     * @returns all shader sources loaded.
+     */
     static getAllShaderNames(): string[] {
         return Object.keys(ShaderSource.shaders);
     }
 
+    /**
+     * The source code of the shader.
+     */
     source: string;
+    /**
+     * The shader type.
+     */
     type: string;
+    /**
+     * The parameter dictionary of the shader.
+     */
     params: any[];
+    /**
+     * Creates a new shader source object.
+     * 
+     * @param paramDict the parameter dictionary of the shader with default values.
+     * @param type the shader type.
+     * @param name the shader name.
+     * @param src the shader source code.
+     */
     constructor(paramDict: any, type: string, name: string, src: string) {
         this.params = paramDict;
         this.source = src;
         this.type = type;
         ShaderSource.shaders[name] = this;
     }
+    /**
+     * 
+     * @returns the parameters that this shader expects.
+     */
     getExpectedParams(): string[] {
         return Object.keys(this.params);
     }
 }
 
-export class Vert {
+/**
+ * A vertex in 3D space.
+ */
+export class Vert3D {
+    /**
+     * The number of floats in a processed vertex.
+     */
     static tSize: number = 17;
 
+    /**
+     * The point that the vertex sits at.
+     */
     p: Vec3; // 4
+    /**
+     * The UV coordinates of the vertex.
+     */
     t: Vec2; // 3
+    /**
+     * The RGB tint of the vertex.
+     */
     rgb: Vec3 = new Vec3(1, 1, 1); // 4
+    /**
+     * The vertex normal.
+     */
     n: Vec3; // 3
+    /**
+     * The vertex tangent.
+     */
     tan: Vec3; // 3
 
+    /**
+     * Creates a new vertex.
+     * 
+     * @param point the vertex location.
+     * @param UV the vertex UV coordinates.
+     * @param rgb the RGB tint of the vertex.
+     * @param normal the vertex normal.
+     */
     constructor(point: Vec3 = new Vec3(), UV: Vec2 = new Vec2(), rgb: Vec3 = new Vec3(1, 1, 1), normal: Vec3 = new Vec3()) {
         this.p = point;
         this.t = UV;
@@ -650,23 +1175,61 @@ export class Vert {
     }
 }
 
-export class Tri {
-    v: Vert[];
+/**
+ * A triangle in 3D space.
+ */
+export class Tri3D {
+    /**
+     * The vertecies in the triangle.
+     */
+    v: Vert3D[];
 
-    constructor(points: Vert[] = [new Vert(), new Vert(), new Vert()]) {
+    /**
+     * Creates a new triangle.
+     * 
+     * @param points the points in the triangle.
+     */
+    constructor(points: Vert3D[] = [new Vert3D(), new Vert3D(), new Vert3D()]) {
         this.v = [points[0], points[1], points[2]];
     }
 }
 
+/**
+ * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
+ */
 export class Material {
+    /**
+     * The diffuse texture.
+     */
     diffuseTexture: WebGLTexture;
+    /**
+     * The specular texture.
+     */
     specularTexture: WebGLTexture;
+    /**
+     * The normal texture.
+     */
     normalTexture: WebGLTexture;
+    /**
+     * The parallax texture.
+     */
     parallaxTexture: WebGLTexture = gl.NONE;
-    hasNormalTexture: boolean = false;
-    hasParallaxTexture: boolean = false;
+    /**
+     * The shininess of the material.
+     */
     shininess: number = 0.5;
+    /**
+     * The scale of the parallax texture.
+     */
     parallaxScale: number = 0;
+    /**
+     * Creates a new material.
+     * 
+     * @param diffuseTexture the diffuse texture.
+     * @param specularTexture the specular texture.
+     * @param normalTexture the normal texture.
+     * @param shininess the shininess of the material.
+     */
     constructor(diffuseTexture: WebGLTexture = gl.NONE, specularTexture: WebGLTexture = gl.NONE, normalTexture: WebGLTexture = gl.NONE, shininess: number = 0.5) {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
@@ -675,25 +1238,56 @@ export class Material {
     }
 }
 
+/**
+ * A material with references to textures only.
+ */
 export class ReferenceMaterial {
+    /**
+     * The diffuse texture.
+     */
     diffuseTexture: WebGLTexture = gl.NONE;
+    /**
+     * The specular texture.
+     */
     specularTexture: WebGLTexture = gl.NONE;
+    /**
+     * The normal texture.
+     */
     normalTexture: WebGLTexture = gl.NONE;
+    /**
+     * The parallax texture.
+     */
     parallaxTexture: WebGLTexture = gl.NONE;
-    hasNormalTexture: boolean = false;
-    hasParallaxTexture: boolean = false;
 }
 
+/**
+ * Repersents a point in 3D space.
+ */
 export class Position3D {
+    /**
+     * The position.
+     */
     position: Vec3;
+    /**
+     * The rotation.
+     */
     rotation: Vec3;
 
+    /**
+     * Creates a new 3D position.
+     * 
+     * @param position The position.
+     * @param rotation The rotation.
+     */
     constructor(position: Vec3 = new Vec3(), rotation: Vec3 = new Vec3()) {
         this.position = position;
         this.rotation = rotation;
     }
 }
 
+/**
+ * The view position to render from.
+ */
 export class Camera3D extends Position3D {
     /**
      * The field of view of the camera.
@@ -976,7 +1570,7 @@ export class Mesh3D extends Position3D {
                 for (var l: number = 1; l < seg.length; l++)
                     vals.push(parseInt(seg[l]));
 
-                var push: Tri = new Tri();
+                var push: Tri3D = new Tri3D();
                 for (var k: number = 0; k < 3; k++) {
                     push.v[k].p = verts[vals[params * k] - 1];
                     if (hasTexture)
@@ -996,7 +1590,7 @@ export class Mesh3D extends Position3D {
      * 
      * @param triangle the triangle to add.
      */
-    addTriangle(triangle: Tri): void {
+    addTriangle(triangle: Tri3D): void {
         var tangent: Vec3[] = Mesh3D.calcTangents(triangle); // Calculate tangent and bittangent
         for (var i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
@@ -1099,8 +1693,6 @@ export class Mesh3D extends Position3D {
         this.material.specularTexture = this.createTextureFromPath(specularPath, gl.TEXTURE1, this.useTextureReferenceCache);
         this.material.normalTexture = this.createTextureFromPath(normalPath, gl.TEXTURE2, this.useTextureReferenceCache);
         this.material.parallaxTexture = this.createTextureFromPath(specularPath, gl.TEXTURE3, this.useTextureReferenceCache);
-        this.material.hasNormalTexture = normalPath != "NONE";
-        this.material.hasParallaxTexture = parallaxPath != "NONE";
     }
     /**
      * Creates a model transformation matrix based on the scale, rotation, and position of the mesh.
@@ -1128,10 +1720,10 @@ export class Mesh3D extends Position3D {
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
 
-            var size: number = Vert.tSize;
+            var size: number = Vert3D.tSize;
 
             var floatSize: number = 4;
-            var stride: number = size * floatSize; // Num of array elements resulting from a Vert
+            var stride: number = size * floatSize; // Num of array elements resulting from a Vert3D
 
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0); // Vertex data
             gl.enableVertexAttribArray(0);
@@ -1159,7 +1751,7 @@ export class Mesh3D extends Position3D {
      * @param triangle the triangle.
      * @returns the tangent and bitangent in a vector array.
      */
-    static calcTangents(triangle: Tri): Vec3[] {
+    static calcTangents(triangle: Tri3D): Vec3[] {
         var edge1: Vec3 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
         var edge2: Vec3 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
         var dUV1: Vec2 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
@@ -1221,8 +1813,6 @@ export class Mesh3D extends Position3D {
 
             var model: Mat4 = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
-            shader.setUBool("hasNormalTexture", meshes[i].material.hasNormalTexture);
-            shader.setUBool("hasParallaxTexture", meshes[i].material.hasParallaxTexture);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
             shader.setUFloat("heightScale", meshes[i].material.parallaxScale);
@@ -1240,6 +1830,9 @@ export class Mesh3D extends Position3D {
     }
 }
 
+/**
+ * The base properties of a light.
+ */
 export class Light {
     /**
     * The intensity of the light.
@@ -1273,6 +1866,9 @@ export class Light {
     }
 }
 
+/**
+ * A light at a point.
+ */
 export class PointLight extends Light {
     /**
      * The position of the light.
@@ -1308,6 +1904,9 @@ export class PointLight extends Light {
     }
 }
 
+/**
+ * A light coming from one direction.
+ */
 export class DirectionalLight extends Light {
     /**
      * The direction of the light.
@@ -1331,6 +1930,9 @@ export class DirectionalLight extends Light {
     }
 }
 
+/**
+ * Deals with obj files.
+ */
 export class Geometry {
     /**
      * The name of the geometry.
@@ -1360,6 +1962,9 @@ export class Geometry {
     }
 }
 
+/**
+ * Contains a reference to geometry on the GPU.
+ */
 export class ReferenceGeometry {
     /**
      * The vertex buffer.
@@ -1377,6 +1982,9 @@ export class ReferenceGeometry {
 
 var cubeData: string = "v -1.000000 1.000000 -1.000000\nv 1.000000 1.000000 1.000000\nv 1.000000 1.000000 -1.000000\nv -1.000000 -1.000000 1.000000\nv 1.000000 -1.000000 1.000000\nv -1.000000 1.000000 1.000000\nv -1.000000 -1.000000 -1.000000\nv 1.000000 -1.000000 -1.000000\nvt 1.000000 0.000000\nvt 0.666667 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.333333\nvt 0.000000 0.000000\nvt 0.333333 0.000000\nvt 0.333333 0.666667\nvt 0.000000 0.333333\nvt 0.333333 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.000000\nvt 0.666667 0.666667\nvt 0.333333 0.333333\nvt 0.666667 0.333333\nvt 0.333333 1.000000\nvt 0.000000 0.666667\nvt 0.333333 0.666667\nvt 1.000000 0.333333\nvt 0.000000 0.333333\nvt 0.000000 0.666667\nvt 0.666667 0.333333\nvt 0.333333 0.666667\nvt 0.000000 1.000000\nvn 0.0000 1.0000 0.0000\nvn 0.0000 -0.0000 1.0000\nvn -1.0000 0.0000 0.0000\nvn 0.0000 -1.0000 -0.0000\nvn 1.0000 0.0000 0.0000\nvn 0.0000 0.0000 -1.0000\ns off\nf 1/1/1 2/2/1 3/3/1\nf 2/4/2 4/5/2 5/6/2\nf 6/7/3 7/8/3 4/9/3\nf 8/10/4 4/9/4 7/11/4\nf 3/12/5 5/13/5 8/14/5\nf 1/15/6 8/16/6 7/17/6\nf 1/1/1 6/18/1 2/2/1\nf 2/4/2 6/19/2 4/5/2\nf 6/7/3 1/20/3 7/8/3\nf 8/10/4 5/21/4 4/9/4\nf 3/12/5 2/22/5 5/13/5\nf 1/15/6 3/23/6 8/16/6";
 
+/**
+ * Contains various utility functions.
+ */
 export class Utils {
     /**
      * Loads the string data of a file.

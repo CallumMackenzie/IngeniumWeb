@@ -74,77 +74,500 @@ export declare class IngeniumWeb {
     static terminate(message: string): void;
     static enterScene(index: number): void;
 }
+/**
+ * An approximation of PI (355 / 113);
+ */
 export declare var PI: number;
+/**
+ * A 2 component vector with a third w component.
+ */
 export declare class Vec2 {
+    /**
+    * The x component of the vector.
+    */
     x: number;
+    /**
+     * The y component of the vector.
+     */
     y: number;
+    /**
+     * The w component of the vector.
+     */
     w: number;
+    /**
+     *
+     * @param num the number to fill the vector with.
+     * @returns a vector filled with num.
+     */
     static filledWith(num: number): Vec2;
+    /**
+     * Subtracts 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the difference of the passed vectors.
+     */
     static sub(v1: Vec2, v2: Vec2): Vec2;
+    /**
+     * Adds 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the sum of the passed vectors.
+     */
     static add(v1: Vec2, v2: Vec2): Vec2;
+    /**
+     * Multiplies 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the product of the passed vectors.
+     */
     static mul(v1: Vec2, v2: Vec2): Vec2;
+    /**
+     * Divides 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the quotient of the passed vectors.
+     */
     static div(v1: Vec2, v2: Vec2): Vec2;
+    /**
+     * Multiplies all components of the vector by the passed number.
+     *
+     * @param v1 the vector.
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
     static mulFloat(v1: Vec2, float: number): Vec2;
+    /**
+     * Divides all components of the vector by the passed number.
+     *
+     * @param v1 the vector.
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
     static divFloat(v1: Vec2, float: number): Vec2;
+    /**
+     *
+     * @param v a vector.
+     * @returns the length of the vector.
+     */
     static len(v: Vec2): number;
+    /**
+     *
+     * @param v a vector.
+     * @returns the normalized vector.
+     */
     static normalize(v: Vec2): Vec2;
+    /**
+     * Creates a new two component vector with a w component.
+     *
+     * @param x the x component of the vector.
+     * @param y the y component of the vector.
+     * @param w the w component of the vector.
+     */
     constructor(x?: number, y?: number, w?: number);
-}
-export declare class Vec3 {
-    x: number;
-    y: number;
-    z: number;
-    w: number;
-    static filledWith(num: number): Vec3;
-    static sub(v1: Vec3, v2: Vec3): Vec3;
-    static add(v1: Vec3, v2: Vec3): Vec3;
-    static mul(v1: Vec3, v2: Vec3): Vec3;
-    static div(v1: Vec3, v2: Vec3): Vec3;
-    static mulFloat(v1: Vec3, float: number): Vec3;
-    static divFloat(v1: Vec3, float: number): Vec3;
-    static dot(v1: Vec3, v2: Vec3): number;
-    static len(v: Vec3): number;
-    static normalize(v: Vec3): Vec3;
-    static cross(v1: Vec3, v2: Vec3): Vec3;
-    static mulMat(i: Vec3, m: Mat4): Vec3;
-    constructor(x?: number, y?: number, z?: number, w?: number);
-    add(v: Vec3): Vec3;
-    sub(v: Vec3): Vec3;
-    mul(v: Vec3): Vec3;
-    div(v: Vec3): Vec3;
-    mulFloat(n: number): Vec3;
-    divFloat(n: number): Vec3;
-    addFloat(n: number): Vec3;
+    /**
+     *
+     * @param v2 the vector to subtract.
+     * @returns the difference.
+     */
+    sub(v2: Vec2): Vec2;
+    /**
+     *
+     * @param v2 the vector to add.
+     * @returns the sum.
+     */
+    add(v2: Vec2): Vec2;
+    /**
+     *
+     * @param v2 the vector to multiply by.
+     * @returns the product.
+     */
+    mul(v2: Vec2): Vec2;
+    /**
+     *
+     * @param v2 the vector to divide by.
+     * @returns the quotient.
+     */
+    div(v2: Vec2): Vec2;
+    /**
+     * Multiplies all components of the vector by the passed number.
+     *
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
+    mulFloat(float: number): Vec2;
+    /**
+     * Divides all components of the vector by the passed number.
+     *
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
+    divFloat(float: number): Vec2;
+    /**
+     *
+     * @returns the length of the vector.
+     */
     len(): number;
+    /**
+     *
+     * @returns the normalized vector.
+     */
+    normalized(): Vec2;
+}
+/**
+ * A 3 component vector with a fourth w component.
+ */
+export declare class Vec3 {
+    /**
+     * The x component of the vector.
+     */
+    x: number;
+    /**
+     * The y component of the vector.
+     */
+    y: number;
+    /**
+     * The z component of the vector.
+     */
+    z: number;
+    /**
+     * The w component of the vector.
+     */
+    w: number;
+    /**
+     * Creates a new vector with the number as the x, y, and z values.
+     *
+     * @param num the number to fill the vector with.
+     * @returns a filed vector.
+     */
+    static filledWith(num: number): Vec3;
+    /**
+     * Subtracts 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the difference of the passed vectors.
+     */
+    static sub(v1: Vec3, v2: Vec3): Vec3;
+    /**
+     * Adds 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the sum of the passed vectors.
+     */
+    static add(v1: Vec3, v2: Vec3): Vec3;
+    /**
+     * Multiplies 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the product of the passed vectors.
+     */
+    static mul(v1: Vec3, v2: Vec3): Vec3;
+    /**
+     * Divides 2 vectors.
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the quotient of the passed vectors.
+     */
+    static div(v1: Vec3, v2: Vec3): Vec3;
+    /**
+     * Multiplies all components of the vector by the passed number.
+     *
+     * @param v1 the vector.
+     * @param float the number to multiply by.
+     * @returns the product.
+     */
+    static mulFloat(v1: Vec3, float: number): Vec3;
+    /**
+     * Divides all components of the vector by the passed number.
+     *
+     * @param v1 the vector.
+     * @param float the number to divide by.
+     * @returns the quotient.
+     */
+    static divFloat(v1: Vec3, float: number): Vec3;
+    /**
+     * Adds the passed number to all components of the vector.
+     *
+     * @param v1 the vector.
+     * @param float the number to add.
+     * @returns the sum.
+     */
+    static addFloat(v1: Vec3, float: number): Vec3;
+    /**
+     * Subtracts the passed number from all components of the vector.
+     *
+     * @param v1 the vector.
+     * @param float the number to subtract.
+     * @returns the difference.
+     */
+    static subFloat(v1: Vec3, float: number): Vec3;
+    /**
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the dot product of the passed vectors.
+     */
+    static dot(v1: Vec3, v2: Vec3): number;
+    /**
+     *
+     * @param v a vector.
+     * @returns the length of the vector.
+     */
+    static len(v: Vec3): number;
+    /**
+     *
+     * @param v a vector.
+     * @returns the normalized vector.
+     */
+    static normalize(v: Vec3): Vec3;
+    /**
+     *
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @returns the cross product of the passed vectors.
+     */
+    static cross(v1: Vec3, v2: Vec3): Vec3;
+    /**
+     *
+     * @param i a vector.
+     * @param m a 4x4 matrix.
+     * @returns the product.
+     */
+    static mulMat(i: Vec3, m: Mat4): Vec3;
+    /**
+     *
+     * @param x the x component of the vector.
+     * @param y the y component of the vector.
+     * @param z the z component of the vector.
+     * @param w the w component of the vector.
+     */
+    constructor(x?: number, y?: number, z?: number, w?: number);
+    /**
+     *
+     * @param v the vector to add.
+     * @returns a new vector with the sum.
+     */
+    add(v: Vec3): Vec3;
+    /**
+     *
+     * @param v the vector to subtract.
+     * @returns a new vector with the difference.
+     */
+    sub(v: Vec3): Vec3;
+    /**
+    *
+    * @param v the vector to multiply with.
+    * @returns a new vector with the product.
+    */
+    mul(v: Vec3): Vec3;
+    /**
+     *
+     * @param v the vector to divide by.
+     * @returns a new vector with the quotient.
+     */
+    div(v: Vec3): Vec3;
+    /**
+     *
+     * @param n the number to multiply with.
+     * @returns a new vector with the product.
+     */
+    mulFloat(n: number): Vec3;
+    /**
+     *
+     * @param n the number to divide by.
+     * @returns a new vector with the quotient.
+     */
+    divFloat(n: number): Vec3;
+    /**
+     *
+     * @param n the number to add.
+     * @returns a new vector with the sum.
+     */
+    addFloat(n: number): Vec3;
+    /**
+     *
+     * @param n the number to subtract.
+     * @returns a new vector with the difference.
+     */
+    subFloat(n: number): Vec3;
+    /**
+     *
+     * @returns the length of the vector.
+     */
+    len(): number;
+    /**
+     *
+     * @param mat the 4x4 matrix to multiply by.
+     * @returns the product.
+     */
     mulMat(mat: Mat4): Vec3;
+    /**
+     *
+     * @returns the vector normalized.
+     */
     normalized(): Vec3;
+    /**
+     *
+     * @returns whether the vector has components which are NaN.
+     */
     isNaN(): boolean;
+    /**
+     *
+     * @param v2 the vector to compare.
+     * @returns whether the vectors have equal x, y, and z components.
+     */
     equals(v2: Vec3): boolean;
 }
+/**
+ * A 4x4 matrix.
+ */
 export declare class Mat4 {
+    /**
+     * The matrix in a 2 dimensional array.
+     */
     m: number[][];
+    /**
+     * Creates a perspective projection matrix.
+     *
+     * @param fovDeg the field of view.
+     * @param aspectRatio the aspect ratio.
+     * @param near the near clip distance.
+     * @param far the far clip distance.
+     * @returns the perspective projection matrix.
+     */
     static perspective(fovDeg: number, aspectRatio: number, near: number, far: number): Mat4;
+    /**
+     *
+     * @param m a matrix.
+     * @returns the inverse of the matrix.
+     */
     static inverse(m: Mat4): Mat4;
+    /**
+     *
+     * @returns an identity matrix.
+     */
     static identity(): Mat4;
+    /**
+     *
+     * @param pos the position to start at.
+     * @param target the target to point at.
+     * @param up the direction to use as up.
+     * @returns a matrix that repersents a transformation to point at a position.
+     */
     static pointedAt(pos: Vec3, target: Vec3, up?: Vec3): Mat4;
+    /**
+     *
+     * @param x the x scale.
+     * @param y the y scale.
+     * @param z the z scale.
+     * @returns a scaling matrix.
+     */
     static scale(x?: number, y?: number, z?: number): Mat4;
+    /**
+     *
+     * @param x the x translation.
+     * @param y the y translation.
+     * @param z the z translation.
+     * @returns a translation matrix.
+     */
     static translation(x?: number, y?: number, z?: number): Mat4;
+    /**
+     *
+     * @param m1 the first matrix.
+     * @param m2 the second matrix.
+     * @returns the product of the matrices.
+     */
     static mul(m1: Mat4, m2: Mat4): Mat4;
+    /**
+     *
+     * @param xRad the x rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationX(xRad: number): Mat4;
+    /**
+     *
+     * @param yRad the y rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationY(yRad: number): Mat4;
+    /**
+     *
+     * @param zRad the z rotation in radians.
+     * @returns a rotation matrix.
+     */
     static rotationZ(zRad: number): Mat4;
+    /**
+     *
+     * @param xRad the x rotation in radians.
+     * @param yRad the y rotation in radians.
+     * @param zRad the z rotation in radians.
+     * @param pt the point to rotate around.
+     * @returns a rotation matrix.
+     */
     static rotationOnPoint(xRad: number, yRad: number, zRad: number, pt: Vec3): Mat4;
+    /**
+     * Creates a new 4x4 matrix.
+     */
     constructor();
 }
+/**
+ * Contains methods for manipulating rotations.
+ */
 export declare class Rotation {
+    /**
+     * Converts a radian measure to a degree measure.
+     *
+     * @param rad the radian value.
+     * @returns the degree value.
+     */
     static radToDeg(rad: number): number;
+    /**
+    * Converts a degree measure to a radian measure.
+    *
+    * @param deg the degree value.
+    * @returns the radian value.
+    */
     static degToRad(deg: number): number;
 }
+/**
+ * Manage shaders and their uniforms.
+ */
 export declare class Shader {
+    /**
+     * The shader program.
+     */
     program: WebGLProgram;
+    /**
+     * Compiles shader source code.
+     *
+     * @param source the shader source code to compile.
+     * @param type the shader type.
+     * @returns the compiled shader location.
+     */
     static compile(source: string, type: number): WebGLShader | null;
+    /**
+     * Creates a new shader.
+     *
+     * @param vertSource the vertex shader source code.
+     * @param fragSource the fragment shader source code.
+     */
     constructor(vertSource: string, fragSource: string);
+    /**
+     * Sets the shader to be used in rendering.
+     */
     use(): void;
+    /**
+     *
+     * @param name the uniform name.
+     * @returns the location of the uniform.
+     */
     getULoc(name: string): WebGLUniformLocation;
     setUInt(name: string, value: number): void;
     setUInt2(name: string, value1: number, value2: number): void;
@@ -160,60 +583,210 @@ export declare class Shader {
     setUVec4(name: string, v: Vec3): void;
     setUBool(name: string, b: boolean): void;
 }
+/**
+ * The supported types of shaders.
+ */
 export declare class ShaderSourceTypes {
+    /**
+     * Vertex shader type.
+     */
     static vert: string;
+    /**
+     * Fragment shader type.
+     */
     static frag: string;
 }
+/**
+ * Shader source code manager.
+ */
 export declare class ShaderSource {
+    /**
+     * All shaders.
+     */
     static shaders: any;
+    /**
+     * Replaces keywords in a shader with others, allowing for more dynamic shaders.
+     *
+     * @param shaderName the name of the shader.
+     * @param paramDict the parameters to pass to the shader.
+     * @returns the proper shader source code.
+     */
     static shaderWithParams(shaderName: string, paramDict?: {
         [id: string]: any;
     }): string;
+    /**
+     *
+     * @param name the name of the shader.
+     * @returns the shader under the passed name.
+     */
     static getShader(name: string): ShaderSource;
+    /**
+     *
+     * @returns all shader sources loaded.
+     */
     static getAllShaderNames(): string[];
+    /**
+     * The source code of the shader.
+     */
     source: string;
+    /**
+     * The shader type.
+     */
     type: string;
+    /**
+     * The parameter dictionary of the shader.
+     */
     params: any[];
+    /**
+     * Creates a new shader source object.
+     *
+     * @param paramDict the parameter dictionary of the shader with default values.
+     * @param type the shader type.
+     * @param name the shader name.
+     * @param src the shader source code.
+     */
     constructor(paramDict: any, type: string, name: string, src: string);
+    /**
+     *
+     * @returns the parameters that this shader expects.
+     */
     getExpectedParams(): string[];
 }
-export declare class Vert {
+/**
+ * A vertex in 3D space.
+ */
+export declare class Vert3D {
+    /**
+     * The number of floats in a processed vertex.
+     */
     static tSize: number;
+    /**
+     * The point that the vertex sits at.
+     */
     p: Vec3;
+    /**
+     * The UV coordinates of the vertex.
+     */
     t: Vec2;
+    /**
+     * The RGB tint of the vertex.
+     */
     rgb: Vec3;
+    /**
+     * The vertex normal.
+     */
     n: Vec3;
+    /**
+     * The vertex tangent.
+     */
     tan: Vec3;
+    /**
+     * Creates a new vertex.
+     *
+     * @param point the vertex location.
+     * @param UV the vertex UV coordinates.
+     * @param rgb the RGB tint of the vertex.
+     * @param normal the vertex normal.
+     */
     constructor(point?: Vec3, UV?: Vec2, rgb?: Vec3, normal?: Vec3);
 }
-export declare class Tri {
-    v: Vert[];
-    constructor(points?: Vert[]);
+/**
+ * A triangle in 3D space.
+ */
+export declare class Tri3D {
+    /**
+     * The vertecies in the triangle.
+     */
+    v: Vert3D[];
+    /**
+     * Creates a new triangle.
+     *
+     * @param points the points in the triangle.
+     */
+    constructor(points?: Vert3D[]);
 }
+/**
+ * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
+ */
 export declare class Material {
+    /**
+     * The diffuse texture.
+     */
     diffuseTexture: WebGLTexture;
+    /**
+     * The specular texture.
+     */
     specularTexture: WebGLTexture;
+    /**
+     * The normal texture.
+     */
     normalTexture: WebGLTexture;
+    /**
+     * The parallax texture.
+     */
     parallaxTexture: WebGLTexture;
-    hasNormalTexture: boolean;
-    hasParallaxTexture: boolean;
+    /**
+     * The shininess of the material.
+     */
     shininess: number;
+    /**
+     * The scale of the parallax texture.
+     */
     parallaxScale: number;
+    /**
+     * Creates a new material.
+     *
+     * @param diffuseTexture the diffuse texture.
+     * @param specularTexture the specular texture.
+     * @param normalTexture the normal texture.
+     * @param shininess the shininess of the material.
+     */
     constructor(diffuseTexture?: WebGLTexture, specularTexture?: WebGLTexture, normalTexture?: WebGLTexture, shininess?: number);
 }
+/**
+ * A material with references to textures only.
+ */
 export declare class ReferenceMaterial {
+    /**
+     * The diffuse texture.
+     */
     diffuseTexture: WebGLTexture;
+    /**
+     * The specular texture.
+     */
     specularTexture: WebGLTexture;
+    /**
+     * The normal texture.
+     */
     normalTexture: WebGLTexture;
+    /**
+     * The parallax texture.
+     */
     parallaxTexture: WebGLTexture;
-    hasNormalTexture: boolean;
-    hasParallaxTexture: boolean;
 }
+/**
+ * Repersents a point in 3D space.
+ */
 export declare class Position3D {
+    /**
+     * The position.
+     */
     position: Vec3;
+    /**
+     * The rotation.
+     */
     rotation: Vec3;
+    /**
+     * Creates a new 3D position.
+     *
+     * @param position The position.
+     * @param rotation The rotation.
+     */
     constructor(position?: Vec3, rotation?: Vec3);
 }
+/**
+ * The view position to render from.
+ */
 export declare class Camera3D extends Position3D {
     /**
      * The field of view of the camera.
@@ -347,7 +920,7 @@ export declare class Mesh3D extends Position3D {
      *
      * @param triangle the triangle to add.
      */
-    addTriangle(triangle: Tri): void;
+    addTriangle(triangle: Tri3D): void;
     /**
      * Loads a texture to the GPU from the specified path.
      *
@@ -386,7 +959,7 @@ export declare class Mesh3D extends Position3D {
      * @param triangle the triangle.
      * @returns the tangent and bitangent in a vector array.
      */
-    static calcTangents(triangle: Tri): Vec3[];
+    static calcTangents(triangle: Tri3D): Vec3[];
     /**
      * Renders meshes.
      *
@@ -398,6 +971,9 @@ export declare class Mesh3D extends Position3D {
      */
     static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
 }
+/**
+ * The base properties of a light.
+ */
 export declare class Light {
     /**
     * The intensity of the light.
@@ -425,6 +1001,9 @@ export declare class Light {
      */
     constructor(ambient: Vec3, diffuse: Vec3, specular: Vec3, intensity: number);
 }
+/**
+ * A light at a point.
+ */
 export declare class PointLight extends Light {
     /**
      * The position of the light.
@@ -453,6 +1032,9 @@ export declare class PointLight extends Light {
      */
     constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, position?: Vec3, intensity?: number);
 }
+/**
+ * A light coming from one direction.
+ */
 export declare class DirectionalLight extends Light {
     /**
      * The direction of the light.
@@ -469,6 +1051,9 @@ export declare class DirectionalLight extends Light {
      */
     constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, direction?: Vec3, intensity?: number);
 }
+/**
+ * Deals with obj files.
+ */
 export declare class Geometry {
     /**
      * The name of the geometry.
@@ -491,6 +1076,9 @@ export declare class Geometry {
     */
     static makeCube(): Geometry;
 }
+/**
+ * Contains a reference to geometry on the GPU.
+ */
 export declare class ReferenceGeometry {
     /**
      * The vertex buffer.
@@ -505,6 +1093,9 @@ export declare class ReferenceGeometry {
      */
     triangles: number;
 }
+/**
+ * Contains various utility functions.
+ */
 export declare class Utils {
     /**
      * Loads the string data of a file.
