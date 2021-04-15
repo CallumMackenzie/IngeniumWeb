@@ -3,7 +3,7 @@
 import * as IW from "./Ingenium.js";
 
 
-class GBody extends IW.Mesh {
+class GBody extends IW.Mesh3D {
     static locked: number = 0;
     constructor(pos: IW.Vec3 = new IW.Vec3()) {
         super(pos);
@@ -13,7 +13,7 @@ class GBody extends IW.Mesh {
         this.make(o, d, s, n);
         this.dTexture = this.createTextureFromPath(dd, IW.gl.TEXTURE4, true);
     }
-    bindDTexture (sh: IW.Shader) {
+    bindDTexture(sh: IW.Shader) {
         sh.use();
         sh.setUInt("material.darkDiffuse", 4);
         IW.gl.activeTexture(IW.gl.TEXTURE4);
@@ -25,10 +25,10 @@ class GBody extends IW.Mesh {
     mass: number = 1;
     radius: number = 1;
     name: string = "NONE";
-    dTexture : WebGLTexture = IW.gl.NONE;
+    dTexture: WebGLTexture = IW.gl.NONE;
 }
 
-class ISCamera extends IW.Camera {
+class ISCamera extends IW.Camera3D {
     constructor(fov: number, cn: number, cf: number) {
         super(fov, cn, cf);
     }
@@ -76,13 +76,13 @@ function onGlobalCreate() {
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
     shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
         IW.ShaderSource.shaderWithParams("defFrag", { nlights: 1 }));
-
+    
     earthShader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
         IW.ShaderSource.shaderWithParams("earthFrag", { nlights: 1 }));
 
     IW.IngeniumWeb.window.setClearColour(0x101010, 1);
 
-    IW.Time.setFPS(25);
+    IW.Time.setFPS(40);
     IW.Time.setFixedFPS(5);
 
     d.intensity = 0;
@@ -145,13 +145,13 @@ function onUpdate() {
         m[i].position = m[i].position.add(m[i].velocity);
         m[i].rotation = m[i].rotation.add(m[i].angularVelocity.mulFloat(IW.Time.deltaTime * simSpeed));
     }
-    camera.refPos = IW.Camera.stdController(camera, camera.refPos, 1, IW.PI);
+    camera.refPos = IW.Camera3D.stdController(camera, camera.refPos, 1, IW.PI);
     camera.rotation = camera.refPos.rotation;
     camera.position = m[GBody.locked].position.add(camera.refPos.position);
     p[0].position = m[0].position;
-    IW.Mesh.renderAll(shader, camera, [m[0]], d, p);
+    IW.Mesh3D.renderAll(shader, camera, [m[0]], d, p);
     m[1].bindDTexture(earthShader);
-    IW.Mesh.renderAll(earthShader, camera, [m[1]], d, p);
+    IW.Mesh3D.renderAll(earthShader, camera, [m[1]], d, p);
 }
 
 var scene: IW.Scene = new IW.Scene(function () { }, onUpdate);

@@ -1,6 +1,6 @@
 "use strict";
 import * as IW from "./Ingenium.js";
-class GBody extends IW.Mesh {
+class GBody extends IW.Mesh3D {
     constructor(pos = new IW.Vec3()) {
         super(pos);
         this.velocity = new IW.Vec3();
@@ -23,7 +23,7 @@ class GBody extends IW.Mesh {
     }
 }
 GBody.locked = 0;
-class ISCamera extends IW.Camera {
+class ISCamera extends IW.Camera3D {
     constructor(fov, cn, cf) {
         super(fov, cn, cf);
         this.refPos = new IW.Position3D();
@@ -62,7 +62,7 @@ function onGlobalCreate() {
     shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("defFrag", { nlights: 1 }));
     earthShader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("earthFrag", { nlights: 1 }));
     IW.IngeniumWeb.window.setClearColour(0x101010, 1);
-    IW.Time.setFPS(25);
+    IW.Time.setFPS(40);
     IW.Time.setFixedFPS(5);
     d.intensity = 0;
     p[0].intensity = 2;
@@ -122,13 +122,13 @@ function onUpdate() {
         m[i].position = m[i].position.add(m[i].velocity);
         m[i].rotation = m[i].rotation.add(m[i].angularVelocity.mulFloat(IW.Time.deltaTime * simSpeed));
     }
-    camera.refPos = IW.Camera.stdController(camera, camera.refPos, 1, IW.PI);
+    camera.refPos = IW.Camera3D.stdController(camera, camera.refPos, 1, IW.PI);
     camera.rotation = camera.refPos.rotation;
     camera.position = m[GBody.locked].position.add(camera.refPos.position);
     p[0].position = m[0].position;
-    IW.Mesh.renderAll(shader, camera, [m[0]], d, p);
+    IW.Mesh3D.renderAll(shader, camera, [m[0]], d, p);
     m[1].bindDTexture(earthShader);
-    IW.Mesh.renderAll(earthShader, camera, [m[1]], d, p);
+    IW.Mesh3D.renderAll(earthShader, camera, [m[1]], d, p);
 }
 var scene = new IW.Scene(function () { }, onUpdate);
 IW.IngeniumWeb.start([scene], onGlobalCreate);

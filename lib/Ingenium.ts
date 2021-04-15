@@ -1,7 +1,12 @@
 "use strict";
-
+/**
+ * The OpenGL object of the program.
+ */
 export var gl: WebGL2RenderingContext;
 
+/**
+ * Automatic input manager.
+ */
 export class Input {
     static keys: { [id: string]: boolean; } = {};
     static setup(): void {
@@ -15,6 +20,11 @@ export class Input {
             Input.keys[event.key] = false;
         }, true);
     }
+    /**
+     * 
+     * @param key the key to check for.
+     * @returns whether the key is currently pressed.
+     */
     static getKeyState(key: string): boolean {
         return (Input.keys[key] === undefined ? false : Input.keys[key]);
     }
@@ -59,6 +69,9 @@ export class Time {
         }
         return false;
     };
+    static deltaTimeToFPS(delta: number): number {
+        return (1 / delta);
+    }
 };
 
 export class WebGLWindow {
@@ -157,11 +170,13 @@ export class IngeniumWeb {
     static onFixedUpdate: Function;
     static scenes: Scene[] = [];
     static currentScene: number = 0;
+    static startTime: number = 0;
 
     static start(scenes: Scene[],
         onCreate: Function = function () { }, onUpdate: Function = function () { },
         onClose: Function = function () { }, onFixedUpdate: Function = function () { },
         webGL = "webgl2"): void {
+        this.startTime = Date.now();
         IngeniumWeb.window = null;
         IngeniumWeb.running = true;
         IngeniumWeb.scenes = scenes;
@@ -227,81 +242,6 @@ export class IngeniumWeb {
         IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
     }
 };
-
-export class Shader {
-    program: WebGLProgram = gl.NONE;
-
-    static compile(source: string, type: number): WebGLShader | null {
-        var shader: WebGLShader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            var err = {
-                type: "SHADER_COMPILE_ERROR",
-                shaderInt: type,
-                shaderType: (type == gl.VERTEX_SHADER) ? "vertex shader" : "fragment shader",
-                error: gl.getShaderInfoLog(shader)
-            };
-            console.log(err);
-            return null;
-        }
-        return shader;
-    }
-
-    constructor(vertSource: string, fragSource: string) {
-        var vShader: WebGLShader | null = Shader.compile(vertSource, gl.VERTEX_SHADER);
-        var fShader: WebGLShader | null = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
-        this.program = gl.createProgram();
-        gl.attachShader(this.program, vShader);
-        gl.attachShader(this.program, fShader);
-        gl.linkProgram(this.program);
-    }
-    use(): void {
-        gl.useProgram(this.program);
-    }
-    getULoc(name: string): WebGLUniformLocation {
-        return gl.getUniformLocation(this.program, name);
-    }
-    setUInt(name: string, value: number): void {
-        gl.uniform1i(this.getULoc(name), value);
-    }
-    setUInt2(name: string, value1: number, value2: number): void {
-        gl.uniform2i(this.getULoc(name), value1, value2);
-    }
-    setUInt3(name: string, value1: number, value2: number, value3: number): void {
-        gl.uniform3i(this.getULoc(name), value1, value2, value3);
-    }
-    setUInt4(name: string, value1: number, value2: number, value3: number, value4: number): void {
-        gl.uniform4i(this.getULoc(name), value1, value2, value3, value4);
-    }
-    setUFloat(name: string, value: number): void {
-        gl.uniform1f(this.getULoc(name), value);
-    }
-    setUFloat2(name: string, value1: number, value2: number): void {
-        gl.uniform2f(this.getULoc(name), value1, value2);
-    }
-    setUFloat3(name: string, value1: number, value2: number, value3: number): void {
-        gl.uniform3f(this.getULoc(name), value1, value2, value3);
-    }
-    setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number): void {
-        gl.uniform4f(this.getULoc(name), value1, value2, value3, value4);
-    }
-    setUMat4(name: string, mat4: Mat4): void {
-        gl.uniformMatrix4fv(this.getULoc(name), false, mat4.m.flat());
-    }
-    setUVec2(name: string, v: Vec3): void {
-        this.setUFloat2(name, v.x, v.y);
-    }
-    setUVec3(name: string, v: Vec3): void {
-        this.setUFloat3(name, v.x, v.y, v.z);
-    }
-    setUVec4(name: string, v: Vec3): void {
-        this.setUFloat4(name, v.x, v.y, v.z, v.w);
-    }
-    setUBool(name: string, b: boolean): void {
-        this.setUInt(name, b ? 1 : 0);
-    }
-}
 
 export var PI: number = 355 / 113;
 
@@ -575,6 +515,80 @@ export class Rotation {
     }
 }
 
+export class Shader {
+    program: WebGLProgram = gl.NONE;
+
+    static compile(source: string, type: number): WebGLShader | null {
+        var shader: WebGLShader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            var err = {
+                type: "SHADER_COMPILE_ERROR",
+                shaderInt: type,
+                shaderType: (type == gl.VERTEX_SHADER) ? "vertex shader" : "fragment shader",
+                error: gl.getShaderInfoLog(shader)
+            };
+            console.log(err);
+            return null;
+        }
+        return shader;
+    }
+
+    constructor(vertSource: string, fragSource: string) {
+        var vShader: WebGLShader | null = Shader.compile(vertSource, gl.VERTEX_SHADER);
+        var fShader: WebGLShader | null = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vShader);
+        gl.attachShader(this.program, fShader);
+        gl.linkProgram(this.program);
+    }
+    use(): void {
+        gl.useProgram(this.program);
+    }
+    getULoc(name: string): WebGLUniformLocation {
+        return gl.getUniformLocation(this.program, name);
+    }
+    setUInt(name: string, value: number): void {
+        gl.uniform1i(this.getULoc(name), value);
+    }
+    setUInt2(name: string, value1: number, value2: number): void {
+        gl.uniform2i(this.getULoc(name), value1, value2);
+    }
+    setUInt3(name: string, value1: number, value2: number, value3: number): void {
+        gl.uniform3i(this.getULoc(name), value1, value2, value3);
+    }
+    setUInt4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+        gl.uniform4i(this.getULoc(name), value1, value2, value3, value4);
+    }
+    setUFloat(name: string, value: number): void {
+        gl.uniform1f(this.getULoc(name), value);
+    }
+    setUFloat2(name: string, value1: number, value2: number): void {
+        gl.uniform2f(this.getULoc(name), value1, value2);
+    }
+    setUFloat3(name: string, value1: number, value2: number, value3: number): void {
+        gl.uniform3f(this.getULoc(name), value1, value2, value3);
+    }
+    setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+        gl.uniform4f(this.getULoc(name), value1, value2, value3, value4);
+    }
+    setUMat4(name: string, mat4: Mat4): void {
+        gl.uniformMatrix4fv(this.getULoc(name), false, mat4.m.flat());
+    }
+    setUVec2(name: string, v: Vec3): void {
+        this.setUFloat2(name, v.x, v.y);
+    }
+    setUVec3(name: string, v: Vec3): void {
+        this.setUFloat3(name, v.x, v.y, v.z);
+    }
+    setUVec4(name: string, v: Vec3): void {
+        this.setUFloat4(name, v.x, v.y, v.z, v.w);
+    }
+    setUBool(name: string, b: boolean): void {
+        this.setUInt(name, b ? 1 : 0);
+    }
+}
 
 export class ShaderSourceTypes {
     static vert: string = "vertex";
@@ -618,8 +632,6 @@ export class ShaderSource {
         return Object.keys(this.params);
     }
 }
-
-
 
 export class Vert {
     static tSize: number = 17;
@@ -672,7 +684,6 @@ export class ReferenceMaterial {
     hasParallaxTexture: boolean = false;
 }
 
-
 export class Position3D {
     position: Vec3;
     rotation: Vec3;
@@ -683,19 +694,36 @@ export class Position3D {
     }
 }
 
-export class Camera extends Position3D {
-
+export class Camera3D extends Position3D {
+    /**
+     * The field of view of the camera.
+     */
+    FOV: number;
+    /**
+     * The near clip distance of the camera.
+     */
+    clipNear: number;
+    /**
+     * The far clip distance of the camera.
+     */
+    clipFar: number;
+    /**
+     * Creates a new camera.
+     * 
+     * @param fov the field of view.
+     * @param clipNear the near clip distance.
+     * @param clipFar the far clip distance.
+     */
     constructor(fov: number = 75, clipNear: number = 0.1, clipFar: number = 500) {
         super();
         this.FOV = fov;
         this.clipNear = clipNear;
         this.clipFar = clipFar;
     }
-
-    FOV: number;
-    clipNear: number;
-    clipFar: number;
-
+    /**
+     * 
+     * @returns a vector repersenting the direction the camera is looking.
+     */
     lookVector(): Vec3 {
         var target: Vec3 = new Vec3(0, 0, 1);
         var up: Vec3 = new Vec3(0, 1, 0);
@@ -703,9 +731,17 @@ export class Camera extends Position3D {
         target = Vec3.mulMat(target, mRotation);
         return target;
     }
+    /**
+     * 
+     * @returns the perspective projection matrix of the camera.
+     */
     perspective(): Mat4 {
         return Mat4.perspective(this.FOV, IngeniumWeb.window.aspectRatio, this.clipNear, this.clipFar);
     }
+    /**
+     * 
+     * @returns the camera transformation matrix.
+     */
     cameraMatrix(): Mat4 {
         var vUp: Vec3 = new Vec3(0, 1, 0);
         var vTarget: Vec3 = new Vec3(0, 0, 1);
@@ -717,14 +753,29 @@ export class Camera extends Position3D {
         var matCamera: Mat4 = Mat4.pointedAt(this.position, vTarget, vUp);
         return matCamera;
     }
+    /**
+     * Basic movement controls for debugging.
+     * 
+     * @param speed the speed of the camera.
+     * @param cameraMoveSpeed the rotation speed of the camera.
+     */
     stdControl(speed: number = 1, cameraMoveSpeed: number = 1): void {
-        var p3d :Position3D = Camera.stdController(this, this, speed, cameraMoveSpeed);
+        var p3d: Position3D = Camera3D.stdController(this, this, speed, cameraMoveSpeed);
         this.position = p3d.position;
         this.rotation = p3d.rotation;
     }
-    static stdController(cam: Camera, pos: Position3D, speed: number = 1, cameraMoveSpeed: number = 1) : Position3D {
+    /**
+     * Standard controls applied to a seperate position.
+     * 
+     * @param cam the camera.
+     * @param pos the position.
+     * @param speed the speed.
+     * @param cameraMoveSpeed the rotation speed.
+     * @returns an updated 3D position.
+     */
+    static stdController(cam: Camera3D, pos: Position3D, speed: number = 1, cameraMoveSpeed: number = 1): Position3D {
         var cLV: Vec3 = cam.lookVector();
-        var p3 : Position3D = pos;
+        var p3: Position3D = pos;
 
         var forward: Vec3 = new Vec3();
         var up: Vec3 = new Vec3(0, 1, 0);
@@ -769,35 +820,83 @@ var loadedGeometry: { [id: string]: Geometry } = {};
 var loadedReferenceTextures: { [id: string]: WebGLTexture } = {};
 var loadedReferenceGeometry: { [id: string]: ReferenceGeometry } = {};
 
-export class Mesh {
-    rotation: Vec3;
+/**
+ * A 3D object.
+ */
+export class Mesh3D extends Position3D {
+
+    /**
+     * Relative point the mesh rotates around.
+     */
     rotationCenter: Vec3;
-    position: Vec3;
+    /**
+     * The scale of the mesh.
+     */
     scale: Vec3;
+    /**
+     * The material of the mesh.
+     */
     material: Material;
+    /**
+     * Whether the mesh has been loaded to the GPU.
+     */
     loaded: boolean;
+    /**
+     * The vertex buffer location of the mesh data on the GPU.
+     */
     mVBO: WebGLBuffer;
+    /**
+     * The vertex array location of the mesh data on the GPU.
+     */
     mVAO: WebGLVertexArrayObject;
-    mTVBO: WebGLBuffer;
+    /**
+     * The loaded float vertex data of the mesh.
+     */
     data: number[];
+    /**
+     * The tint of the mesh.
+     */
     tint: Vec3 = new Vec3(1, 1, 1);
+    /**
+     * The number of triangles in the mesh
+     */
     triangles: number = 0;
-
+    /**
+     * Whether to check the geometry reference cache.
+     */
     useGeometryReferenceCache: boolean = false;
+    /**
+    * Whether to check the texture reference cache.
+    */
     useTextureReferenceCache: boolean = true;
-
+    /**
+     * Creates a new mesh.
+     * 
+     * @param position the position of the mesh.
+     * @param rotation  the rotation of the mesh.
+     * @param rotationCenter the rotation center of the mesh.
+     * @param scale the scale of the mesh
+     * @param material the material of the mesh
+     */
     constructor(position: Vec3 = new Vec3(), rotation: Vec3 = new Vec3(), rotationCenter: Vec3 = new Vec3(), scale: Vec3 = new Vec3(1, 1, 1), material: Material = new Material()) {
-        this.rotation = rotation;
+        super(position, rotation);
         this.rotationCenter = rotationCenter;
-        this.position = position;
         this.scale = scale;
         this.material = material;
         this.loaded = false;
         this.mVBO = gl.NONE;
         this.mVAO = gl.NONE;
-        this.mTVBO = gl.NONE;
         this.data = [];
     }
+    /**
+     * Loads the textures and obj file to the GPU.
+     * 
+     * @param objPath the path to the obj file
+     * @param diffTexPath the path to the diffuse texture
+     * @param specTexPath the path to the specular texture
+     * @param normalPath the path to the normal texture
+     * @param parallaxPath the path to the parallax texture
+     */
     make(objPath: string, diffTexPath: string = "NONE", specTexPath: string = "NONE",
         normalPath: string = "NONE", parallaxPath = "NONE") {
         if (this.useGeometryReferenceCache && Object.keys(loadedReferenceGeometry).includes(objPath)) {
@@ -823,6 +922,11 @@ export class Mesh {
             loadedReferenceGeometry[objPath] = refG;
         }
     }
+    /**
+     * Populates the data of the mesh.
+     * 
+     * @param raw the raw obj data
+     */
     loadFromObjData(raw: string): void {
         var verts: Vec3[] = [];
         var normals: Vec3[] = [];
@@ -887,8 +991,13 @@ export class Mesh {
             }
         }
     }
+    /**
+     * Adds the data from a triangle to the data array.
+     * 
+     * @param triangle the triangle to add.
+     */
     addTriangle(triangle: Tri): void {
-        var tangent: Vec3[] = Mesh.calcTangents(triangle); // Calculate tangent and bittangent
+        var tangent: Vec3[] = Mesh3D.calcTangents(triangle); // Calculate tangent and bittangent
         for (var i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
             this.data.push(triangle.v[i].p.y);
@@ -914,6 +1023,17 @@ export class Mesh {
         }
         this.triangles++;
     }
+    /**
+     * Loads a texture to the GPU from the specified path.
+     * 
+     * @param path the path to the texture.
+     * @param texSlot the texture slot to use.
+     * @param useRefCache whether to use the texture reference texture cache.
+     * @param wrap the wrap type of the texture.
+     * @param minFilter the min filter type of the texture.
+     * @param magFilter the mag filter type of the texture.
+     * @returns the texture location on the GPU.
+     */
     createTextureFromPath(path: string, texSlot: number = gl.TEXTURE0, useRefCache: boolean, wrap: number[] = [gl.REPEAT, gl.REPEAT],
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {
 
@@ -965,6 +1085,14 @@ export class Mesh {
             return (loadedReferenceTextures[path] = tex);
         return tex;
     }
+    /**
+     * Sets the textures of the mesh.
+     * 
+     * @param diffusePath the path to the diffuse texture
+     * @param specularPath the path to the specular texture
+     * @param normalPaththe path to the normal texture
+     * @param parallaxPath the path to the parallax texture
+     */
     setTexture(diffusePath: string, specularPath: string = "NONE", normalPath: string = "NONE",
         parallaxPath: string = "NONE"): void {
         this.material.diffuseTexture = this.createTextureFromPath(diffusePath, gl.TEXTURE0, this.useTextureReferenceCache);
@@ -974,6 +1102,10 @@ export class Mesh {
         this.material.hasNormalTexture = normalPath != "NONE";
         this.material.hasParallaxTexture = parallaxPath != "NONE";
     }
+    /**
+     * Creates a model transformation matrix based on the scale, rotation, and position of the mesh.
+     * @returns the model transformation matrix.
+     */
     modelMatrix(): Mat4 {
         var matRot: Mat4 = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
         var matTrans: Mat4 = Mat4.translation(this.position.x, this.position.y, this.position.z);
@@ -981,6 +1113,11 @@ export class Mesh {
         var matWorld: Mat4 = Mat4.mul(Mat4.mul(matScale, matRot), matTrans);
         return matWorld;
     }
+    /**
+     * Loads the data in the data array to the GPU.
+     * 
+     * @param drawType the access type of the data on the GPU.
+     */
     load(drawType: number = gl.DYNAMIC_DRAW): void {
         if (!this.loaded) {
             this.mVBO = gl.createBuffer();
@@ -1016,7 +1153,12 @@ export class Mesh {
             this.loaded = true;
         }
     }
-
+    /**
+     * Calculates the tangent and bitangent of the input triangle.
+     * 
+     * @param triangle the triangle.
+     * @returns the tangent and bitangent in a vector array.
+     */
     static calcTangents(triangle: Tri): Vec3[] {
         var edge1: Vec3 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
         var edge2: Vec3 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
@@ -1038,14 +1180,22 @@ export class Mesh {
 
         return [tan, bitTan];
     }
-
-    static renderAll(shader: Shader, camera: Camera, meshes: Mesh[], dirLight: DirectionalLight, pointLights: PointLight[] = []) {
+    /**
+     * Renders meshes.
+     * 
+     * @param shader the shader to use.
+     * @param camera the camera to use.
+     * @param meshes the meshes to render.
+     * @param dirLight the directional light to use.
+     * @param pointLights the point lights to use.
+     */
+    static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights: PointLight[] = []) {
         shader.use();
         shader.setUInt("material.diffuse", 0);
         shader.setUInt("material.specular", 1);
         shader.setUInt("material.normal", 2);
         shader.setUInt("material.parallax", 3);
-        shader.setUFloat("u_time", Date.now());
+        shader.setUFloat("u_time", (Date.now() - IngeniumWeb.startTime) / 1000);
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
         shader.setUMat4("projection", camera.perspective());
@@ -1091,25 +1241,64 @@ export class Mesh {
 }
 
 export class Light {
+    /**
+    * The intensity of the light.
+    */
+    intensity: number;
+    /**
+     * The ambient light value.
+     */
+    ambient: Vec3;
+    /**
+    * The diffuse light value.
+    */
+    diffuse: Vec3;
+    /**
+    * The specular light value.
+    */
+    specular: Vec3;
+    /**
+     * Creates a new light.
+     * 
+     * @param ambient the ambient light value.
+     * @param diffuse the diffuse light value.
+     * @param specular the specular light value.
+     * @param intensity the intensity of the light.
+     */
     constructor(ambient: Vec3, diffuse: Vec3, specular: Vec3, intensity: number) {
         this.ambient = ambient;
         this.diffuse = diffuse;
         this.specular = specular;
         this.intensity = intensity;
     }
-    intensity: number;
-    ambient: Vec3;
-    diffuse: Vec3;
-    specular: Vec3;
 }
 
 export class PointLight extends Light {
+    /**
+     * The position of the light.
+     */
     position: Vec3;
-
+    /**
+     * The constant in the light attentuation equation.
+     */
     constant: number = 1;
+    /**
+     * The linear coefficient in the light attentuation equation.
+     */
     linear: number = 0.09;
+    /**
+    * The quadratic coefficient in the light attentuation equation.
+    */
     quadratic: number = 0.032;
-
+    /**
+     * Creates a new point light.
+     * 
+     * @param ambient the ambient light value.
+     * @param diffuse the diffuse light value.
+     * @param specular the specular light value.
+     * @param direction the direction the light comes from.
+     * @param intensity the intensity of the light.
+     */
     constructor(ambient: Vec3 = new Vec3(0.05, 0.05, 0.05),
         diffuse: Vec3 = new Vec3(0.8, 0.8, 0.8),
         specular: Vec3 = new Vec3(0.2, 0.2, 0.2),
@@ -1120,9 +1309,19 @@ export class PointLight extends Light {
 }
 
 export class DirectionalLight extends Light {
-
+    /**
+     * The direction of the light.
+     */
     direction: Vec3;
-
+    /**
+     * Creates a new directional light.
+     * 
+     * @param ambient the ambient light value.
+     * @param diffuse the diffuse light value.
+     * @param specular the specular light value.
+     * @param direction the direction the light comes from.
+     * @param intensity the intensity of the light.
+     */
     constructor(ambient: Vec3 = new Vec3(0.05, 0.05, 0.05),
         diffuse: Vec3 = new Vec3(0.8, 0.8, 0.8),
         specular: Vec3 = new Vec3(0.2, 0.2, 0.2),
@@ -1132,32 +1331,59 @@ export class DirectionalLight extends Light {
     }
 }
 
-
-
 export class Geometry {
-    static makeCube() {
-        return new Geometry(cubeData, "Default Cube");
-    }
-
+    /**
+     * The name of the geometry.
+     */
     name: string;
+    /**
+     * The .obj raw data of the geometry.
+     */
     data: string;
-
+    /**
+     * Creates a new geometry object.
+     * 
+     * @param data The .obj raw data of the geometry.
+     * @param name The name of the geometry.
+     */
     constructor(data: string, name: string = "NONE") {
         this.data = data;
         this.name = name;
     }
+
+    /**
+    * 
+    * @returns the geometry of a 3D cube.
+    */
+    static makeCube() {
+        return new Geometry(cubeData, "Default Cube");
+    }
 }
 
 export class ReferenceGeometry {
+    /**
+     * The vertex buffer.
+     */
     VBO: WebGLBuffer;
+    /**
+     * The vertex array.
+     */
     VAO: WebGLVertexArrayObject;
+    /**
+     * The number of triangles.
+     */
     triangles: number;
 }
 
 var cubeData: string = "v -1.000000 1.000000 -1.000000\nv 1.000000 1.000000 1.000000\nv 1.000000 1.000000 -1.000000\nv -1.000000 -1.000000 1.000000\nv 1.000000 -1.000000 1.000000\nv -1.000000 1.000000 1.000000\nv -1.000000 -1.000000 -1.000000\nv 1.000000 -1.000000 -1.000000\nvt 1.000000 0.000000\nvt 0.666667 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.333333\nvt 0.000000 0.000000\nvt 0.333333 0.000000\nvt 0.333333 0.666667\nvt 0.000000 0.333333\nvt 0.333333 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.000000\nvt 0.666667 0.666667\nvt 0.333333 0.333333\nvt 0.666667 0.333333\nvt 0.333333 1.000000\nvt 0.000000 0.666667\nvt 0.333333 0.666667\nvt 1.000000 0.333333\nvt 0.000000 0.333333\nvt 0.000000 0.666667\nvt 0.666667 0.333333\nvt 0.333333 0.666667\nvt 0.000000 1.000000\nvn 0.0000 1.0000 0.0000\nvn 0.0000 -0.0000 1.0000\nvn -1.0000 0.0000 0.0000\nvn 0.0000 -1.0000 -0.0000\nvn 1.0000 0.0000 0.0000\nvn 0.0000 0.0000 -1.0000\ns off\nf 1/1/1 2/2/1 3/3/1\nf 2/4/2 4/5/2 5/6/2\nf 6/7/3 7/8/3 4/9/3\nf 8/10/4 4/9/4 7/11/4\nf 3/12/5 5/13/5 8/14/5\nf 1/15/6 8/16/6 7/17/6\nf 1/1/1 6/18/1 2/2/1\nf 2/4/2 6/19/2 4/5/2\nf 6/7/3 1/20/3 7/8/3\nf 8/10/4 5/21/4 4/9/4\nf 3/12/5 2/22/5 5/13/5\nf 1/15/6 3/23/6 8/16/6";
 
-
 export class Utils {
+    /**
+     * Loads the string data of a file.
+     * 
+     * @param filePath the path to the file.
+     * @returns the string data of the file, or null if the file isn't found.
+     */
     static loadFile(filePath: string): string | null {
         var result = null;
         var xmlhttp = new XMLHttpRequest();
@@ -1165,23 +1391,9 @@ export class Utils {
         xmlhttp.send();
         if (xmlhttp.status == 200) {
             result = xmlhttp.responseText;
+        } else {
+            console.error("XMLHTTP error (", filePath, "): ", xmlhttp.status);
         }
         return result;
-    }
-    static typeCheck(value: any, type: any, loc: string): boolean {
-        if (!(value instanceof type)) {
-            IngeniumWeb.terminate("Error in " + loc + ": Cannot convert " + typeof (value) + " to " + type.name);
-            return true;
-        }
-        return false;
-    }
-    static argCheck(fargs: any, loc: string, types: any): boolean {
-        var ret = false;
-        for (var arg = 0; arg < fargs.length; arg++) {
-            var arr = fargs[arg];
-            ret = ret || Utils.typeCheck(arr, types[arg], loc);
-            if (ret) return ret;
-        }
-        return ret;
     }
 }

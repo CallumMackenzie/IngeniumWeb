@@ -49,14 +49,14 @@ void main ()
 {
     vec2 cUV = vec2(UV.x, 1.0 - UV.y);
     vec3 norm;
-    norm = CalcBumpedNormal(cUV); // normalize(TBN * (texture(material.normal, cUV).rgb * 2.0 - 1.0));
+    norm = CalcBumpedNormal(cUV);
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 result = CalcDirLight(dirLight, norm, viewDir, cUV);
 #if NR_POINT_LIGHTS > 0
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
         result += CalcPointLight(pointLights[i], norm, fragPos, viewDir, cUV);
 #endif
-    color = vec4(result, 1.0);
+    color = vec4(result * vec3(sin(u_time), sin(u_time) + 1.0, sin(u_time) + 2.0), 1.0);
 }
 
 vec3 CalcBumpedNormal(vec2 cUV)
@@ -65,7 +65,7 @@ vec3 CalcBumpedNormal(vec2 cUV)
     vec3 Tangent = normalize(Tangent0);
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     vec3 Bitangent = cross(Tangent, Normal);
-    vec3 BumpMapNormal = texture(material.normal, cUV).xyz;
+    vec3 BumpMapNormal = texture(material.normal, cUV).rgb;
     BumpMapNormal = 2.0 * BumpMapNormal - vec3(1.0, 1.0, 1.0);
     vec3 NewNormal;
     mat3 TBN = mat3(Tangent, Bitangent, Normal);
