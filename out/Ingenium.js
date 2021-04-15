@@ -7,6 +7,9 @@ export var gl;
  * Automatic input manager.
  */
 export class Input {
+    /**
+     * Initializes the input system.
+     */
     static setup() {
         window.addEventListener("keydown", function (event) {
             if (event.ctrlKey == true && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
@@ -27,6 +30,9 @@ export class Input {
         return (Input.keys[key] === undefined ? false : Input.keys[key]);
     }
 }
+/**
+ * Dictionary of keys.
+ */
 Input.keys = {};
 export class Time {
     static setFPS(newfps) {
@@ -138,7 +144,17 @@ export class WebGLWindow {
     }
 }
 ;
+/**
+ * A set of methods to be executed by Ingenium Web.
+ */
 export class Scene {
+    /**
+     *
+     * @param onCreate the function executed when the scene is created.
+     * @param onUpdate the function executed when the scene is updated.
+     * @param onClose the function executed when the scene is closed.
+     * @param onFixedUpdate the function executed when the scene is updated on the fixed loop.
+     */
     constructor(onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }) {
         this.onCreate = onCreate;
         this.onClose = onClose;
@@ -147,6 +163,16 @@ export class Scene {
     }
 }
 export class IngeniumWeb {
+    /**
+     * Starts the engine.
+     *
+     * @param scenes the scenes to use.
+     * @param onCreate the global creation function.
+     * @param onUpdate the global update function.
+     * @param onClose the global closing function.
+     * @param onFixedUpdate the global fixed update function.
+     * @param webGL the WebGl version to use.
+     */
     static start(scenes, onCreate = function () { }, onUpdate = function () { }, onClose = function () { }, onFixedUpdate = function () { }, webGL = "webgl2") {
         this.startTime = Date.now();
         IngeniumWeb.window = null;

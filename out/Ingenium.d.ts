@@ -6,9 +6,15 @@ export declare var gl: WebGL2RenderingContext;
  * Automatic input manager.
  */
 export declare class Input {
+    /**
+     * Dictionary of keys.
+     */
     static keys: {
         [id: string]: boolean;
     };
+    /**
+     * Initializes the input system.
+     */
     static setup(): void;
     /**
      *
@@ -45,11 +51,33 @@ export declare class WebGLWindow {
     setClearColour(hex: number, alpha: number): void;
     clear(): void;
 }
+/**
+ * A set of methods to be executed by Ingenium Web.
+ */
 export declare class Scene {
+    /**
+     * The function executed when the scene is created.
+     */
     onCreate: Function;
+    /**
+     * The function executed when the scene is updated.
+     */
     onUpdate: Function;
+    /**
+     * The function executed when the scene is updated on the fixed loop.
+     */
     onFixedUpdate: Function;
+    /**
+     * The function executed when the scene is closed.
+     */
     onClose: Function;
+    /**
+     *
+     * @param onCreate the function executed when the scene is created.
+     * @param onUpdate the function executed when the scene is updated.
+     * @param onClose the function executed when the scene is closed.
+     * @param onFixedUpdate the function executed when the scene is updated on the fixed loop.
+     */
     constructor(onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function);
 }
 export declare class IngeniumWeb {
@@ -65,6 +93,16 @@ export declare class IngeniumWeb {
     static scenes: Scene[];
     static currentScene: number;
     static startTime: number;
+    /**
+     * Starts the engine.
+     *
+     * @param scenes the scenes to use.
+     * @param onCreate the global creation function.
+     * @param onUpdate the global update function.
+     * @param onClose the global closing function.
+     * @param onFixedUpdate the global fixed update function.
+     * @param webGL the WebGl version to use.
+     */
     static start(scenes: Scene[], onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function, webGL?: string): void;
     static createWindow(width: number, height: number, id: string, parentName?: string, takeUpAsepct?: boolean): void;
     static update(): void;

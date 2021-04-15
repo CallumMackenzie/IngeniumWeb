@@ -93,7 +93,9 @@ function onGlobalCreate() {
     earth.material.shininess = 0.9;
     earth.makeTwoTex(objPath, "./resource/earth/b.jpg", "./resource/earth/db.jpg", "./resource/earth/s.png", "./resource/earth/n.png");
     m.push(earth);
-    camera.position = sun.position.add(new IW.Vec3(0, 0, -100));
+    GBody.locked = 1;
+    camera.refPos.position = new IW.Vec3(0, 0, -1);
+    camera.setToLockedGBody();
 }
 function onUpdate() {
     if (IW.Input.getKeyState('1')) {
@@ -126,9 +128,9 @@ function onUpdate() {
     camera.rotation = camera.refPos.rotation;
     camera.position = m[GBody.locked].position.add(camera.refPos.position);
     p[0].position = m[0].position;
-    IW.Mesh3D.renderAll(shader, camera, [m[0]], d, p);
+    IW.Mesh3D.renderAll(shader, camera, [], d, p);
     m[1].bindDTexture(earthShader);
-    IW.Mesh3D.renderAll(earthShader, camera, [m[1]], d, p);
+    IW.Mesh3D.renderAll(earthShader, camera, [m[1], m[0]], d, p);
 }
 var scene = new IW.Scene(function () { }, onUpdate);
 IW.IngeniumWeb.start([scene], onGlobalCreate);

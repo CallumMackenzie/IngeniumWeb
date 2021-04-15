@@ -45,18 +45,51 @@ in vec3 normal;
 in vec3 fragPos;
 in vec3 Tangent0;
 
+float random (in float x) {
+    return fract(sin(x)*1e4);
+}
+
+float random (in vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))* 43758.5453123);
+}
+
+float pattern(vec2 st, vec2 v, float t) {
+    vec2 p = floor(st+v);
+    return step(t, random(100.+p*.000001)+random(p.x)*0.5 );
+}
+
 void main () 
 {
     vec2 cUV = vec2(UV.x, 1.0 - UV.y);
-    vec3 norm;
-    norm = CalcBumpedNormal(cUV);
+    vec3 norm = CalcBumpedNormal(cUV);
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 result = CalcDirLight(dirLight, norm, viewDir, cUV);
 #if NR_POINT_LIGHTS > 0
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
         result += CalcPointLight(pointLights[i], norm, fragPos, viewDir, cUV);
 #endif
-    color = vec4(result * vec3(sin(u_time), sin(u_time) + 1.0, sin(u_time) + 2.0), 1.0);
+    vec3 spc = texture((material.specular), cUV).rgb;
+    if (length(spc) > 0.5) {
+            vec2 st = fragPos.xy;
+            vec2 grid = vec2(100.0,50.0);
+            st *= grid;
+
+            vec2 ipos = floor(st);
+            vec2 fpos = fract(st);
+
+            vec2 vel = vec2(u_time*2.0*max(grid.x, grid.y)); // time
+            vel *= vec2(-1.0,0.0) * random(1.0 + ipos.y); // direction
+
+            vec2 offset = vec2(0.1,0.0);
+
+            vec3 c = vec3(0.0);
+            c.r = pattern(st+offset,vel,0.5);
+            c.g = pattern(st,vel,0.5);
+            c.b = pattern(st-offset,vel,0.5);
+            c *= step(0.2,fpos.y);
+            result = c;
+    }
+    color = vec4(result, 1.0);
 }
 
 vec3 CalcBumpedNormal(vec2 cUV)
