@@ -1,7 +1,7 @@
 /**
  * The OpenGL object of the program.
  */
-export declare var gl: WebGL2RenderingContext;
+export declare let gl: WebGL2RenderingContext;
 /**
  * Automatic input manager.
  */
@@ -115,7 +115,7 @@ export declare class IngeniumWeb {
 /**
  * An approximation of PI (355 / 113);
  */
-export declare var PI: number;
+export declare let PI: number;
 /**
  * A 2 component vector with a third w component.
  */

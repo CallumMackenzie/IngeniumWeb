@@ -2,7 +2,7 @@
 /**
  * The OpenGL object of the program.
  */
-export var gl;
+export let gl;
 /**
  * Automatic input manager.
  */
@@ -103,8 +103,8 @@ export class WebGLWindow {
     ;
     sizeToWindow(aspect) {
         aspect = 1 / aspect;
-        var win_width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-        var win_height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        let win_width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+        let win_height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
         if (win_width / win_height != aspect) {
             if (win_height * aspect < win_width) {
                 this.canvas.width = win_height * aspect;
@@ -128,11 +128,11 @@ export class WebGLWindow {
     }
     setClearColour(hex, alpha) {
         gl.clearDepth(1.0);
-        var r = (hex & 0xFF0000) >> 16;
-        var g = (hex & 0x00FF00) >> 8;
-        var b = (hex & 0x0000FF);
+        let r = (hex & 0xFF0000) >> 16;
+        let g = (hex & 0x00FF00) >> 8;
+        let b = (hex & 0x0000FF);
         gl.clearColor(r / 255, g / 255, b / 255, alpha);
-        var col = {
+        let col = {
             prop: "background",
             val: "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")"
         };
@@ -247,7 +247,7 @@ IngeniumWeb.startTime = 0;
 /**
  * An approximation of PI (355 / 113);
  */
-export var PI = 355 / 113;
+export let PI = 355 / 113;
 /**
  * A 2 component vector with a third w component.
  */
@@ -358,7 +358,7 @@ export class Vec2 {
      * @returns the normalized vector.
      */
     static normalize(v) {
-        var l = Vec2.len(v);
+        let l = Vec2.len(v);
         return new Vec2(v.x / l, v.y / l);
     }
     /**
@@ -571,7 +571,7 @@ export class Vec3 {
      * @returns the normalized vector.
      */
     static normalize(v) {
-        var l = Vec3.len(v);
+        let l = Vec3.len(v);
         if (l != 0)
             return new Vec3(v.x / l, v.y / l, v.z / l);
         return new Vec3();
@@ -583,7 +583,7 @@ export class Vec3 {
      * @returns the cross product of the passed vectors.
      */
     static cross(v1, v2) {
-        var v = new Vec3();
+        let v = new Vec3();
         v.x = v1.y * v2.z - v1.z * v2.y;
         v.y = v1.z * v2.x - v1.x * v2.z;
         v.z = v1.x * v2.y - v1.y * v2.x;
@@ -596,7 +596,7 @@ export class Vec3 {
      * @returns the product.
      */
     static mulMat(i, m) {
-        var v = new Vec3();
+        let v = new Vec3();
         v.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + i.w * m.m[3][0];
         v.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z * m.m[2][1] + i.w * m.m[3][1];
         v.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z * m.m[2][2] + i.w * m.m[3][2];
@@ -725,8 +725,8 @@ export class Mat4 {
      * @returns the perspective projection matrix.
      */
     static perspective(fovDeg, aspectRatio, near, far) {
-        var fovRad = 1.0 / Math.tan(Rotation.degToRad(fovDeg * 0.5));
-        var matrix = new Mat4();
+        let fovRad = 1.0 / Math.tan(Rotation.degToRad(fovDeg * 0.5));
+        let matrix = new Mat4();
         matrix.m[0][0] = aspectRatio * fovRad;
         matrix.m[1][1] = fovRad;
         matrix.m[2][2] = far / (far - near);
@@ -742,7 +742,7 @@ export class Mat4 {
      * @returns the inverse of the matrix.
      */
     static inverse(m) {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = m.m[0][0];
         matrix.m[0][1] = m.m[1][0];
         matrix.m[0][2] = m.m[2][0];
@@ -766,7 +766,7 @@ export class Mat4 {
      * @returns an identity matrix.
      */
     static identity() {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = 1.0;
         matrix.m[1][1] = 1.0;
         matrix.m[2][2] = 1.0;
@@ -781,13 +781,13 @@ export class Mat4 {
      * @returns a matrix that repersents a transformation to point at a position.
      */
     static pointedAt(pos, target, up = new Vec3(0, 1, 0)) {
-        var newForward = Vec3.sub(target, pos);
+        let newForward = Vec3.sub(target, pos);
         newForward = Vec3.normalize(newForward);
-        var a = Vec3.mulFloat(newForward, Vec3.dot(up, newForward));
-        var newUp = Vec3.sub(up, a);
+        let a = Vec3.mulFloat(newForward, Vec3.dot(up, newForward));
+        let newUp = Vec3.sub(up, a);
         newUp = Vec3.normalize(newUp);
-        var newRight = Vec3.cross(newUp, newForward);
-        var matrix = new Mat4();
+        let newRight = Vec3.cross(newUp, newForward);
+        let matrix = new Mat4();
         matrix.m[0][0] = newRight.x;
         matrix.m[0][1] = newRight.y;
         matrix.m[0][2] = newRight.z;
@@ -814,7 +814,7 @@ export class Mat4 {
      * @returns a scaling matrix.
      */
     static scale(x = 1, y = 1, z = 1) {
-        var matrix = Mat4.identity();
+        let matrix = Mat4.identity();
         matrix.m[0][0] = x;
         matrix.m[1][1] = y;
         matrix.m[2][2] = z;
@@ -828,7 +828,7 @@ export class Mat4 {
      * @returns a translation matrix.
      */
     static translation(x = 0, y = 0, z = 0) {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = 1.0;
         matrix.m[1][1] = 1.0;
         matrix.m[2][2] = 1.0;
@@ -845,9 +845,9 @@ export class Mat4 {
      * @returns the product of the matrices.
      */
     static mul(m1, m2) {
-        var matrix = new Mat4();
-        for (var c = 0; c < 4; c++)
-            for (var r = 0; r < 4; r++)
+        let matrix = new Mat4();
+        for (let c = 0; c < 4; c++)
+            for (let r = 0; r < 4; r++)
                 matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
         return matrix;
     }
@@ -857,7 +857,7 @@ export class Mat4 {
      * @returns a rotation matrix.
      */
     static rotationX(xRad) {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = 1;
         matrix.m[1][1] = Math.cos(xRad);
         matrix.m[1][2] = Math.sin(xRad);
@@ -872,7 +872,7 @@ export class Mat4 {
      * @returns a rotation matrix.
      */
     static rotationY(yRad) {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = Math.cos(yRad);
         matrix.m[0][2] = Math.sin(yRad);
         matrix.m[2][0] = -Math.sin(yRad);
@@ -887,7 +887,7 @@ export class Mat4 {
      * @returns a rotation matrix.
      */
     static rotationZ(zRad) {
-        var matrix = new Mat4();
+        let matrix = new Mat4();
         matrix.m[0][0] = Math.cos(zRad);
         matrix.m[0][1] = Math.sin(zRad);
         matrix.m[1][0] = -Math.sin(zRad);
@@ -905,7 +905,7 @@ export class Mat4 {
      * @returns a rotation matrix.
      */
     static rotationOnPoint(xRad, yRad, zRad, pt) {
-        var mat = Mat4.mul(Mat4.mul(Mat4.translation(pt.x, pt.y, pt.z), Mat4.mul(Mat4.mul(Mat4.rotationX(xRad), Mat4.rotationY(yRad)), Mat4.rotationZ(zRad))), Mat4.translation(-pt.x, -pt.y, -pt.z));
+        let mat = Mat4.mul(Mat4.mul(Mat4.translation(pt.x, pt.y, pt.z), Mat4.mul(Mat4.mul(Mat4.rotationX(xRad), Mat4.rotationY(yRad)), Mat4.rotationZ(zRad))), Mat4.translation(-pt.x, -pt.y, -pt.z));
         return mat;
     }
 }
@@ -947,8 +947,8 @@ export class Shader {
          * The shader program.
          */
         this.program = gl.NONE;
-        var vShader = Shader.compile(vertSource, gl.VERTEX_SHADER);
-        var fShader = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
+        let vShader = Shader.compile(vertSource, gl.VERTEX_SHADER);
+        let fShader = Shader.compile(fragSource, gl.FRAGMENT_SHADER);
         this.program = gl.createProgram();
         gl.attachShader(this.program, vShader);
         gl.attachShader(this.program, fShader);
@@ -962,11 +962,11 @@ export class Shader {
      * @returns the compiled shader location.
      */
     static compile(source, type) {
-        var shader = gl.createShader(type);
+        let shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            var err = {
+            let err = {
                 type: "SHADER_COMPILE_ERROR",
                 shaderInt: type,
                 shaderType: (type == gl.VERTEX_SHADER) ? "vertex shader" : "fragment shader",
@@ -1071,13 +1071,13 @@ export class ShaderSource {
      * @returns the proper shader source code.
      */
     static shaderWithParams(shaderName, paramDict = {}) {
-        var keys = Object.keys(paramDict);
-        var ss = ShaderSource.shaders[shaderName];
-        var src = ss.source;
-        var exp = ss.getExpectedParams();
-        for (var j = 0; j < exp.length; j++) {
+        let keys = Object.keys(paramDict);
+        let ss = ShaderSource.shaders[shaderName];
+        let src = ss.source;
+        let exp = ss.getExpectedParams();
+        for (let j = 0; j < exp.length; j++) {
             if (keys.includes(exp[j])) {
-                var pName = keys[keys.indexOf(exp[j])];
+                let pName = keys[keys.indexOf(exp[j])];
                 src = src.replace("$" + pName.toString() + "$", paramDict[pName.toString()].toString());
             }
             else {
@@ -1244,9 +1244,9 @@ export class Camera3D extends Position3D {
      * @returns a vector repersenting the direction the camera is looking.
      */
     lookVector() {
-        var target = new Vec3(0, 0, 1);
-        var up = new Vec3(0, 1, 0);
-        var mRotation = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
+        let target = new Vec3(0, 0, 1);
+        let up = new Vec3(0, 1, 0);
+        let mRotation = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
         target = Vec3.mulMat(target, mRotation);
         return target;
     }
@@ -1262,14 +1262,14 @@ export class Camera3D extends Position3D {
      * @returns the camera transformation matrix.
      */
     cameraMatrix() {
-        var vUp = new Vec3(0, 1, 0);
-        var vTarget = new Vec3(0, 0, 1);
-        var matCameraRotY = Mat4.rotationY(this.rotation.y);
-        var matCameraRotX = Mat4.rotationX(this.rotation.x);
-        var matCameraRotZ = Mat4.rotationZ(this.rotation.z);
-        var camRot = Vec3.mulMat(vTarget, Mat4.mul(Mat4.mul(matCameraRotX, matCameraRotY), matCameraRotZ));
+        let vUp = new Vec3(0, 1, 0);
+        let vTarget = new Vec3(0, 0, 1);
+        let matCameraRotY = Mat4.rotationY(this.rotation.y);
+        let matCameraRotX = Mat4.rotationX(this.rotation.x);
+        let matCameraRotZ = Mat4.rotationZ(this.rotation.z);
+        let camRot = Vec3.mulMat(vTarget, Mat4.mul(Mat4.mul(matCameraRotX, matCameraRotY), matCameraRotZ));
         vTarget = Vec3.add(this.position, camRot);
-        var matCamera = Mat4.pointedAt(this.position, vTarget, vUp);
+        let matCamera = Mat4.pointedAt(this.position, vTarget, vUp);
         return matCamera;
     }
     /**
@@ -1279,7 +1279,7 @@ export class Camera3D extends Position3D {
      * @param cameraMoveSpeed the rotation speed of the camera.
      */
     stdControl(speed = 1, cameraMoveSpeed = 1) {
-        var p3d = Camera3D.stdController(this, this, speed, cameraMoveSpeed);
+        let p3d = Camera3D.stdController(this, this, speed, cameraMoveSpeed);
         this.position = p3d.position;
         this.rotation = p3d.rotation;
     }
@@ -1293,11 +1293,11 @@ export class Camera3D extends Position3D {
      * @returns an updated 3D position.
      */
     static stdController(cam, pos, speed = 1, cameraMoveSpeed = 1) {
-        var cLV = cam.lookVector();
-        var p3 = pos;
-        var forward = new Vec3();
-        var up = new Vec3(0, 1, 0);
-        var rotate = new Vec3();
+        let cLV = cam.lookVector();
+        let p3 = pos;
+        let forward = new Vec3();
+        let up = new Vec3(0, 1, 0);
+        let rotate = new Vec3();
         if (Input.getKeyState('w'))
             forward = Vec3.add(forward, cLV);
         if (Input.getKeyState('s'))
@@ -1333,10 +1333,10 @@ export class Camera3D extends Position3D {
         return p3;
     }
 }
-var loadedImages = {};
-var loadedGeometry = {};
-var loadedReferenceTextures = {};
-var loadedReferenceGeometry = {};
+let loadedImages = {};
+let loadedGeometry = {};
+let loadedReferenceTextures = {};
+let loadedReferenceGeometry = {};
 /**
  * A 3D object.
  */
@@ -1387,7 +1387,7 @@ export class Mesh3D extends Position3D {
      */
     make(objPath, diffTexPath = "NONE", specTexPath = "NONE", normalPath = "NONE", parallaxPath = "NONE") {
         if (this.useGeometryReferenceCache && Object.keys(loadedReferenceGeometry).includes(objPath)) {
-            var geom = loadedReferenceGeometry[objPath];
+            let geom = loadedReferenceGeometry[objPath];
             this.mVBO = geom.VBO;
             this.mVAO = geom.VAO;
             this.triangles = geom.triangles;
@@ -1397,14 +1397,14 @@ export class Mesh3D extends Position3D {
             this.loadFromObjData(loadedGeometry[objPath].data);
         }
         else {
-            var obGeometry = new Geometry(Utils.loadFile(objPath), "USER_GEOMETRY");
+            let obGeometry = new Geometry(Utils.loadFile(objPath), "USER_GEOMETRY");
             loadedGeometry[objPath] = obGeometry;
             this.loadFromObjData(obGeometry.data);
         }
         this.setTexture(diffTexPath, specTexPath, normalPath, parallaxPath);
         this.load();
         if (!Object.keys(loadedReferenceGeometry).includes(objPath)) {
-            var refG = new ReferenceGeometry();
+            let refG = new ReferenceGeometry();
             refG.VBO = this.mVBO;
             refG.VAO = this.mVAO;
             refG.triangles = this.triangles;
@@ -1417,33 +1417,33 @@ export class Mesh3D extends Position3D {
      * @param raw the raw obj data
      */
     loadFromObjData(raw) {
-        var verts = [];
-        var normals = [];
-        var texs = [];
-        var lines = raw.split("\n");
-        var hasNormals = raw.includes("vn");
-        var hasTexture = raw.includes("vt");
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
+        let verts = [];
+        let normals = [];
+        let texs = [];
+        let lines = raw.split("\n");
+        let hasNormals = raw.includes("vn");
+        let hasTexture = raw.includes("vt");
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
             if (line[0] == 'v') {
                 if (line[1] == 't') {
-                    var v = new Vec2();
-                    var seg = line.split(" ");
+                    let v = new Vec2();
+                    let seg = line.split(" ");
                     v.x = parseFloat(seg[1]);
                     v.y = parseFloat(seg[2]);
                     texs.push(v);
                 }
                 else if (line[1] == 'n') {
-                    var normal = new Vec3();
-                    var seg = line.split(" ");
+                    let normal = new Vec3();
+                    let seg = line.split(" ");
                     normal.x = parseFloat(seg[1]);
                     normal.y = parseFloat(seg[2]);
                     normal.z = parseFloat(seg[3]);
                     normals.push(normal);
                 }
                 else {
-                    var ve = new Vec3();
-                    var seg = line.split(" ");
+                    let ve = new Vec3();
+                    let seg = line.split(" ");
                     ve.x = parseFloat(seg[1]);
                     ve.y = parseFloat(seg[2]);
                     ve.z = parseFloat(seg[3]);
@@ -1451,17 +1451,17 @@ export class Mesh3D extends Position3D {
                 }
             }
             if (line[0] == 'f') {
-                var params = 1;
+                let params = 1;
                 if (hasNormals)
                     params++;
                 if (hasTexture)
                     params++;
-                var vals = [];
-                var seg = line.replace("f", "").split(/[\/\s]+/g);
-                for (var l = 1; l < seg.length; l++)
+                let vals = [];
+                let seg = line.replace("f", "").split(/[\/\s]+/g);
+                for (let l = 1; l < seg.length; l++)
                     vals.push(parseInt(seg[l]));
-                var push = new Tri3D();
-                for (var k = 0; k < 3; k++) {
+                let push = new Tri3D();
+                for (let k = 0; k < 3; k++) {
                     push.v[k].p = verts[vals[params * k] - 1];
                     if (hasTexture)
                         push.v[k].t = texs[vals[(params * k) + 1] - 1];
@@ -1480,8 +1480,8 @@ export class Mesh3D extends Position3D {
      * @param triangle the triangle to add.
      */
     addTriangle(triangle) {
-        var tangent = Mesh3D.calcTangents(triangle); // Calculate tangent and bittangent
-        for (var i = 0; i < 3; i++) {
+        let tangent = Mesh3D.calcTangents(triangle); // Calculate tangent and bittangent
+        for (let i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
             this.data.push(triangle.v[i].p.y);
             this.data.push(triangle.v[i].p.z);
@@ -1517,13 +1517,13 @@ export class Mesh3D extends Position3D {
         if (useRefCache && Object.keys(loadedReferenceTextures).includes(path)) {
             return loadedReferenceTextures[path];
         }
-        var tex = gl.NONE;
+        let tex = gl.NONE;
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 255]));
         if (path != "NONE") {
-            var image;
+            let image;
             if (Object.keys(loadedImages).includes(path) && loadedImages[path].complete) {
                 image = loadedImages[path];
                 gl.activeTexture(texSlot);
@@ -1575,10 +1575,10 @@ export class Mesh3D extends Position3D {
      * @returns the model transformation matrix.
      */
     modelMatrix() {
-        var matRot = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
-        var matTrans = Mat4.translation(this.position.x, this.position.y, this.position.z);
-        var matScale = Mat4.scale(this.scale.x, this.scale.y, this.scale.z);
-        var matWorld = Mat4.mul(Mat4.mul(matScale, matRot), matTrans);
+        let matRot = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
+        let matTrans = Mat4.translation(this.position.x, this.position.y, this.position.z);
+        let matScale = Mat4.scale(this.scale.x, this.scale.y, this.scale.z);
+        let matWorld = Mat4.mul(Mat4.mul(matScale, matRot), matTrans);
         return matWorld;
     }
     /**
@@ -1594,9 +1594,9 @@ export class Mesh3D extends Position3D {
             this.mVAO = gl.createVertexArray();
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
-            var size = Vert3D.tSize;
-            var floatSize = 4;
-            var stride = size * floatSize; // Num of array elements resulting from a Vert3D
+            let size = Vert3D.tSize;
+            let floatSize = 4;
+            let stride = size * floatSize; // Num of array elements resulting from a Vert3D
             gl.vertexAttribPointer(0, 4, gl.FLOAT, false, stride, 0); // Vertex data
             gl.enableVertexAttribArray(0);
             gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 4 * floatSize); // UV data
@@ -1618,16 +1618,16 @@ export class Mesh3D extends Position3D {
      * @returns the tangent and bitangent in a vector array.
      */
     static calcTangents(triangle) {
-        var edge1 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
-        var edge2 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
-        var dUV1 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
-        var dUV2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
-        var f = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
-        var tan = new Vec3();
+        let edge1 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
+        let edge2 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
+        let dUV1 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
+        let dUV2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
+        let f = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
+        let tan = new Vec3();
         tan.x = f * (dUV2.y * edge1.x - dUV1.y * edge2.x);
         tan.y = f * (dUV2.y * edge1.y - dUV1.y * edge2.y);
         tan.z = f * (dUV2.y * edge1.z - dUV1.y * edge2.z);
-        var bitTan = new Vec3();
+        let bitTan = new Vec3();
         bitTan.x = f * (-dUV2.x * edge1.x + dUV1.x * edge2.x);
         bitTan.y = f * (-dUV2.x * edge1.y + dUV1.x * edge2.y);
         bitTan.z = f * (-dUV2.x * edge1.z + dUV1.x * edge2.z);
@@ -1656,7 +1656,7 @@ export class Mesh3D extends Position3D {
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
         shader.setUVec3("dirLight.specular", dirLight.specular.mulFloat(dirLight.intensity));
         shader.setUVec3("dirLight.diffuse", dirLight.diffuse.mulFloat(dirLight.intensity));
-        for (var j = 0; j < pointLights.length; j++) {
+        for (let j = 0; j < pointLights.length; j++) {
             shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
             shader.setUVec3("pointLights[" + j + "].ambient", pointLights[j].ambient);
             shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[j].diffuse, pointLights[j].intensity));
@@ -1665,9 +1665,9 @@ export class Mesh3D extends Position3D {
             shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
             shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
         }
-        for (var i = 0; i < meshes.length; i++) {
+        for (let i = 0; i < meshes.length; i++) {
             gl.bindVertexArray(meshes[i].mVAO);
-            var model = meshes[i].modelMatrix();
+            let model = meshes[i].modelMatrix();
             shader.setUMat4("model", model);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
@@ -1679,7 +1679,7 @@ export class Mesh3D extends Position3D {
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
             gl.activeTexture(gl.TEXTURE2);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.normalTexture);
-            var verts = meshes[i].triangles * 3;
+            let verts = meshes[i].triangles * 3;
             gl.drawArrays(gl.TRIANGLES, 0, verts);
         }
     }
@@ -1778,7 +1778,7 @@ export class Geometry {
  */
 export class ReferenceGeometry {
 }
-var cubeData = "v -1.000000 1.000000 -1.000000\nv 1.000000 1.000000 1.000000\nv 1.000000 1.000000 -1.000000\nv -1.000000 -1.000000 1.000000\nv 1.000000 -1.000000 1.000000\nv -1.000000 1.000000 1.000000\nv -1.000000 -1.000000 -1.000000\nv 1.000000 -1.000000 -1.000000\nvt 1.000000 0.000000\nvt 0.666667 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.333333\nvt 0.000000 0.000000\nvt 0.333333 0.000000\nvt 0.333333 0.666667\nvt 0.000000 0.333333\nvt 0.333333 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.000000\nvt 0.666667 0.666667\nvt 0.333333 0.333333\nvt 0.666667 0.333333\nvt 0.333333 1.000000\nvt 0.000000 0.666667\nvt 0.333333 0.666667\nvt 1.000000 0.333333\nvt 0.000000 0.333333\nvt 0.000000 0.666667\nvt 0.666667 0.333333\nvt 0.333333 0.666667\nvt 0.000000 1.000000\nvn 0.0000 1.0000 0.0000\nvn 0.0000 -0.0000 1.0000\nvn -1.0000 0.0000 0.0000\nvn 0.0000 -1.0000 -0.0000\nvn 1.0000 0.0000 0.0000\nvn 0.0000 0.0000 -1.0000\ns off\nf 1/1/1 2/2/1 3/3/1\nf 2/4/2 4/5/2 5/6/2\nf 6/7/3 7/8/3 4/9/3\nf 8/10/4 4/9/4 7/11/4\nf 3/12/5 5/13/5 8/14/5\nf 1/15/6 8/16/6 7/17/6\nf 1/1/1 6/18/1 2/2/1\nf 2/4/2 6/19/2 4/5/2\nf 6/7/3 1/20/3 7/8/3\nf 8/10/4 5/21/4 4/9/4\nf 3/12/5 2/22/5 5/13/5\nf 1/15/6 3/23/6 8/16/6";
+let cubeData = "v -1.000000 1.000000 -1.000000\nv 1.000000 1.000000 1.000000\nv 1.000000 1.000000 -1.000000\nv -1.000000 -1.000000 1.000000\nv 1.000000 -1.000000 1.000000\nv -1.000000 1.000000 1.000000\nv -1.000000 -1.000000 -1.000000\nv 1.000000 -1.000000 -1.000000\nvt 1.000000 0.000000\nvt 0.666667 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.333333\nvt 0.000000 0.000000\nvt 0.333333 0.000000\nvt 0.333333 0.666667\nvt 0.000000 0.333333\nvt 0.333333 0.333333\nvt 0.666667 0.000000\nvt 0.333333 0.000000\nvt 0.666667 0.666667\nvt 0.333333 0.333333\nvt 0.666667 0.333333\nvt 0.333333 1.000000\nvt 0.000000 0.666667\nvt 0.333333 0.666667\nvt 1.000000 0.333333\nvt 0.000000 0.333333\nvt 0.000000 0.666667\nvt 0.666667 0.333333\nvt 0.333333 0.666667\nvt 0.000000 1.000000\nvn 0.0000 1.0000 0.0000\nvn 0.0000 -0.0000 1.0000\nvn -1.0000 0.0000 0.0000\nvn 0.0000 -1.0000 -0.0000\nvn 1.0000 0.0000 0.0000\nvn 0.0000 0.0000 -1.0000\ns off\nf 1/1/1 2/2/1 3/3/1\nf 2/4/2 4/5/2 5/6/2\nf 6/7/3 7/8/3 4/9/3\nf 8/10/4 4/9/4 7/11/4\nf 3/12/5 5/13/5 8/14/5\nf 1/15/6 8/16/6 7/17/6\nf 1/1/1 6/18/1 2/2/1\nf 2/4/2 6/19/2 4/5/2\nf 6/7/3 1/20/3 7/8/3\nf 8/10/4 5/21/4 4/9/4\nf 3/12/5 2/22/5 5/13/5\nf 1/15/6 3/23/6 8/16/6";
 /**
  * Contains various utility functions.
  */
@@ -1790,8 +1790,8 @@ export class Utils {
      * @returns the string data of the file, or null if the file isn't found.
      */
     static loadFile(filePath) {
-        var result = null;
-        var xmlhttp = new XMLHttpRequest();
+        let result = null;
+        let xmlhttp = new XMLHttpRequest();
         xmlhttp.open("GET", filePath, false);
         xmlhttp.send();
         if (xmlhttp.status == 200) {
