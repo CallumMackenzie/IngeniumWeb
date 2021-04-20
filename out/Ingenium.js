@@ -1505,9 +1505,9 @@ export class Mesh3D extends Position3D {
             this.data.push(triangle.v[i].t.x);
             this.data.push(triangle.v[i].t.y);
             this.data.push(triangle.v[i].t.w);
-            this.data.push(triangle.v[i].rgb.x + this.tint.x);
-            this.data.push(triangle.v[i].rgb.y + this.tint.y);
-            this.data.push(triangle.v[i].rgb.z + this.tint.z);
+            this.data.push(triangle.v[i].rgb.x);
+            this.data.push(triangle.v[i].rgb.y);
+            this.data.push(triangle.v[i].rgb.z);
             this.data.push(triangle.v[i].rgb.w);
             this.data.push(triangle.v[i].n.x);
             this.data.push(triangle.v[i].n.y);

@@ -58,30 +58,31 @@ function perpVelocity(sunObj: GBody, gby: GBody, randomPos: IW.Vec3): IW.Vec3 {
 
 function onGlobalCreate() {
     IW.ShaderSource.makeFromFile(
-        { 
-            version: "300 es", 
+        {
+            version: "300 es",
             precision: "highp",
-            normalmap: 1,
-            parallaxmap: 0,
-            vertexrgb: 1
+            normalMap: 1,
+            parallaxMap: 0,
+            vertexRGB: 0
         }, IW.ShaderSource.types.vert, "defVert", "./shaders/3D/asn.vs");
     IW.ShaderSource.makeFromFile(
-        { 
-            version: "300 es", 
-            precision: "mediump", 
-            nlights: 0, 
-            model : "BLINN",
-            normalmap: 1,
-            parallaxmap: 0
+        {
+            version: "300 es",
+            precision: "mediump",
+            maxPointLights: 0,
+            lightModel: "BLINN",
+            normalMap: 1,
+            parallaxMap: 0,
+            parallaxClipEdge: 1,
+            parallaxInvert: 1
         }, IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
 
-        IW.ShaderSource.makeFromFile(
-    { 
-        version: "#version 300 es", 
-        precision: "precision mediump float;", 
-        nlights: 0 
-    },  
-    IW.ShaderSource.types.frag, "emission", "./shaders/3D/emissive.fs");
+    IW.ShaderSource.makeFromFile(
+        {
+            version: "300 es",
+            precision: "mediump"
+        },
+        IW.ShaderSource.types.frag, "emission", "./shaders/3D/emissive.fs");
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
     shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
         IW.ShaderSource.shaderWithParams("defFrag", { nlights: 0 }));
@@ -112,7 +113,7 @@ function onGlobalCreate() {
         gb.tint = new IW.Vec3(1.2, 0.3, 0.3);
         gb.angularVelocity = new IW.Vec3(1, 0, 0);
         gb.make(objPath, "./resource/moon/b.jpg", "./resource/moon/s.jpg",
-         "./resource/moon/n.jpg", "./resource/moon/h.png");
+            "./resource/moon/n.jpg", "./resource/moon/h.png");
         p[i].intensity = 0.1;
         p[i].constant = 0.3;
         p[i].linear = 0;
@@ -129,14 +130,14 @@ function onGlobalCreate() {
         gb.mass = 10000;
         gb.scale = IW.Vec3.filledWith(0.25);
         gb.radius = gb.scale.x;
-        // gb.angularVelocity = new IW.Vec3(0, 0.1, 0);
+        // gb.angularVelocity = new IW.Vec3(1, 1, 1);
         gb.material.parallaxScale = 0.1;
         gb.material.shininess = 2;
         gb.material.UVScale = IW.Vec2.filledWith(1);
         gb.position = new IW.Vec3(0, 0, 1);
         gb.make(objPath, "./resource/sbrick/b.jpg", "./resource/sbrick/s.jpg",
-        "./resource/sbrick/n.jpg", 
-        "./resource/sbrick/h.png");
+            "./resource/sbrick/n.jpg",
+            "./resource/sbrick/h.png");
         m.push(gb);
     }
 }

@@ -1172,7 +1172,7 @@ export class ShaderSource {
      * @param src the shader source file path.
      * @returns the shader source object.
      */
-    static makeFromFile (paramDict: any, type: string, name: string, srcPath: string): ShaderSource {
+    static makeFromFile(paramDict: any, type: string, name: string, srcPath: string): ShaderSource {
         return new ShaderSource(paramDict, type, name, Utils.loadFile(srcPath));
     }
 }
@@ -1654,9 +1654,9 @@ export class Mesh3D extends Position3D {
             this.data.push(triangle.v[i].t.y);
             this.data.push(triangle.v[i].t.w);
 
-            this.data.push(triangle.v[i].rgb.x + this.tint.x);
-            this.data.push(triangle.v[i].rgb.y + this.tint.y);
-            this.data.push(triangle.v[i].rgb.z + this.tint.z);
+            this.data.push(triangle.v[i].rgb.x);
+            this.data.push(triangle.v[i].rgb.y);
+            this.data.push(triangle.v[i].rgb.z);
             this.data.push(triangle.v[i].rgb.w);
 
             this.data.push(triangle.v[i].n.x);

@@ -4,18 +4,14 @@
 precision $precision$ float;
 #endif
 
-#define NORMAL_MAP $normalmap$
-#define PARALLAX_MAP $parallaxmap$
-#define VERTEX_RGB $vertexrgb$
+#define NORMAL_MAP $normalMap$
+#define PARALLAX_MAP $parallaxMap$
+#define VERTEX_RGB $vertexRGB$
 
 layout (location = 0) in vec4 vertexPosition;
 layout (location = 1) in vec3 vertexUV;
-#if VERTEX_RGB
 layout (location = 2) in vec4 vertexRGB;
 layout (location = 3) in vec3 vertexNormal;
-#else
-layout (location = 2) in vec3 vertexNormal;
-#endif
 
 #if NORMAL_MAP || PARALLAX_MAP
 layout (location = 4) in vec3 vertexTangent;
@@ -25,7 +21,6 @@ uniform mat4 projection;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 invModel;
-uniform bool hasNormalTexture;
 uniform vec4 meshTint;
 uniform vec2 UVScale;
 
@@ -33,7 +28,15 @@ out vec3 UV;
 out vec4 tint;
 out vec3 normal;
 out vec3 fragPos;
-out vec3 Tangent0;
+out mat3 TBN;
+
+mat3 getTBN (vec3 norm, vec3 tangentTheta) {
+    vec3 Normal = normalize(norm);
+    vec3 Tangent = normalize(tangentTheta);
+    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
+    vec3 Bitangent = cross(Tangent, Normal);
+    return mat3(Tangent, Bitangent, Normal);
+}
 
 void main () {
     vec4 transformed = projection * view * model * vertexPosition;
@@ -49,6 +52,7 @@ void main () {
     fragPos = vec3(model * vertexPosition);
 
 #if NORMAL_MAP || PARALLAX_MAP
-    Tangent0 = (model * vec4(vertexTangent, 0.0)).xyz;   
+    vec3 tangentTheta = (model * vec4(vertexTangent, 0.0)).xyz;   
+    TBN = getTBN(normal, tangentTheta);
 #endif
 }
