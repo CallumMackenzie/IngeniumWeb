@@ -49,7 +49,7 @@ uniform int numlights;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 #endif
 
-in vec3 UV;
+in vec2 UV;
 in vec4 tint;
 in vec3 normal;
 in vec3 fragPos;
@@ -70,19 +70,19 @@ vec3 CalcBumpedNormal(vec2 cUV)
 #endif // NORMAL_MAP
 
 #if !defined(NONE)
-vec3 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
+vec4 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(cnormal, lightDir), 0.0);
     vec3 reflectDir = reflect(-lightDir, cnormal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, coordUV.xy).rgba * tint.rgba);
-    vec3 diffuse  = light.diffuse  * diff * vec3(texture((material.diffuse), coordUV.xy).rgba * tint.rgba);
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, coordUV.xy).rgba * tint.rgba);
+    vec4 ambient  = vec4(light.ambient, 1.0)  * (texture(material.diffuse, coordUV).rgba * tint.rgba);
+    vec4 diffuse  = vec4(light.diffuse  * diff, 1.0) * (texture((material.diffuse), coordUV).rgba * tint.rgba);
+    vec4 specular = vec4(light.specular * spec, 1.0) * (texture(material.specular, coordUV).rgba * tint.rgba);
     return (ambient + diffuse + specular);
 } 
 
-vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir, vec2 coordUV)
+vec4 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir, vec2 coordUV)
 {
     vec3 lightDir = normalize(light.position - cfragPos);
     float diff = max(dot(cnormal, lightDir), 0.0);
@@ -96,9 +96,9 @@ vec3 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     #endif // defined(BLINN)
     float distance    = length(light.position - cfragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
-    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, coordUV.xy).rgba * tint.rgba);
-    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, coordUV.xy).rgba * tint.rgba);
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, coordUV.xy).rgba * tint.rgba);
+    vec4 ambient  = vec4(light.ambient, 1.0)  * (texture(material.diffuse, coordUV).rgba * tint.rgba);
+    vec4 diffuse  = vec4(light.diffuse  * diff, 1.0) * (texture(material.diffuse, coordUV).rgba * tint.rgba);
+    vec4 specular = vec4(light.specular * spec, 1.0) * (texture(material.specular, coordUV).rgba * tint.rgba);
     ambient  *= attenuation;
     diffuse  *= attenuation;
     specular *= attenuation;
@@ -153,9 +153,10 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
 
 void main () 
 {
-    vec2 cUV = UV.xy;
+    vec2 cUV = UV;
+    vec3 viewDir = normalize(viewPos - fragPos);
 #if PARALLAX_MAP
-    vec3 tangentViewDir = normalize((TBN * viewPos) - (TBN * fragPos));
+    vec3 tangentViewDir = normalize(TBN * viewDir);
     cUV = ParallaxMapping(cUV, tangentViewDir);
     #if PARALLAX_CLIP_EDGE
     if(cUV.x > 1.0 || cUV.y > 1.0 || cUV.x < 0.0 || cUV.y < 0.0)
@@ -168,15 +169,14 @@ void main ()
 #else
     vec3 norm = normalize(normal);
 #endif
-    vec3 viewDir = normalize(viewPos - fragPos);
 #if PARALLAX_MAP
-    vec3 result = CalcDirLight(dirLight, norm, tangentViewDir, cUV);
+    vec4 result = CalcDirLight(dirLight, norm, tangentViewDir, cUV);
 #else
-#if !defined(NONE)
-    vec3 result = CalcDirLight(dirLight, norm, viewDir, cUV);
-#else
-    vec3 result = texture(material.diffuse, cUV).rgb;
-#endif
+    #if !defined(NONE)
+    vec4 result = CalcDirLight(dirLight, norm, viewDir, cUV);
+    #else
+    vec4 result = texture(material.diffuse, cUV).rgba * tint.rgba;
+    #endif
 #endif
 #if !defined(NONE)
     #if MAX_POINT_LIGHTS > 0
@@ -189,5 +189,5 @@ void main ()
     }
     #endif
 #endif
-    color = vec4(result, 1.0);
+    color = result;
 }

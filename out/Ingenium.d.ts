@@ -587,7 +587,7 @@ export declare class Shader {
      * @param type the shader type.
      * @returns the compiled shader location.
      */
-    static compile(source: string, type: number): WebGLShader | null;
+    static compile(source: string, type: number, name?: string): WebGLShader | null;
     /**
      * Creates a new shader.
      *
@@ -940,6 +940,10 @@ export declare class Mesh3D extends Position3D {
     */
     useTextureReferenceCache: boolean;
     /**
+     * Whether to render this mesh as transparent.
+     */
+    renderTransparent: boolean;
+    /**
      * Creates a new mesh.
      *
      * @param position the position of the mesh.
@@ -1020,6 +1024,7 @@ export declare class Mesh3D extends Position3D {
      * @param pointLights the point lights to use.
      */
     static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
+    static renderMeshRaw(mesh: Mesh3D, shader: Shader): void;
 }
 /**
  * The base properties of a light.

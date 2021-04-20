@@ -45,40 +45,47 @@ function perpVelocity(sunObj, gby, randomPos) {
     return rand;
 }
 function onGlobalCreate() {
+    let gParams = {
+        version: "300 es",
+        normalMap: 1,
+        parallaxMap: 0
+    };
+    IW.ShaderSource.makeFromFile(Object.assign(gParams, {
+        precision: "highp",
+        vertexRGB: 0
+    }), IW.ShaderSource.types.vert, "defVert", "./shaders/3D/asn.vs");
+    IW.ShaderSource.makeFromFile(Object.assign(gParams, {
+        precision: "mediump",
+        maxPointLights: 1,
+        lightModel: "NONE",
+        parallaxClipEdge: 0,
+        parallaxInvert: 1
+    }), IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
     IW.ShaderSource.makeFromFile({
         version: "300 es",
-        precision: "highp",
         normalMap: 1,
         parallaxMap: 0,
-        vertexRGB: 0
-    }, IW.ShaderSource.types.vert, "defVert", "./shaders/3D/asn.vs");
-    IW.ShaderSource.makeFromFile({
-        version: "300 es",
         precision: "mediump",
         maxPointLights: 0,
-        lightModel: "BLINN",
-        normalMap: 1,
-        parallaxMap: 0,
-        parallaxClipEdge: 1,
+        lightModel: "NONE",
+        parallaxClipEdge: 0,
         parallaxInvert: 1
-    }, IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
-    IW.ShaderSource.makeFromFile({
-        version: "300 es",
-        precision: "mediump"
-    }, IW.ShaderSource.types.frag, "emission", "./shaders/3D/emissive.fs");
+    }, IW.ShaderSource.types.frag, "emission", "./shaders/3D/asn.fs");
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
-    shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("defFrag", { nlights: 0 }));
+    shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("defFrag", {}));
     emissionShader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("emission", {}));
     IW.IngeniumWeb.window.setClearColour(0x303030, 1);
+    IW.gl.enable(IW.gl.CULL_FACE);
+    IW.gl.cullFace(IW.gl.BACK);
     IW.Time.setFPS(40);
     IW.Time.setFixedFPS(5);
     d.intensity = 0.6;
     d.diffuse = IW.Vec3.filledWith(1);
     d.specular = IW.Vec3.filledWith(0.8);
-    d.direction = new IW.Vec3(0, -1);
-    d.ambient = IW.Vec3.filledWith(0.1);
+    d.direction = new IW.Vec3(-0.4, -1, 0);
+    d.ambient = IW.Vec3.filledWith(0.2);
     let objPath = "./resource/cubent.obj";
-    let rpos = new IW.Vec3(0, 0, 1);
+    let rpos = new IW.Vec3(2, 2, 2);
     for (let i = 0; i < 0; i++) {
         let rn = function () { return Math.random(); };
         let gb = new GBody(new IW.Vec3(rn() * rpos.x, rn() * rpos.y, rn() * rpos.z));
@@ -97,17 +104,18 @@ function onGlobalCreate() {
         p[i].ambient = IW.Vec3.filledWith(0);
         l.push(gb);
     }
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 4; i++) {
         let rn = function () { return Math.random(); };
         let gb = new GBody(new IW.Vec3(rn() * rpos.x, rn() * rpos.y, rn() * rpos.z));
         gb.mass = 10000;
         gb.scale = IW.Vec3.filledWith(0.25);
         gb.radius = gb.scale.x;
+        gb.tint = new IW.Vec3(1, 1, 1, (i + 1) / 10);
         // gb.angularVelocity = new IW.Vec3(1, 1, 1);
         gb.material.parallaxScale = 0.1;
         gb.material.shininess = 2;
         gb.material.UVScale = IW.Vec2.filledWith(1);
-        gb.position = new IW.Vec3(0, 0, 1);
+        gb.position = new IW.Vec3(0, 0, i);
         gb.make(objPath, "./resource/sbrick/b.jpg", "./resource/sbrick/s.jpg", "./resource/sbrick/n.jpg", "./resource/sbrick/h.png");
         m.push(gb);
     }

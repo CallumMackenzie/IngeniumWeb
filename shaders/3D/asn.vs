@@ -17,42 +17,49 @@ layout (location = 3) in vec3 vertexNormal;
 layout (location = 4) in vec3 vertexTangent;
 #endif
 
-uniform mat4 projection;
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 invModel;
-uniform vec4 meshTint;
-uniform vec2 UVScale;
+struct Camera {
+    mat4 projection;
+    mat4 view;
+};
+struct Mesh {
+    mat4 transform;
+    mat4 inverseTransform;
+    vec4 tint;
+    vec2 scaleUV;
+};
 
-out vec3 UV;
+uniform Mesh mesh;
+uniform Camera camera;
+
+out vec2 UV;
 out vec4 tint;
 out vec3 normal;
 out vec3 fragPos;
 out mat3 TBN;
 
 mat3 getTBN (vec3 norm, vec3 tangentTheta) {
-    vec3 Normal = normalize(norm);
-    vec3 Tangent = normalize(tangentTheta);
-    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-    vec3 Bitangent = cross(Tangent, Normal);
-    return mat3(Tangent, Bitangent, Normal);
+    norm = normalize(norm);
+    vec3 tangent = normalize(tangentTheta);
+    tangent = normalize(tangent - dot(tangent, norm) * norm);
+    vec3 bitangent = cross(tangent, norm);
+    return mat3(tangent, bitangent, norm);
 }
 
 void main () {
-    vec4 transformed = projection * view * model * vertexPosition;
-    transformed.x = - transformed.x;
+    vec4 transformed = camera.projection * camera.view * mesh.transform * vertexPosition;
+    transformed.x = -transformed.x;
     gl_Position = transformed;
-    UV = vertexUV * vec3(UVScale, 1.0);
+    UV = vertexUV.xy * mesh.scaleUV;
 #if VERTEX_RGB
-    tint = vertexRGB * meshTint;
+    tint = vertexRGB * mesh.tint;
 #else
-    tint = meshTint;
+    tint = mesh.tint;
 #endif
-    normal = mat3(transpose(invModel)) * vertexNormal.xyz;
-    fragPos = vec3(model * vertexPosition);
+    normal = mat3(transpose(mesh.inverseTransform)) * vertexNormal;
+    fragPos = vec3(mesh.transform * vertexPosition);
 
 #if NORMAL_MAP || PARALLAX_MAP
-    vec3 tangentTheta = (model * vec4(vertexTangent, 0.0)).xyz;   
+    vec3 tangentTheta = (mesh.transform * vec4(vertexTangent, 0.0)).xyz;   
     TBN = getTBN(normal, tangentTheta);
 #endif
 }

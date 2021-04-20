@@ -959,13 +959,14 @@ export class Shader {
      * @param type the shader type.
      * @returns the compiled shader location.
      */
-    static compile(source, type) {
+    static compile(source, type, name = "not provided") {
         let shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
             let err = {
                 type: "SHADER_COMPILE_ERROR",
+                id: name,
                 shaderInt: type,
                 shaderType: (type == gl.VERTEX_SHADER) ? "vertex shader" : "fragment shader",
                 error: gl.getShaderInfoLog(shader)
@@ -1384,6 +1385,10 @@ export class Mesh3D extends Position3D {
         * Whether to check the texture reference cache.
         */
         this.useTextureReferenceCache = true;
+        /**
+         * Whether to render this mesh as transparent.
+         */
+        this.renderTransparent = false;
         this.rotationCenter = rotationCenter;
         this.scale = scale;
         this.material = material;
@@ -1512,9 +1517,9 @@ export class Mesh3D extends Position3D {
             this.data.push(triangle.v[i].n.x);
             this.data.push(triangle.v[i].n.y);
             this.data.push(triangle.v[i].n.z);
-            this.data.push(tangent[0].x);
-            this.data.push(tangent[0].y);
-            this.data.push(tangent[0].z);
+            this.data.push(tangent[i].x);
+            this.data.push(tangent[i].y);
+            this.data.push(tangent[i].z);
         }
         this.triangles++;
     }
@@ -1634,20 +1639,33 @@ export class Mesh3D extends Position3D {
      * @returns the tangent and bitangent in a vector array.
      */
     static calcTangents(triangle) {
-        let edge1 = Vec3.sub(triangle.v[1].p, triangle.v[0].p);
-        let edge2 = Vec3.sub(triangle.v[2].p, triangle.v[0].p);
-        let dUV1 = Vec2.sub(triangle.v[1].t, triangle.v[0].t);
-        let dUV2 = Vec2.sub(triangle.v[2].t, triangle.v[0].t);
-        let f = 1.0 / (dUV1.x * dUV2.y - dUV2.x * dUV1.y);
-        let tan = new Vec3();
-        tan.x = f * (dUV2.y * edge1.x - dUV1.y * edge2.x);
-        tan.y = f * (dUV2.y * edge1.y - dUV1.y * edge2.y);
-        tan.z = f * (dUV2.y * edge1.z - dUV1.y * edge2.z);
-        let bitTan = new Vec3();
-        bitTan.x = f * (-dUV2.x * edge1.x + dUV1.x * edge2.x);
-        bitTan.y = f * (-dUV2.x * edge1.y + dUV1.x * edge2.y);
-        bitTan.z = f * (-dUV2.x * edge1.z + dUV1.x * edge2.z);
-        return [tan, bitTan];
+        let v1 = triangle.v[0].p;
+        let v2 = triangle.v[1].p;
+        let v3 = triangle.v[2].p;
+        let w1 = triangle.v[0].t;
+        let w2 = triangle.v[1].t;
+        let w3 = triangle.v[2].t;
+        let x1 = v2.x - v1.x;
+        let x2 = v3.x - v1.x;
+        let y1 = v2.y - v1.y;
+        let y2 = v3.y - v1.y;
+        let z1 = v2.z - v1.z;
+        let z2 = v3.z - v1.z;
+        let s1 = w2.x - w1.x;
+        let s2 = w3.x - w1.x;
+        let t1 = w2.y - w1.y;
+        let t2 = w3.y - w1.y;
+        let r = 1.0 / (s1 * t2 - s2 * t1);
+        let sdir = new Vec3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+        let tdir = new Vec3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+        let tan = [sdir, sdir, sdir];
+        for (var i = 0; i < 3; i++) {
+            let t = tan[i];
+            let n = triangle.v[i].n;
+            t = t.sub(n).mulFloat(Vec3.dot(n, t)).normalized();
+            t.w = (Vec3.dot(Vec3.cross(n, t), tdir) < 0.0) ? -1.0 : 1.0;
+        }
+        return tan;
     }
     /**
      * Renders meshes.
@@ -1665,9 +1683,9 @@ export class Mesh3D extends Position3D {
         shader.setUInt("material.normal", 2);
         shader.setUInt("material.parallax", 3);
         shader.setUFloat("u_time", (Date.now() - IngeniumWeb.startTime) / 1000);
-        shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
+        shader.setUMat4("camera.view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
-        shader.setUMat4("projection", camera.perspective());
+        shader.setUMat4("camera.projection", camera.perspective());
         shader.setUInt("numlights", pointLights.length);
         shader.setUVec3("dirLight.direction", dirLight.direction);
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
@@ -1682,26 +1700,47 @@ export class Mesh3D extends Position3D {
             shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
             shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
         }
+        let transparents = [];
         for (let i = 0; i < meshes.length; i++) {
-            gl.bindVertexArray(meshes[i].mVAO);
-            let model = meshes[i].modelMatrix();
-            shader.setUMat4("model", model);
-            shader.setUMat4("invModel", Mat4.inverse(model));
-            shader.setUFloat("material.shininess", meshes[i].material.shininess);
-            shader.setUFloat("material.heightScale", meshes[i].material.parallaxScale);
-            shader.setUVec4("meshTint", meshes[i].tint);
-            shader.setUVec2("UVScale", meshes[i].material.UVScale);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture);
-            gl.activeTexture(gl.TEXTURE2);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.normalTexture);
-            gl.activeTexture(gl.TEXTURE3);
-            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.parallaxTexture);
-            let verts = meshes[i].triangles * 3;
-            gl.drawArrays(gl.TRIANGLES, 0, verts);
+            if (meshes[i].tint.w != 1.0 || meshes[i].renderTransparent) {
+                transparents.push(meshes[i]);
+                continue;
+            }
+            Mesh3D.renderMeshRaw(meshes[i], shader);
         }
+        transparents.sort(function (a, b) {
+            let aDist = camera.position.sub(a.position).len();
+            let bDist = camera.position.sub(b.position).len();
+            if (aDist < bDist) {
+                return 1;
+            }
+            if (aDist > bDist) {
+                return -1;
+            }
+            return 0;
+        });
+        for (let i = 0; i < transparents.length; i++)
+            Mesh3D.renderMeshRaw(transparents[i], shader);
+    }
+    static renderMeshRaw(mesh, shader) {
+        gl.bindVertexArray(mesh.mVAO);
+        let model = mesh.modelMatrix();
+        shader.setUMat4("mesh.transform", model);
+        shader.setUMat4("mesh.inverseTransform", Mat4.inverse(model));
+        shader.setUFloat("material.shininess", mesh.material.shininess);
+        shader.setUFloat("material.heightScale", mesh.material.parallaxScale);
+        shader.setUVec4("mesh.tint", mesh.tint);
+        shader.setUVec2("mesh.scaleUV", mesh.material.UVScale);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, mesh.material.diffuseTexture);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, mesh.material.specularTexture);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, mesh.material.normalTexture);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, mesh.material.parallaxTexture);
+        let verts = mesh.triangles * 3;
+        gl.drawArrays(gl.TRIANGLES, 0, verts);
     }
 }
 /**
