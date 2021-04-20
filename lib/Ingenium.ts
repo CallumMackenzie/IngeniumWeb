@@ -1431,7 +1431,7 @@ export class Material {
         this.shininess = shininess;
     }
 
-    bindTextures (): void {
+    bindTextures(): void {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.diffuseTexture);
         gl.activeTexture(gl.TEXTURE1);

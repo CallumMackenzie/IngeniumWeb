@@ -29,7 +29,7 @@ class ISCamera extends IW.Camera3D {
     }
 }
 
-let shaders: {[id: string]: IW.Shader} = {};
+let shaders: { [id: string]: IW.Shader } = {};
 
 let camera: ISCamera = new ISCamera(70, 0.01, 2000);
 let camera2D: IW.Camera2D = new IW.Camera2D(9 / 16);
@@ -90,12 +90,12 @@ function onGlobalCreate() {
             parallaxClipEdge: 0,
             parallaxInvert: 1
         }, IW.ShaderSource.types.frag, "emission", "./shaders/3D/asn.fs");
-    
-    IW.ShaderSource.makeFromFile (
-        {version: "300 es", precision: "highp"}, 
+
+    IW.ShaderSource.makeFromFile(
+        { version: "300 es", precision: "highp" },
         IW.ShaderSource.types.vert, "postvs", "./shaders/post/fbo.vs");
-    IW.ShaderSource.makeFromFile (
-        {version: "300 es", precision: "mediump"},
+    IW.ShaderSource.makeFromFile(
+        { version: "300 es", precision: "mediump" },
         IW.ShaderSource.types.frag, "postfs", "./shaders/post/fbo.fs");
 
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
@@ -114,13 +114,13 @@ function onGlobalCreate() {
     lowResBuffer.bind();
     lowResBuffer.properties.width = 720;
     lowResBuffer.properties.height = 480;
-    IW.gl.renderbufferStorage(IW.gl.RENDERBUFFER, IW.gl.DEPTH24_STENCIL8, lowResBuffer.properties.width, lowResBuffer.properties.height); 
+    IW.gl.renderbufferStorage(IW.gl.RENDERBUFFER, IW.gl.DEPTH24_STENCIL8, lowResBuffer.properties.width, lowResBuffer.properties.height);
     IW.gl.framebufferRenderbuffer(IW.gl.FRAMEBUFFER, IW.gl.DEPTH_STENCIL_ATTACHMENT, IW.gl.RENDERBUFFER, lowResBuffer.RBO);
     lowResBuffer.addTexture("tex", lowResBuffer.properties.width, lowResBuffer.properties.height);
     IW.gl.bindRenderbuffer(IW.gl.RENDERBUFFER, null);
     fbMesh = new IW.Mesh2D();
     fbMesh.triangles = 2;
-    fbMesh.material = new IW.Material(<WebGLTexture> lowResBuffer.properties.tex);
+    fbMesh.material = new IW.Material(<WebGLTexture>lowResBuffer.properties.tex);
     fbMesh.data = IW.Geometry.quadData;
     fbMesh.load();
 
@@ -211,7 +211,7 @@ function onUpdate() {
     IW.gl.viewport(0, 0, lowResBuffer.properties.width, lowResBuffer.properties.height);
     IW.Mesh3D.renderAll(shaders.asn, camera, m, d, p);
     IW.Mesh3D.renderAll(shaders.emission, camera, l, d, p);
-''
+    ''
     IW.FrameBuffer.bindDefault();
     IW.IngeniumWeb.window.clear();
     IW.gl.disable(IW.gl.DEPTH_TEST);
