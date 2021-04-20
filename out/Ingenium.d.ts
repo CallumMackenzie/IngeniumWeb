@@ -279,7 +279,7 @@ export declare class Vec3 {
      * Creates a new vector with the number as the x, y, and z values.
      *
      * @param num the number to fill the vector with.
-     * @returns a filed vector.
+     * @returns a filled vector.
      */
     static filledWith(num: number): Vec3;
     /**
@@ -543,13 +543,11 @@ export declare class Mat4 {
     static rotationZ(zRad: number): Mat4;
     /**
      *
-     * @param xRad the x rotation in radians.
-     * @param yRad the y rotation in radians.
-     * @param zRad the z rotation in radians.
+     * @param r the rotation in radians.
      * @param pt the point to rotate around.
      * @returns a rotation matrix.
      */
-    static rotationOnPoint(xRad: number, yRad: number, zRad: number, pt: Vec3): Mat4;
+    static rotationOnPoint(r: Vec3, pt: Vec3): Mat4;
     /**
      * Creates a new 4x4 matrix.
      */
@@ -616,7 +614,7 @@ export declare class Shader {
     setUFloat3(name: string, value1: number, value2: number, value3: number): void;
     setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number): void;
     setUMat4(name: string, mat4: Mat4): void;
-    setUVec2(name: string, v: Vec3): void;
+    setUVec2(name: string, v: Vec2): void;
     setUVec3(name: string, v: Vec3): void;
     setUVec4(name: string, v: Vec3): void;
     setUBool(name: string, b: boolean): void;
@@ -624,20 +622,21 @@ export declare class Shader {
 /**
  * The supported types of shaders.
  */
-export declare class ShaderSourceTypes {
+declare class ShaderSourceTypes {
     /**
      * Vertex shader type.
      */
-    static vert: string;
+    vert: string;
     /**
      * Fragment shader type.
      */
-    static frag: string;
+    frag: string;
 }
 /**
  * Shader source code manager.
  */
 export declare class ShaderSource {
+    static types: ShaderSourceTypes;
     /**
      * All shaders.
      */
@@ -689,6 +688,15 @@ export declare class ShaderSource {
      * @returns the parameters that this shader expects.
      */
     getExpectedParams(): string[];
+    /**
+     *
+     * @param paramDict the parameter dictionary of the shader with default values.
+     * @param type the shader type.
+     * @param name the shader name.
+     * @param src the shader source file path.
+     * @returns the shader source object.
+     */
+    static makeFromFile(paramDict: any, type: string, name: string, srcPath: string): ShaderSource;
 }
 /**
  * A vertex in 3D space.
@@ -771,6 +779,10 @@ export declare class Material {
      * The scale of the parallax texture.
      */
     parallaxScale: number;
+    /**
+     * The scale for the UV coordinates.
+     */
+    UVScale: Vec2;
     /**
      * Creates a new material.
      *
@@ -1143,3 +1155,4 @@ export declare class Utils {
      */
     static loadFile(filePath: string): string | null;
 }
+export {};

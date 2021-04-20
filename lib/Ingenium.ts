@@ -493,7 +493,7 @@ export class Vec3 {
      * Creates a new vector with the number as the x, y, and z values.
      * 
      * @param num the number to fill the vector with.
-     * @returns a filed vector.
+     * @returns a filled vector.
      */
     static filledWith(num: number): Vec3 {
         return new Vec3(num, num, num);
@@ -923,16 +923,14 @@ export class Mat4 {
     }
     /**
      * 
-     * @param xRad the x rotation in radians. 
-     * @param yRad the y rotation in radians. 
-     * @param zRad the z rotation in radians. 
+     * @param r the rotation in radians.
      * @param pt the point to rotate around.
      * @returns a rotation matrix.
      */
-    static rotationOnPoint(xRad: number, yRad: number, zRad: number, pt: Vec3): Mat4 {
+    static rotationOnPoint(r: Vec3, pt: Vec3): Mat4 {
         let mat: Mat4 = Mat4.mul(
             Mat4.mul(Mat4.translation(pt.x, pt.y, pt.z),
-                Mat4.mul(Mat4.mul(Mat4.rotationX(xRad), Mat4.rotationY(yRad)), Mat4.rotationZ(zRad))),
+                Mat4.mul(Mat4.mul(Mat4.rotationX(r.x), Mat4.rotationY(r.y)), Mat4.rotationZ(r.z))),
             Mat4.translation(-pt.x, -pt.y, -pt.z));
         return mat;
     }
@@ -1058,7 +1056,7 @@ export class Shader {
     setUMat4(name: string, mat4: Mat4): void {
         gl.uniformMatrix4fv(this.getULoc(name), false, mat4.m.flat());
     }
-    setUVec2(name: string, v: Vec3): void {
+    setUVec2(name: string, v: Vec2): void {
         this.setUFloat2(name, v.x, v.y);
     }
     setUVec3(name: string, v: Vec3): void {
@@ -1075,21 +1073,22 @@ export class Shader {
 /**
  * The supported types of shaders.
  */
-export class ShaderSourceTypes {
+class ShaderSourceTypes {
     /**
      * Vertex shader type.
      */
-    static vert: string = "vertex";
+    vert: string = "vertex";
     /**
      * Fragment shader type.
      */
-    static frag: string = "fragment";
+    frag: string = "fragment";
 };
 
 /**
  * Shader source code manager.
  */
 export class ShaderSource {
+    static types: ShaderSourceTypes = new ShaderSourceTypes();
     /**
      * All shaders.
      */
@@ -1164,6 +1163,17 @@ export class ShaderSource {
      */
     getExpectedParams(): string[] {
         return Object.keys(this.params);
+    }
+    /**
+     * 
+     * @param paramDict the parameter dictionary of the shader with default values.
+     * @param type the shader type.
+     * @param name the shader name.
+     * @param src the shader source file path.
+     * @returns the shader source object.
+     */
+    static makeFromFile (paramDict: any, type: string, name: string, srcPath: string): ShaderSource {
+        return new ShaderSource(paramDict, type, name, Utils.loadFile(srcPath));
     }
 }
 
@@ -1260,6 +1270,10 @@ export class Material {
      * The scale of the parallax texture.
      */
     parallaxScale: number = 0;
+    /**
+     * The scale for the UV coordinates.
+     */
+    UVScale: Vec2 = Vec2.filledWith(1);
     /**
      * Creates a new material.
      * 
@@ -1730,14 +1744,14 @@ export class Mesh3D extends Position3D {
         this.material.diffuseTexture = this.createTextureFromPath(diffusePath, gl.TEXTURE0, this.useTextureReferenceCache);
         this.material.specularTexture = this.createTextureFromPath(specularPath, gl.TEXTURE1, this.useTextureReferenceCache);
         this.material.normalTexture = this.createTextureFromPath(normalPath, gl.TEXTURE2, this.useTextureReferenceCache);
-        this.material.parallaxTexture = this.createTextureFromPath(specularPath, gl.TEXTURE3, this.useTextureReferenceCache);
+        this.material.parallaxTexture = this.createTextureFromPath(parallaxPath, gl.TEXTURE3, this.useTextureReferenceCache);
     }
     /**
      * Creates a model transformation matrix based on the scale, rotation, and position of the mesh.
      * @returns the model transformation matrix.
      */
     modelMatrix(): Mat4 {
-        let matRot: Mat4 = Mat4.rotationOnPoint(this.rotation.x, this.rotation.y, this.rotation.z, this.rotationCenter);
+        let matRot: Mat4 = Mat4.rotationOnPoint(this.rotation, this.rotationCenter);
         let matTrans: Mat4 = Mat4.translation(this.position.x, this.position.y, this.position.z);
         let matScale: Mat4 = Mat4.scale(this.scale.x, this.scale.y, this.scale.z);
         let matWorld: Mat4 = Mat4.mul(Mat4.mul(matScale, matRot), matTrans);
@@ -1829,6 +1843,7 @@ export class Mesh3D extends Position3D {
         shader.setUMat4("view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
         shader.setUMat4("projection", camera.perspective());
+        shader.setUInt("numlights", pointLights.length);
 
         shader.setUVec3("dirLight.direction", dirLight.direction);
         shader.setUVec3("dirLight.ambient", dirLight.ambient);
@@ -1853,14 +1868,17 @@ export class Mesh3D extends Position3D {
             shader.setUMat4("model", model);
             shader.setUMat4("invModel", Mat4.inverse(model));
             shader.setUFloat("material.shininess", meshes[i].material.shininess);
-            shader.setUFloat("heightScale", meshes[i].material.parallaxScale);
+            shader.setUFloat("material.heightScale", meshes[i].material.parallaxScale);
             shader.setUVec4("meshTint", meshes[i].tint);
+            shader.setUVec2("UVScale", meshes[i].material.UVScale);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.diffuseTexture);
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.specularTexture)
             gl.activeTexture(gl.TEXTURE2);
             gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.normalTexture);
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, meshes[i].material.parallaxTexture);
 
             let verts = meshes[i].triangles * 3;
             gl.drawArrays(gl.TRIANGLES, 0, verts);

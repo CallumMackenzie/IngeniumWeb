@@ -31,14 +31,14 @@ class ISCamera extends IW.Camera3D {
 
 let shader: IW.Shader;
 let emissionShader: IW.Shader;
-let camera: ISCamera = new ISCamera(70, 0.05, 2000);
+let camera: ISCamera = new ISCamera(70, 0.01, 2000);
 let d: IW.DirectionalLight = new IW.DirectionalLight();
 let p: IW.PointLight[] = [new IW.PointLight(new IW.Vec3(0.01, 0.01, 0.01),
     new IW.Vec3(1, 1, 1), new IW.Vec3(1, 1, 1), new IW.Vec3(0, 0, -3))];
 let m: GBody[] = [];
 let l: GBody[] = [];
 
-let simSpeed: number = 3600;//3600 * 24; // 1 day
+let simSpeed: number = 1;//3600 * 24; // 1 day
 let meterScale: number = 1; // 1 km
 
 function perpVelocity(sunObj: GBody, gby: GBody, randomPos: IW.Vec3): IW.Vec3 {
@@ -57,39 +57,63 @@ function perpVelocity(sunObj: GBody, gby: GBody, randomPos: IW.Vec3): IW.Vec3 {
 }
 
 function onGlobalCreate() {
-    new IW.ShaderSource({ version: "#version 300 es", precision: "precision highp float;" }, IW.ShaderSourceTypes.vert,
-        "defVert", IW.Utils.loadFile("./shaders/3D/vert3d.vs"));
-    new IW.ShaderSource({ version: "#version 300 es", precision: "precision mediump float;", nlights: 0 }, IW.ShaderSourceTypes.frag,
-        "defFrag", IW.Utils.loadFile("./shaders/3D/blinnphong.fs"));
-    new IW.ShaderSource({ version: "#version 300 es", precision: "precision mediump float;", nlights: 0 }, IW.ShaderSourceTypes.frag,
-        "emission", IW.Utils.loadFile("./shaders/3D/emissive.fs"));
+    IW.ShaderSource.makeFromFile(
+        { 
+            version: "300 es", 
+            precision: "highp",
+            normalmap: 1,
+            parallaxmap: 0,
+            vertexrgb: 1
+        }, IW.ShaderSource.types.vert, "defVert", "./shaders/3D/asn.vs");
+    IW.ShaderSource.makeFromFile(
+        { 
+            version: "300 es", 
+            precision: "mediump", 
+            nlights: 0, 
+            model : "BLINN",
+            normalmap: 1,
+            parallaxmap: 0
+        }, IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
+
+        IW.ShaderSource.makeFromFile(
+    { 
+        version: "#version 300 es", 
+        precision: "precision mediump float;", 
+        nlights: 0 
+    },  
+    IW.ShaderSource.types.frag, "emission", "./shaders/3D/emissive.fs");
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
     shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
-        IW.ShaderSource.shaderWithParams("defFrag", { nlights: 1 }));
+        IW.ShaderSource.shaderWithParams("defFrag", { nlights: 0 }));
     emissionShader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
         IW.ShaderSource.shaderWithParams("emission", {}));
 
-    IW.IngeniumWeb.window.setClearColour(0x101010, 1);
+    IW.IngeniumWeb.window.setClearColour(0x303030, 1);
 
     IW.Time.setFPS(40);
     IW.Time.setFixedFPS(5);
 
-    d.intensity = 0;
+    d.intensity = 0.6;
+    d.diffuse = IW.Vec3.filledWith(1);
+    d.specular = IW.Vec3.filledWith(0.8);
+    d.direction = new IW.Vec3(0, -1);
+    d.ambient = IW.Vec3.filledWith(0.1);
 
-    let objPath: string = "./resource/uvsmoothnt.obj";
+    let objPath: string = "./resource/cubent.obj";
 
-    let rpos: IW.Vec3 = new IW.Vec3(10, 10, 10);
+    let rpos: IW.Vec3 = new IW.Vec3(0, 0, 1);
 
-    for (let i: number = 0; i < 1; i++) {
+    for (let i: number = 0; i < 0; i++) {
         let rn: Function = function (): number { return Math.random(); };
         let gb: GBody = new GBody(new IW.Vec3(rn() * rpos.x, rn() * rpos.y, rn() * rpos.z));
         gb.mass = 10000;
-        gb.scale = IW.Vec3.filledWith(0.25);
+        gb.scale = IW.Vec3.filledWith(1);
         gb.radius = gb.scale.x;
         gb.tint = new IW.Vec3(1.2, 0.3, 0.3);
         gb.angularVelocity = new IW.Vec3(1, 0, 0);
-        gb.make(objPath, "./resource/paper/b.jpg");
-        p[i].intensity = 0.7;
+        gb.make(objPath, "./resource/moon/b.jpg", "./resource/moon/s.jpg",
+         "./resource/moon/n.jpg", "./resource/moon/h.png");
+        p[i].intensity = 0.1;
         p[i].constant = 0.3;
         p[i].linear = 0;
         p[i].quadratic = 0.00002;
@@ -99,14 +123,20 @@ function onGlobalCreate() {
         l.push(gb);
     }
 
-    for (let i: number = 0; i < 10; i++) {
+    for (let i: number = 0; i < 1; i++) {
         let rn: Function = function (): number { return Math.random(); };
         let gb: GBody = new GBody(new IW.Vec3(rn() * rpos.x, rn() * rpos.y, rn() * rpos.z));
         gb.mass = 10000;
         gb.scale = IW.Vec3.filledWith(0.25);
         gb.radius = gb.scale.x;
-        gb.angularVelocity = new IW.Vec3(1, 0, 0);
-        gb.make(objPath, "./resource/paper/b.jpg", "NONE", "./resource/paper/n.jpg");
+        // gb.angularVelocity = new IW.Vec3(0, 0.1, 0);
+        gb.material.parallaxScale = 0.1;
+        gb.material.shininess = 2;
+        gb.material.UVScale = IW.Vec2.filledWith(1);
+        gb.position = new IW.Vec3(0, 0, 1);
+        gb.make(objPath, "./resource/sbrick/b.jpg", "./resource/sbrick/s.jpg",
+        "./resource/sbrick/n.jpg", 
+        "./resource/sbrick/h.png");
         m.push(gb);
     }
 }
