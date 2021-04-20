@@ -93,12 +93,6 @@ export class WebGLWindow {
         this.height = height;
         this.aspectRatio = height / width;
         this.setGL();
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.enable(gl.BLEND);
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthMask(true);
-        gl.depthFunc(gl.LEQUAL);
-        gl.depthRange(0.0, 1.0);
     }
     ;
     sizeToWindow(aspect) {
@@ -120,6 +114,7 @@ export class WebGLWindow {
             }
             this.width = this.canvas.width;
             this.height = this.canvas.height;
+            FrameBuffer.bindDefault();
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         }
     }
@@ -706,6 +701,95 @@ export class Vec3 {
     }
 }
 /**
+ * Repersents a 2x2 matrix
+ */
+export class Mat2 {
+    constructor(m = [[0, 0], [0, 0]]) {
+        this.m = m;
+    }
+    /**
+     *
+     * @return the flattened matrix
+     */
+    flatten() {
+        return [this.m[0][0], this.m[0][1], this.m[1][0], this.m[1][1]];
+    }
+    /**
+     *
+     * @return the determinant of the matrix
+     */
+    determinant() {
+        return (this.m[0][0] * this.m[1][1]) - (this.m[0][1] * this.m[1][0]);
+    }
+    /**
+     *
+     * @return the inverse of the matrix
+     */
+    inverse() {
+        return Mat2.inverse(this);
+    }
+    mul(mats) {
+        let m1 = new Mat2(this.m);
+        for (let i = 0; i < mats.length; i++) {
+            let m2 = mats[i];
+            let matrix = new Mat2();
+            for (let c = 0; c < 2; c++)
+                for (let r = 0; r < 2; r++)
+                    matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c];
+            m1 = matrix;
+        }
+        return m1;
+    }
+    /**
+     *
+     * @param x the x scale
+     * @param y the y scale
+     * @return the scaling matrix
+     */
+    static scale(scale) {
+        let mat = new Mat2();
+        mat.m[0][0] = scale.x;
+        mat.m[1][1] = scale.y;
+        return mat;
+    }
+    /**
+     *
+     * @param radians the clockwise rotation in radians
+     * @return the 2D rotation matrix
+     */
+    static rotation(radians) {
+        let mat = new Mat2();
+        mat.m[0][0] = Math.cos(radians);
+        mat.m[0][1] = Math.sin(radians);
+        mat.m[1][0] = -Math.sin(radians);
+        mat.m[1][1] = Math.cos(radians);
+        return mat;
+    }
+    /**
+     *
+     * @return a 2D identity matrix
+     */
+    static identity() {
+        let m = new Mat2();
+        m.m[0][0] = 1;
+        m.m[1][1] = 0;
+        return m;
+    }
+    /**
+     *
+     * @return the inverse of the matrix
+     */
+    static inverse(mat) {
+        let determinant = mat.determinant();
+        let m = new Mat2();
+        m.m[0][0] = mat.m[0][0] / determinant;
+        m.m[1][1] = mat.m[1][1] / determinant;
+        m.m[1][0] = mat.m[1][0] / determinant;
+        m.m[0][1] = mat.m[0][1] / determinant;
+        return m;
+    }
+}
+/**
  * A 4x4 matrix.
  */
 export class Mat4 {
@@ -1029,6 +1113,9 @@ export class Shader {
     setUBool(name, b) {
         this.setUInt(name, b ? 1 : 0);
     }
+    setUMat2(name, m) {
+        gl.uniformMatrix2fv(this.getULoc(name), false, m.flatten());
+    }
 }
 /**
  * The supported types of shaders.
@@ -1153,6 +1240,24 @@ export class Vert3D {
  * The number of floats in a processed vertex.
  */
 Vert3D.tSize = 17;
+export class Vert2D {
+    /**
+     * Creates a new vertex.
+     *
+     * @param point the vertex location.
+     * @param UV the vertex UV coordinates.
+     * @param rgb the RGB tint of the vertex.
+     * @param normal the vertex normal.
+     */
+    constructor(point = new Vec2(), UV = new Vec2()) {
+        this.p = point;
+        this.t = UV;
+    }
+}
+/**
+ * The number of floats in a processed vertex.
+ */
+Vert2D.tSize = 4;
 /**
  * A triangle in 3D space.
  */
@@ -1163,6 +1268,16 @@ export class Tri3D {
      * @param points the points in the triangle.
      */
     constructor(points = [new Vert3D(), new Vert3D(), new Vert3D()]) {
+        this.v = [points[0], points[1], points[2]];
+    }
+}
+export class Tri2D {
+    /**
+     * Creates a new triangle.
+     *
+     * @param points the points in the triangle.
+     */
+    constructor(points = [new Vert2D(), new Vert2D(), new Vert2D()]) {
         this.v = [points[0], points[1], points[2]];
     }
 }
@@ -1180,10 +1295,6 @@ export class Material {
      */
     constructor(diffuseTexture = gl.NONE, specularTexture = gl.NONE, normalTexture = gl.NONE, shininess = 0.5) {
         /**
-         * The parallax texture.
-         */
-        this.parallaxTexture = gl.NONE;
-        /**
          * The shininess of the material.
          */
         this.shininess = 0.5;
@@ -1198,7 +1309,25 @@ export class Material {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.normalTexture = normalTexture;
+        this.parallaxTexture = gl.NONE;
         this.shininess = shininess;
+    }
+    bindTextures() {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.diffuseTexture);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.specularTexture);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, this.parallaxTexture);
+    }
+    static sendToShader(shader) {
+        shader.setUInt("material.diffuse", 0);
+        shader.setUInt("material.specular", 1);
+        shader.setUInt("material.normal", 2);
+        shader.setUInt("material.parallax", 3);
+        shader.setUInt("screenTexture", 0);
     }
 }
 /**
@@ -1235,6 +1364,12 @@ export class Position3D {
      * @param rotation The rotation.
      */
     constructor(position = new Vec3(), rotation = new Vec3()) {
+        this.position = position;
+        this.rotation = rotation;
+    }
+}
+export class Position2D {
+    constructor(position = new Vec2(), rotation = 0) {
         this.position = position;
         this.rotation = rotation;
     }
@@ -1348,6 +1483,41 @@ export class Camera3D extends Position3D {
         if (Math.abs(p3.rotation.z) >= Rotation.degToRad(360))
             p3.rotation.z = 0;
         return p3;
+    }
+}
+export class Camera2D extends Position2D {
+    constructor(aspect, position = new Vec2(), rotation = 0) {
+        super(position, rotation);
+        this.rotationPoint = new Vec2();
+        this.aspect = aspect;
+    }
+    cameraMatrix() {
+        return Mat2.rotation(this.rotation);
+    }
+    sendToShader(shader) {
+        shader.setUMat2("camera.rotation", this.cameraMatrix());
+        shader.setUVec2("camera.translation", this.position);
+        shader.setUFloat("camera.aspect", this.aspect);
+        shader.setUVec2("camera.rotationPoint", this.rotationPoint);
+    }
+    stdControl(speed, rotateSpeed) {
+        let move = new Vec2();
+        let cLV = new Vec2(Math.sin(this.rotation), Math.cos(this.rotation));
+        let rotate = 0;
+        if (Input.getKeyState('w')) // w
+            move = move.sub(cLV);
+        if (Input.getKeyState('s')) // s
+            move = move.add(cLV);
+        if (Input.getKeyState('d')) // d
+            move = move.add(new Vec2(Math.sin(this.rotation - 1.5708), Math.cos(this.rotation - 1.5708)));
+        if (Input.getKeyState('a')) // a
+            move = move.add(new Vec2(Math.sin(this.rotation + 1.5708), Math.cos(this.rotation + 1.5708)));
+        if (Input.getKeyState('ArrowLeft')) // left arrow
+            rotate -= rotateSpeed;
+        if (Input.getKeyState('ArrowRight')) // right arrow
+            rotate += rotateSpeed;
+        this.position = this.position.add(move.normalized().mulFloat(Time.deltaTime * speed));
+        this.rotation = this.rotation + rotate * Time.deltaTime;
     }
 }
 let loadedImages = {};
@@ -1678,10 +1848,7 @@ export class Mesh3D extends Position3D {
      */
     static renderAll(shader, camera, meshes, dirLight, pointLights = []) {
         shader.use();
-        shader.setUInt("material.diffuse", 0);
-        shader.setUInt("material.specular", 1);
-        shader.setUInt("material.normal", 2);
-        shader.setUInt("material.parallax", 3);
+        Material.sendToShader(shader);
         shader.setUFloat("u_time", (Date.now() - IngeniumWeb.startTime) / 1000);
         shader.setUMat4("camera.view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
@@ -1731,16 +1898,102 @@ export class Mesh3D extends Position3D {
         shader.setUFloat("material.heightScale", mesh.material.parallaxScale);
         shader.setUVec4("mesh.tint", mesh.tint);
         shader.setUVec2("mesh.scaleUV", mesh.material.UVScale);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.diffuseTexture);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.specularTexture);
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.normalTexture);
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.parallaxTexture);
+        mesh.material.bindTextures();
         let verts = mesh.triangles * 3;
         gl.drawArrays(gl.TRIANGLES, 0, verts);
+    }
+}
+export class Mesh2D extends Position2D {
+    /**
+     *
+     * @param position      the position
+     * @param rotation      the rotation
+     * @param scale         the scale
+     * @param rotationPoint the relative point rotation is done around
+     * @param material      the material
+     */
+    constructor(position = new Vec2(), rotation = 0, scale = Vec2.filledWith(1), rotationPoint = new Vec2(), material = new Material()) {
+        super(position, rotation);
+        /**
+         * The tint of the mesh.
+         */
+        this.tint = new Vec3(1, 1, 1);
+        /**
+         * The number of triangles in the mesh
+         */
+        this.triangles = 0;
+        /**
+         * Whether to check the geometry reference cache.
+         */
+        this.useGeometryReferenceCache = false;
+        /**
+        * Whether to check the texture reference cache.
+        */
+        this.useTextureReferenceCache = true;
+        /**
+         * Whether to render this mesh as transparent.
+         */
+        this.renderTransparent = false;
+        /**
+         * The z index of the 2D mesh.
+         */
+        this.zIndex = 0;
+        this.scale = scale;
+        this.rotationCenter = rotationPoint;
+        this.material = material;
+    }
+    /**
+     * Loads all the data onto the GPU
+     *
+     */
+    load(drawType = gl.STATIC_DRAW) {
+        if (!this.loaded) {
+            this.mVBO = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), drawType);
+            this.mVAO = gl.createVertexArray();
+            gl.bindVertexArray(this.mVAO);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+            let size = Vert2D.tSize;
+            let floatSize = 4;
+            let stride = size * floatSize; // Num of array elements resulting from a Vert3D
+            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0); // Vertex data
+            gl.enableVertexAttribArray(0);
+            gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * floatSize); // UV data
+            gl.enableVertexAttribArray(1);
+            this.loaded = true;
+        }
+    }
+    modelMatrix() {
+        return Mat2.rotation(this.rotation);
+    }
+    sendToShader(shader) {
+        shader.setUVec4("model.tint", this.tint);
+        shader.setUVec2("model.translation", this.position);
+        shader.setUMat2("model.rotation", this.modelMatrix());
+        shader.setUVec2("model.rotationPoint", this.rotationCenter);
+        shader.setUVec2("model.scale", this.scale);
+        shader.setUFloat("model.zIndex", this.zIndex);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.material.diffuseTexture);
+    }
+    bindVBO() {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+    }
+    bindVAO() {
+        gl.bindVertexArray(this.mVAO);
+    }
+    static renderAll(shader, camera, meshes) {
+        shader.use();
+        Material.sendToShader(shader);
+        camera.sendToShader(shader);
+        shader.setUFloat("u_time", Date.now());
+        for (let i = 0; i < meshes.length; i++) {
+            meshes[i].bindVAO();
+            shader.setUVec2("translation", meshes[i].position.add(camera.position));
+            meshes[i].sendToShader(shader);
+            gl.drawArrays(gl.TRIANGLES, 0, meshes[i].triangles * 3);
+        }
     }
 }
 /**
@@ -1832,6 +2085,14 @@ export class Geometry {
         return new Geometry(cubeData, "Default Cube");
     }
 }
+Geometry.quadData = [
+    -1, 1, 0, 1,
+    -1, -1, 0, 0,
+    1, 1, 1, 1,
+    -1, -1, 0, 0,
+    1, -1, 1, 0,
+    1, 1, 1, 1
+];
 /**
  * Contains a reference to geometry on the GPU.
  */
@@ -1862,4 +2123,33 @@ export class Utils {
         return result;
     }
 }
+export class FrameBuffer {
+    constructor() {
+        this.properties = {};
+        this.FBO = gl.createFramebuffer();
+        this.RBO = gl.createRenderbuffer();
+        this.type = gl.FRAMEBUFFER;
+    }
+    bind() {
+        gl.bindFramebuffer(this.type, this.FBO);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.RBO);
+    }
+    addTexture(name, width, height, slot = gl.TEXTURE0, minFilter = gl.LINEAR, magFilter = gl.LINEAR) {
+        gl.activeTexture(slot);
+        this.bind();
+        let tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.properties[name] = tex;
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    }
+    static bindDefault() {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+}
+FrameBuffer.buffers = [];
 //# sourceMappingURL=Ingenium.js.map

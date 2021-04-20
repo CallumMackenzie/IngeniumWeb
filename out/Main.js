@@ -21,13 +21,15 @@ class ISCamera extends IW.Camera3D {
         this.refPos.position = this.refPos.position.normalized().mul(m[GBody.locked].scale.mulFloat(2));
     }
 }
-let shader;
-let emissionShader;
+let shaders = {};
 let camera = new ISCamera(70, 0.01, 2000);
+let camera2D = new IW.Camera2D(9 / 16);
 let d = new IW.DirectionalLight();
 let p = [new IW.PointLight(new IW.Vec3(0.01, 0.01, 0.01), new IW.Vec3(1, 1, 1), new IW.Vec3(1, 1, 1), new IW.Vec3(0, 0, -3))];
 let m = [];
 let l = [];
+let fbMesh;
+let lowResBuffer;
 let simSpeed = 1; //3600 * 24; // 1 day
 let meterScale = 1; // 1 km
 function perpVelocity(sunObj, gby, randomPos) {
@@ -48,7 +50,7 @@ function onGlobalCreate() {
     let gParams = {
         version: "300 es",
         normalMap: 1,
-        parallaxMap: 0
+        parallaxMap: 1
     };
     IW.ShaderSource.makeFromFile(Object.assign(gParams, {
         precision: "highp",
@@ -57,7 +59,7 @@ function onGlobalCreate() {
     IW.ShaderSource.makeFromFile(Object.assign(gParams, {
         precision: "mediump",
         maxPointLights: 1,
-        lightModel: "NONE",
+        lightModel: "BLINN",
         parallaxClipEdge: 0,
         parallaxInvert: 1
     }), IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
@@ -71,12 +73,34 @@ function onGlobalCreate() {
         parallaxClipEdge: 0,
         parallaxInvert: 1
     }, IW.ShaderSource.types.frag, "emission", "./shaders/3D/asn.fs");
+    IW.ShaderSource.makeFromFile({ version: "300 es", precision: "highp" }, IW.ShaderSource.types.vert, "postvs", "./shaders/post/fbo.vs");
+    IW.ShaderSource.makeFromFile({ version: "300 es", precision: "mediump" }, IW.ShaderSource.types.frag, "postfs", "./shaders/post/fbo.fs");
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
-    shader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("defFrag", {}));
-    emissionShader = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("emission", {}));
-    IW.IngeniumWeb.window.setClearColour(0x303030, 1);
+    IW.gl.blendFunc(IW.gl.SRC_ALPHA, IW.gl.ONE_MINUS_SRC_ALPHA);
+    IW.gl.enable(IW.gl.BLEND);
+    IW.gl.enable(IW.gl.DEPTH_TEST);
+    IW.gl.depthMask(true);
+    IW.gl.depthFunc(IW.gl.LEQUAL);
+    IW.gl.depthRange(0.0, 1.0);
     IW.gl.enable(IW.gl.CULL_FACE);
     IW.gl.cullFace(IW.gl.BACK);
+    IW.IngeniumWeb.window.setClearColour(0x303030, 1);
+    lowResBuffer = new IW.FrameBuffer();
+    lowResBuffer.bind();
+    lowResBuffer.properties.width = 720;
+    lowResBuffer.properties.height = 480;
+    IW.gl.renderbufferStorage(IW.gl.RENDERBUFFER, IW.gl.DEPTH24_STENCIL8, lowResBuffer.properties.width, lowResBuffer.properties.height);
+    IW.gl.framebufferRenderbuffer(IW.gl.FRAMEBUFFER, IW.gl.DEPTH_STENCIL_ATTACHMENT, IW.gl.RENDERBUFFER, lowResBuffer.RBO);
+    lowResBuffer.addTexture("tex", lowResBuffer.properties.width, lowResBuffer.properties.height);
+    IW.gl.bindRenderbuffer(IW.gl.RENDERBUFFER, null);
+    fbMesh = new IW.Mesh2D();
+    fbMesh.triangles = 2;
+    fbMesh.material = new IW.Material(lowResBuffer.properties.tex);
+    fbMesh.data = IW.Geometry.quadData;
+    fbMesh.load();
+    shaders.asn = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("defFrag"));
+    shaders.emission = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"), IW.ShaderSource.shaderWithParams("emission"));
+    shaders.post = new IW.Shader(IW.ShaderSource.shaderWithParams("postvs"), IW.ShaderSource.shaderWithParams("postfs"));
     IW.Time.setFPS(40);
     IW.Time.setFixedFPS(5);
     d.intensity = 0.6;
@@ -104,18 +128,18 @@ function onGlobalCreate() {
         p[i].ambient = IW.Vec3.filledWith(0);
         l.push(gb);
     }
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
         let rn = function () { return Math.random(); };
         let gb = new GBody(new IW.Vec3(rn() * rpos.x, rn() * rpos.y, rn() * rpos.z));
         gb.mass = 10000;
         gb.scale = IW.Vec3.filledWith(0.25);
         gb.radius = gb.scale.x;
-        gb.tint = new IW.Vec3(1, 1, 1, (i + 1) / 10);
+        // gb.tint = new IW.Vec3(1, 1, 1, (i + 1) / 4);
         // gb.angularVelocity = new IW.Vec3(1, 1, 1);
         gb.material.parallaxScale = 0.1;
         gb.material.shininess = 2;
         gb.material.UVScale = IW.Vec2.filledWith(1);
-        gb.position = new IW.Vec3(0, 0, i);
+        gb.position = new IW.Vec3(0, 0, i + 1);
         gb.make(objPath, "./resource/sbrick/b.jpg", "./resource/sbrick/s.jpg", "./resource/sbrick/n.jpg", "./resource/sbrick/h.png");
         m.push(gb);
     }
@@ -145,8 +169,18 @@ function onUpdate() {
     for (let k = 0; k < l.length; k++) {
         p[k].position = l[k].position;
     }
-    IW.Mesh3D.renderAll(shader, camera, m, d, p);
-    IW.Mesh3D.renderAll(emissionShader, camera, l, d, p);
+    lowResBuffer.bind();
+    IW.IngeniumWeb.window.clear();
+    IW.gl.enable(IW.gl.DEPTH_TEST);
+    IW.gl.viewport(0, 0, lowResBuffer.properties.width, lowResBuffer.properties.height);
+    IW.Mesh3D.renderAll(shaders.asn, camera, m, d, p);
+    IW.Mesh3D.renderAll(shaders.emission, camera, l, d, p);
+    '';
+    IW.FrameBuffer.bindDefault();
+    IW.IngeniumWeb.window.clear();
+    IW.gl.disable(IW.gl.DEPTH_TEST);
+    IW.gl.viewport(0, 0, IW.IngeniumWeb.window.width, IW.IngeniumWeb.window.height);
+    IW.Mesh2D.renderAll(shaders.post, camera2D, [fbMesh]);
 }
 let scene = new IW.Scene(function () { }, onUpdate);
 IW.IngeniumWeb.start([scene], onGlobalCreate);

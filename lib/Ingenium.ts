@@ -100,12 +100,6 @@ export class WebGLWindow {
         this.aspectRatio = height / width;
 
         this.setGL();
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.enable(gl.BLEND);
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthMask(true);
-        gl.depthFunc(gl.LEQUAL);
-        gl.depthRange(0.0, 1.0);
     };
     sizeToWindow(aspect: number) {
         aspect = 1 / aspect;
@@ -125,6 +119,7 @@ export class WebGLWindow {
             }
             this.width = this.canvas.width;
             this.height = this.canvas.height;
+            FrameBuffer.bindDefault();
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         }
     }
@@ -752,6 +747,106 @@ export class Vec3 {
 }
 
 /**
+ * Repersents a 2x2 matrix
+ */
+export class Mat2 {
+    m: number[][];
+
+    constructor(m: number[][] = [[0, 0], [0, 0]]) {
+        this.m = m;
+    }
+
+    /**
+     * 
+     * @return the flattened matrix
+     */
+    flatten(): number[] {
+        return [this.m[0][0], this.m[0][1], this.m[1][0], this.m[1][1]];
+    }
+
+    /**
+     * 
+     * @return the determinant of the matrix
+     */
+    determinant(): number {
+        return (this.m[0][0] * this.m[1][1]) - (this.m[0][1] * this.m[1][0]);
+    }
+
+    /**
+     * 
+     * @return the inverse of the matrix
+     */
+    inverse(): Mat2 {
+        return Mat2.inverse(this);
+    }
+
+    mul(mats: Mat2[]): Mat2 {
+        let m1: Mat2 = new Mat2(this.m);
+        for (let i = 0; i < mats.length; i++) {
+            let m2: Mat2 = mats[i];
+            let matrix: Mat2 = new Mat2();
+            for (let c = 0; c < 2; c++)
+                for (let r = 0; r < 2; r++)
+                    matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c];
+            m1 = matrix;
+        }
+        return m1;
+    }
+
+    /**
+     * 
+     * @param x the x scale
+     * @param y the y scale
+     * @return the scaling matrix
+     */
+    static scale(scale: Vec2): Mat2 {
+        let mat: Mat2 = new Mat2();
+        mat.m[0][0] = scale.x;
+        mat.m[1][1] = scale.y;
+        return mat;
+    }
+
+    /**
+     * 
+     * @param radians the clockwise rotation in radians
+     * @return the 2D rotation matrix
+     */
+    static rotation(radians: number): Mat2 {
+        let mat: Mat2 = new Mat2();
+        mat.m[0][0] = Math.cos(radians);
+        mat.m[0][1] = Math.sin(radians);
+        mat.m[1][0] = -Math.sin(radians);
+        mat.m[1][1] = Math.cos(radians);
+        return mat;
+    }
+
+    /**
+     * 
+     * @return a 2D identity matrix
+     */
+    static identity(): Mat2 {
+        let m: Mat2 = new Mat2();
+        m.m[0][0] = 1;
+        m.m[1][1] = 0;
+        return m;
+    }
+
+    /**
+     * 
+     * @return the inverse of the matrix
+     */
+    static inverse(mat: Mat2): Mat2 {
+        let determinant: number = mat.determinant();
+        let m: Mat2 = new Mat2();
+        m.m[0][0] = mat.m[0][0] / determinant;
+        m.m[1][1] = mat.m[1][1] / determinant;
+        m.m[1][0] = mat.m[1][0] / determinant;
+        m.m[0][1] = mat.m[0][1] / determinant;
+        return m;
+    }
+}
+
+/**
  * A 4x4 matrix.
  */
 export class Mat4 {
@@ -1069,6 +1164,9 @@ export class Shader {
     setUBool(name: string, b: boolean): void {
         this.setUInt(name, b ? 1 : 0);
     }
+    setUMat2(name: string, m: Mat2): void {
+        gl.uniformMatrix2fv(this.getULoc(name), false, m.flatten());
+    }
 }
 
 /**
@@ -1224,6 +1322,35 @@ export class Vert3D {
     }
 }
 
+export class Vert2D {
+    /**
+     * The number of floats in a processed vertex.
+     */
+    static tSize: number = 4;
+
+    /**
+     * The point that the vertex sits at.
+     */
+    p: Vec2; // 2
+    /**
+    * The UV coordinates of the vertex.
+    */
+    t: Vec2; // 2
+
+    /**
+     * Creates a new vertex.
+     * 
+     * @param point the vertex location.
+     * @param UV the vertex UV coordinates.
+     * @param rgb the RGB tint of the vertex.
+     * @param normal the vertex normal.
+     */
+    constructor(point: Vec2 = new Vec2(), UV: Vec2 = new Vec2()) {
+        this.p = point;
+        this.t = UV;
+    }
+}
+
 /**
  * A triangle in 3D space.
  */
@@ -1239,6 +1366,19 @@ export class Tri3D {
      * @param points the points in the triangle.
      */
     constructor(points: Vert3D[] = [new Vert3D(), new Vert3D(), new Vert3D()]) {
+        this.v = [points[0], points[1], points[2]];
+    }
+}
+
+export class Tri2D {
+    v: Vert2D[];
+
+    /**
+     * Creates a new triangle.
+     * 
+     * @param points the points in the triangle.
+     */
+    constructor(points: Vert2D[] = [new Vert2D(), new Vert2D(), new Vert2D()]) {
         this.v = [points[0], points[1], points[2]];
     }
 }
@@ -1262,7 +1402,7 @@ export class Material {
     /**
      * The parallax texture.
      */
-    parallaxTexture: WebGLTexture = gl.NONE;
+    parallaxTexture: WebGLTexture;
     /**
      * The shininess of the material.
      */
@@ -1287,7 +1427,27 @@ export class Material {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.normalTexture = normalTexture;
+        this.parallaxTexture = gl.NONE;
         this.shininess = shininess;
+    }
+
+    bindTextures (): void {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.diffuseTexture);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.specularTexture);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, this.parallaxTexture);
+    }
+
+    static sendToShader(shader: Shader): void {
+        shader.setUInt("material.diffuse", 0);
+        shader.setUInt("material.specular", 1);
+        shader.setUInt("material.normal", 2);
+        shader.setUInt("material.parallax", 3);
+        shader.setUInt("screenTexture", 0);
     }
 }
 
@@ -1333,6 +1493,16 @@ export class Position3D {
      * @param rotation The rotation.
      */
     constructor(position: Vec3 = new Vec3(), rotation: Vec3 = new Vec3()) {
+        this.position = position;
+        this.rotation = rotation;
+    }
+}
+
+export class Position2D {
+    position: Vec2;
+    rotation: number;
+
+    constructor(position: Vec2 = new Vec2(), rotation: number = 0) {
         this.position = position;
         this.rotation = rotation;
     }
@@ -1459,6 +1629,48 @@ export class Camera3D extends Position3D {
         if (Math.abs(p3.rotation.y) >= Rotation.degToRad(360)) p3.rotation.y = 0;
         if (Math.abs(p3.rotation.z) >= Rotation.degToRad(360)) p3.rotation.z = 0;
         return p3;
+    }
+}
+
+export class Camera2D extends Position2D {
+    rotationPoint: Vec2;
+    aspect: number;
+
+    constructor(aspect: number, position: Vec2 = new Vec2(), rotation: number = 0) {
+        super(position, rotation);
+        this.rotationPoint = new Vec2();
+        this.aspect = aspect;
+    }
+
+    cameraMatrix(): Mat2 {
+        return Mat2.rotation(this.rotation);
+    }
+
+    sendToShader(shader: Shader): void {
+        shader.setUMat2("camera.rotation", this.cameraMatrix());
+        shader.setUVec2("camera.translation", this.position);
+        shader.setUFloat("camera.aspect", this.aspect);
+        shader.setUVec2("camera.rotationPoint", this.rotationPoint);
+    }
+
+    stdControl(speed: number, rotateSpeed: number): void {
+        let move: Vec2 = new Vec2();
+        let cLV: Vec2 = new Vec2(Math.sin(this.rotation), Math.cos(this.rotation));
+        let rotate: number = 0;
+        if (Input.getKeyState('w')) // w
+            move = move.sub(cLV);
+        if (Input.getKeyState('s')) // s
+            move = move.add(cLV);
+        if (Input.getKeyState('d')) // d
+            move = move.add(new Vec2(Math.sin(this.rotation - 1.5708), Math.cos(this.rotation - 1.5708)));
+        if (Input.getKeyState('a')) // a
+            move = move.add(new Vec2(Math.sin(this.rotation + 1.5708), Math.cos(this.rotation + 1.5708)));
+        if (Input.getKeyState('ArrowLeft')) // left arrow
+            rotate -= rotateSpeed;
+        if (Input.getKeyState('ArrowRight')) // right arrow
+            rotate += rotateSpeed;
+        this.position = this.position.add(move.normalized().mulFloat(Time.deltaTime * speed));
+        this.rotation = this.rotation + rotate * Time.deltaTime;
     }
 }
 
@@ -1836,7 +2048,7 @@ export class Mesh3D extends Position3D {
 
         let tan: Vec3[] = [sdir, sdir, sdir];
         for (var i: number = 0; i < 3; i++) {
-            let t : Vec3 = tan[i];
+            let t: Vec3 = tan[i];
             let n: Vec3 = triangle.v[i].n;
             t = t.sub(n).mulFloat(Vec3.dot(n, t)).normalized();
             t.w = (Vec3.dot(Vec3.cross(n, t), tdir) < 0.0) ? -1.0 : 1.0;
@@ -1855,10 +2067,7 @@ export class Mesh3D extends Position3D {
      */
     static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights: PointLight[] = []) {
         shader.use();
-        shader.setUInt("material.diffuse", 0);
-        shader.setUInt("material.specular", 1);
-        shader.setUInt("material.normal", 2);
-        shader.setUInt("material.parallax", 3);
+        Material.sendToShader(shader);
         shader.setUFloat("u_time", (Date.now() - IngeniumWeb.startTime) / 1000);
         shader.setUMat4("camera.view", Mat4.inverse(camera.cameraMatrix()));
         shader.setUVec3("viewPos", camera.position);
@@ -1890,12 +2099,12 @@ export class Mesh3D extends Position3D {
             }
             Mesh3D.renderMeshRaw(meshes[i], shader);
         }
-        transparents.sort(function (a : Mesh3D, b: Mesh3D) : number {
+        transparents.sort(function (a: Mesh3D, b: Mesh3D): number {
             let aDist: number = camera.position.sub(a.position).len();
             let bDist: number = camera.position.sub(b.position).len();
             if (aDist < bDist) {
                 return 1;
-            } 
+            }
             if (aDist > bDist) {
                 return -1;
             }
@@ -1904,7 +2113,7 @@ export class Mesh3D extends Position3D {
         for (let i: number = 0; i < transparents.length; i++)
             Mesh3D.renderMeshRaw(transparents[i], shader);
     }
-    static renderMeshRaw (mesh: Mesh3D, shader: Shader) {
+    static renderMeshRaw(mesh: Mesh3D, shader: Shader) {
         gl.bindVertexArray(mesh.mVAO);
 
         let model: Mat4 = mesh.modelMatrix();
@@ -1914,17 +2123,146 @@ export class Mesh3D extends Position3D {
         shader.setUFloat("material.heightScale", mesh.material.parallaxScale);
         shader.setUVec4("mesh.tint", mesh.tint);
         shader.setUVec2("mesh.scaleUV", mesh.material.UVScale);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.diffuseTexture);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.specularTexture)
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.normalTexture);
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, mesh.material.parallaxTexture);
+        mesh.material.bindTextures();
 
         let verts = mesh.triangles * 3;
         gl.drawArrays(gl.TRIANGLES, 0, verts);
+    }
+}
+
+export class Mesh2D extends Position2D {
+    /**
+     * Relative point the mesh rotates around.
+     */
+    rotationCenter: Vec2;
+    /**
+     * The scale of the mesh.
+     */
+    scale: Vec2;
+    /**
+     * The material of the mesh.
+     */
+    material: Material;
+    /**
+     * Whether the mesh has been loaded to the GPU.
+     */
+    loaded: boolean;
+    /**
+     * The vertex buffer location of the mesh data on the GPU.
+     */
+    mVBO: WebGLBuffer;
+    /**
+     * The vertex array location of the mesh data on the GPU.
+     */
+    mVAO: WebGLVertexArrayObject;
+    /**
+     * The loaded float vertex data of the mesh.
+     */
+    data: number[];
+    /**
+     * The tint of the mesh.
+     */
+    tint: Vec3 = new Vec3(1, 1, 1);
+    /**
+     * The number of triangles in the mesh
+     */
+    triangles: number = 0;
+    /**
+     * Whether to check the geometry reference cache.
+     */
+    useGeometryReferenceCache: boolean = false;
+    /**
+    * Whether to check the texture reference cache.
+    */
+    useTextureReferenceCache: boolean = true;
+    /**
+     * Whether to render this mesh as transparent.
+     */
+    renderTransparent: boolean = false;
+    /**
+     * The z index of the 2D mesh.
+     */
+    zIndex: number = 0;
+
+    /**
+     * 
+     * @param position      the position
+     * @param rotation      the rotation
+     * @param scale         the scale
+     * @param rotationPoint the relative point rotation is done around
+     * @param material      the material
+     */
+    constructor(position: Vec2 = new Vec2(), rotation: number = 0, scale: Vec2 = Vec2.filledWith(1), rotationPoint: Vec2 = new Vec2(), material: Material = new Material()) {
+        super(position, rotation);
+        this.scale = scale;
+        this.rotationCenter = rotationPoint;
+        this.material = material;
+    }
+
+    /**
+     * Loads all the data onto the GPU
+     * 
+     */
+    load(drawType: number = gl.STATIC_DRAW): void {
+        if (!this.loaded) {
+            this.mVBO = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), drawType);
+
+            this.mVAO = gl.createVertexArray();
+            gl.bindVertexArray(this.mVAO);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+
+            let size: number = Vert2D.tSize;
+
+            let floatSize: number = 4;
+            let stride: number = size * floatSize; // Num of array elements resulting from a Vert3D
+
+            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0); // Vertex data
+            gl.enableVertexAttribArray(0);
+
+            gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * floatSize); // UV data
+            gl.enableVertexAttribArray(1);
+
+            this.loaded = true;
+        }
+    }
+
+    modelMatrix(): Mat2 {
+        return Mat2.rotation(this.rotation);
+    }
+
+    sendToShader(shader: Shader): void {
+        shader.setUVec4("model.tint", this.tint);
+        shader.setUVec2("model.translation", this.position);
+        shader.setUMat2("model.rotation", this.modelMatrix());
+        shader.setUVec2("model.rotationPoint", this.rotationCenter);
+        shader.setUVec2("model.scale", this.scale);
+        shader.setUFloat("model.zIndex", this.zIndex);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.material.diffuseTexture);
+    }
+
+    bindVBO(): void {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+    }
+
+    bindVAO(): void {
+        gl.bindVertexArray(this.mVAO);
+    }
+
+    static renderAll(shader: Shader, camera: Camera2D, meshes: Mesh2D[]): void {
+        shader.use();
+        Material.sendToShader(shader);
+        camera.sendToShader(shader);
+        shader.setUFloat("u_time", Date.now());
+
+        for (let i = 0; i < meshes.length; i++) {
+            meshes[i].bindVAO();
+            shader.setUVec2("translation", meshes[i].position.add(camera.position));
+            meshes[i].sendToShader(shader);
+            gl.drawArrays(gl.TRIANGLES, 0, meshes[i].triangles * 3);
+        }
     }
 }
 
@@ -2032,6 +2370,15 @@ export class DirectionalLight extends Light {
  * Deals with obj files.
  */
 export class Geometry {
+    static quadData: number[] = [
+        -1, 1, 0, 1,
+        -1, -1, 0, 0,
+        1, 1, 1, 1,
+        -1, -1, 0, 0,
+        1, -1, 1, 0,
+        1, 1, 1, 1
+    ];
+
     /**
      * The name of the geometry.
      */
@@ -2101,5 +2448,44 @@ export class Utils {
             console.error("XMLHTTP error (", filePath, "): ", xmlhttp.status);
         }
         return result;
+    }
+}
+
+export class FrameBuffer {
+    static buffers: FrameBuffer[] = [];
+
+    FBO: WebGLFramebuffer;
+    RBO: WebGLRenderbuffer;
+    type: number;
+    properties: any = {};
+
+    constructor() {
+        this.FBO = gl.createFramebuffer();
+        this.RBO = gl.createRenderbuffer();
+        this.type = gl.FRAMEBUFFER;
+    }
+
+    bind(): void {
+        gl.bindFramebuffer(this.type, this.FBO);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.RBO);
+    }
+
+    addTexture(name: string, width: number, height: number,
+        slot: number = gl.TEXTURE0, minFilter: number = gl.LINEAR, magFilter: number = gl.LINEAR): void {
+        gl.activeTexture(slot);
+        this.bind();
+        let tex: WebGLTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.properties[name] = tex;
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    }
+
+    static bindDefault(): void {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 }

@@ -464,6 +464,52 @@ export declare class Vec3 {
     equals(v2: Vec3): boolean;
 }
 /**
+ * Repersents a 2x2 matrix
+ */
+export declare class Mat2 {
+    m: number[][];
+    constructor(m?: number[][]);
+    /**
+     *
+     * @return the flattened matrix
+     */
+    flatten(): number[];
+    /**
+     *
+     * @return the determinant of the matrix
+     */
+    determinant(): number;
+    /**
+     *
+     * @return the inverse of the matrix
+     */
+    inverse(): Mat2;
+    mul(mats: Mat2[]): Mat2;
+    /**
+     *
+     * @param x the x scale
+     * @param y the y scale
+     * @return the scaling matrix
+     */
+    static scale(scale: Vec2): Mat2;
+    /**
+     *
+     * @param radians the clockwise rotation in radians
+     * @return the 2D rotation matrix
+     */
+    static rotation(radians: number): Mat2;
+    /**
+     *
+     * @return a 2D identity matrix
+     */
+    static identity(): Mat2;
+    /**
+     *
+     * @return the inverse of the matrix
+     */
+    static inverse(mat: Mat2): Mat2;
+}
+/**
  * A 4x4 matrix.
  */
 export declare class Mat4 {
@@ -618,6 +664,7 @@ export declare class Shader {
     setUVec3(name: string, v: Vec3): void;
     setUVec4(name: string, v: Vec3): void;
     setUBool(name: string, b: boolean): void;
+    setUMat2(name: string, m: Mat2): void;
 }
 /**
  * The supported types of shaders.
@@ -736,6 +783,29 @@ export declare class Vert3D {
      */
     constructor(point?: Vec3, UV?: Vec2, rgb?: Vec3, normal?: Vec3);
 }
+export declare class Vert2D {
+    /**
+     * The number of floats in a processed vertex.
+     */
+    static tSize: number;
+    /**
+     * The point that the vertex sits at.
+     */
+    p: Vec2;
+    /**
+    * The UV coordinates of the vertex.
+    */
+    t: Vec2;
+    /**
+     * Creates a new vertex.
+     *
+     * @param point the vertex location.
+     * @param UV the vertex UV coordinates.
+     * @param rgb the RGB tint of the vertex.
+     * @param normal the vertex normal.
+     */
+    constructor(point?: Vec2, UV?: Vec2);
+}
 /**
  * A triangle in 3D space.
  */
@@ -750,6 +820,15 @@ export declare class Tri3D {
      * @param points the points in the triangle.
      */
     constructor(points?: Vert3D[]);
+}
+export declare class Tri2D {
+    v: Vert2D[];
+    /**
+     * Creates a new triangle.
+     *
+     * @param points the points in the triangle.
+     */
+    constructor(points?: Vert2D[]);
 }
 /**
  * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
@@ -792,6 +871,8 @@ export declare class Material {
      * @param shininess the shininess of the material.
      */
     constructor(diffuseTexture?: WebGLTexture, specularTexture?: WebGLTexture, normalTexture?: WebGLTexture, shininess?: number);
+    bindTextures(): void;
+    static sendToShader(shader: Shader): void;
 }
 /**
  * A material with references to textures only.
@@ -833,6 +914,11 @@ export declare class Position3D {
      * @param rotation The rotation.
      */
     constructor(position?: Vec3, rotation?: Vec3);
+}
+export declare class Position2D {
+    position: Vec2;
+    rotation: number;
+    constructor(position?: Vec2, rotation?: number);
 }
 /**
  * The view position to render from.
@@ -890,6 +976,14 @@ export declare class Camera3D extends Position3D {
      * @returns an updated 3D position.
      */
     static stdController(cam: Camera3D, pos: Position3D, speed?: number, cameraMoveSpeed?: number): Position3D;
+}
+export declare class Camera2D extends Position2D {
+    rotationPoint: Vec2;
+    aspect: number;
+    constructor(aspect: number, position?: Vec2, rotation?: number);
+    cameraMatrix(): Mat2;
+    sendToShader(shader: Shader): void;
+    stdControl(speed: number, rotateSpeed: number): void;
 }
 /**
  * A 3D object.
@@ -1026,6 +1120,79 @@ export declare class Mesh3D extends Position3D {
     static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights?: PointLight[]): void;
     static renderMeshRaw(mesh: Mesh3D, shader: Shader): void;
 }
+export declare class Mesh2D extends Position2D {
+    /**
+     * Relative point the mesh rotates around.
+     */
+    rotationCenter: Vec2;
+    /**
+     * The scale of the mesh.
+     */
+    scale: Vec2;
+    /**
+     * The material of the mesh.
+     */
+    material: Material;
+    /**
+     * Whether the mesh has been loaded to the GPU.
+     */
+    loaded: boolean;
+    /**
+     * The vertex buffer location of the mesh data on the GPU.
+     */
+    mVBO: WebGLBuffer;
+    /**
+     * The vertex array location of the mesh data on the GPU.
+     */
+    mVAO: WebGLVertexArrayObject;
+    /**
+     * The loaded float vertex data of the mesh.
+     */
+    data: number[];
+    /**
+     * The tint of the mesh.
+     */
+    tint: Vec3;
+    /**
+     * The number of triangles in the mesh
+     */
+    triangles: number;
+    /**
+     * Whether to check the geometry reference cache.
+     */
+    useGeometryReferenceCache: boolean;
+    /**
+    * Whether to check the texture reference cache.
+    */
+    useTextureReferenceCache: boolean;
+    /**
+     * Whether to render this mesh as transparent.
+     */
+    renderTransparent: boolean;
+    /**
+     * The z index of the 2D mesh.
+     */
+    zIndex: number;
+    /**
+     *
+     * @param position      the position
+     * @param rotation      the rotation
+     * @param scale         the scale
+     * @param rotationPoint the relative point rotation is done around
+     * @param material      the material
+     */
+    constructor(position?: Vec2, rotation?: number, scale?: Vec2, rotationPoint?: Vec2, material?: Material);
+    /**
+     * Loads all the data onto the GPU
+     *
+     */
+    load(drawType?: number): void;
+    modelMatrix(): Mat2;
+    sendToShader(shader: Shader): void;
+    bindVBO(): void;
+    bindVAO(): void;
+    static renderAll(shader: Shader, camera: Camera2D, meshes: Mesh2D[]): void;
+}
 /**
  * The base properties of a light.
  */
@@ -1110,6 +1277,7 @@ export declare class DirectionalLight extends Light {
  * Deals with obj files.
  */
 export declare class Geometry {
+    static quadData: number[];
     /**
      * The name of the geometry.
      */
@@ -1159,5 +1327,16 @@ export declare class Utils {
      * @returns the string data of the file, or null if the file isn't found.
      */
     static loadFile(filePath: string): string | null;
+}
+export declare class FrameBuffer {
+    static buffers: FrameBuffer[];
+    FBO: WebGLFramebuffer;
+    RBO: WebGLRenderbuffer;
+    type: number;
+    properties: any;
+    constructor();
+    bind(): void;
+    addTexture(name: string, width: number, height: number, slot?: number, minFilter?: number, magFilter?: number): void;
+    static bindDefault(): void;
 }
 export {};

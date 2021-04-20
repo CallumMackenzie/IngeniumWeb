@@ -79,7 +79,7 @@ vec4 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
     vec4 ambient  = vec4(light.ambient, 1.0)  * (texture(material.diffuse, coordUV).rgba * tint.rgba);
     vec4 diffuse  = vec4(light.diffuse  * diff, 1.0) * (texture((material.diffuse), coordUV).rgba * tint.rgba);
     vec4 specular = vec4(light.specular * spec, 1.0) * (texture(material.specular, coordUV).rgba * tint.rgba);
-    return (ambient + diffuse + specular);
+    return vec4(ambient.rgb + diffuse.rgb + specular.rgb, (ambient.a + diffuse.a + specular.a) * 0.333);
 } 
 
 vec4 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir, vec2 coordUV)
@@ -96,13 +96,13 @@ vec4 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir,
     #endif // defined(BLINN)
     float distance    = length(light.position - cfragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
-    vec4 ambient  = vec4(light.ambient, 1.0)  * (texture(material.diffuse, coordUV).rgba * tint.rgba);
-    vec4 diffuse  = vec4(light.diffuse  * diff, 1.0) * (texture(material.diffuse, coordUV).rgba * tint.rgba);
-    vec4 specular = vec4(light.specular * spec, 1.0) * (texture(material.specular, coordUV).rgba * tint.rgba);
+    vec4 ambient  = vec4(light.ambient, 1.0)  * texture(material.diffuse, coordUV).rgba * tint.rgba;
+    vec4 diffuse  = vec4(light.diffuse * diff, 1.0) * texture(material.diffuse, coordUV).rgba * tint.rgba;
+    vec4 specular = vec4(light.specular * spec, 1.0) * texture(material.specular, coordUV).rgba * tint.rgba;
     ambient  *= attenuation;
     diffuse  *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+    return vec4(ambient.rgb + diffuse.rgb + specular.rgb, (ambient.a * diffuse.a * specular.a) * 0.333);
 }
 #endif // !defined(NONE)
 
@@ -187,6 +187,7 @@ void main ()
         result += CalcPointLight(pointLights[i], norm, fragPos, viewDir, cUV);
         #endif
     }
+    result.a /= float(numlights);
     #endif
 #endif
     color = result;
