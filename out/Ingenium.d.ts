@@ -111,6 +111,7 @@ export declare class IngeniumWeb {
     static refreshLoops(): void;
     static terminate(message: string): void;
     static enterScene(index: number): void;
+    static defaultSetup(): void;
 }
 /**
  * An approximation of PI (355 / 113);
@@ -834,6 +835,13 @@ export declare class Tri2D {
  * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
  */
 export declare class Material {
+    static diffuseLoc: string;
+    static specularLoc: string;
+    static normalLoc: string;
+    static parallaxLoc: string;
+    static heightScaleLoc: string;
+    static shininessLoc: string;
+    static scaleUVLoc: string;
     /**
      * The diffuse texture.
      */
@@ -937,13 +945,17 @@ export declare class Camera3D extends Position3D {
      */
     clipFar: number;
     /**
+     * The aspect ratio of the camera.
+     */
+    aspect: number;
+    /**
      * Creates a new camera.
      *
      * @param fov the field of view.
      * @param clipNear the near clip distance.
      * @param clipFar the far clip distance.
      */
-    constructor(fov?: number, clipNear?: number, clipFar?: number);
+    constructor(fov?: number, clipNear?: number, clipFar?: number, aspect?: number);
     /**
      *
      * @returns a vector repersenting the direction the camera is looking.
@@ -989,6 +1001,10 @@ export declare class Camera2D extends Position2D {
  * A 3D object.
  */
 export declare class Mesh3D extends Position3D {
+    static modelMatrixLoc: string;
+    static invModelMatrixLoc: string;
+    static tintLoc: string;
+    static timeLoc: string;
     /**
      * Relative point the mesh rotates around.
      */
@@ -1121,6 +1137,7 @@ export declare class Mesh3D extends Position3D {
     static renderMeshRaw(mesh: Mesh3D, shader: Shader): void;
 }
 export declare class Mesh2D extends Position2D {
+    static renderTranslationName: string;
     /**
      * Relative point the mesh rotates around.
      */
@@ -1227,10 +1244,18 @@ export declare class Light {
  * A light at a point.
  */
 export declare class PointLight extends Light {
+    static structName: string;
+    static positionLoc: string;
+    static ambientLoc: string;
+    static diffuseLoc: string;
+    static specularLoc: string;
+    static constantLoc: string;
+    static linearLoc: string;
+    static quadraticLoc: string;
+    position: Vec3;
     /**
      * The position of the light.
      */
-    position: Vec3;
     /**
      * The constant in the light attentuation equation.
      */
@@ -1253,11 +1278,16 @@ export declare class PointLight extends Light {
      * @param intensity the intensity of the light.
      */
     constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, position?: Vec3, intensity?: number);
+    sendToShader(shader: Shader, index: number): void;
 }
 /**
  * A light coming from one direction.
  */
 export declare class DirectionalLight extends Light {
+    static directionLoc: string;
+    static ambientLoc: string;
+    static specularLoc: string;
+    static diffuseLoc: string;
     /**
      * The direction of the light.
      */
@@ -1272,12 +1302,14 @@ export declare class DirectionalLight extends Light {
      * @param intensity the intensity of the light.
      */
     constructor(ambient?: Vec3, diffuse?: Vec3, specular?: Vec3, direction?: Vec3, intensity?: number);
+    sendToShader(shader: Shader): void;
 }
 /**
  * Deals with obj files.
  */
 export declare class Geometry {
     static quadData: number[];
+    static triData: number[];
     /**
      * The name of the geometry.
      */
@@ -1338,5 +1370,8 @@ export declare class FrameBuffer {
     bind(): void;
     addTexture(name: string, width: number, height: number, slot?: number, minFilter?: number, magFilter?: number): void;
     static bindDefault(): void;
+    static createRenderTexture(width: number, height: number): FrameBuffer;
+    static renderToRenderTexture(fb: FrameBuffer, onRender: Function): void;
+    static setDefaultRenderBuffer(): void;
 }
 export {};

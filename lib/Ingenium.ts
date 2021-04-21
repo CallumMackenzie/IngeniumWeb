@@ -274,6 +274,16 @@ export class IngeniumWeb {
         IngeniumWeb.currentScene = index;
         IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
     }
+    static defaultSetup (): void {
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.enable(gl.BLEND);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthMask(true);
+        gl.depthFunc(gl.LEQUAL);
+        gl.depthRange(0.0, 1.0);
+        // gl.enable(gl.CULL_FACE);
+        // gl.cullFace(gl.BACK);
+    }
 };
 
 /**
@@ -1387,6 +1397,14 @@ export class Tri2D {
  * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
  */
 export class Material {
+    static diffuseLoc: string = "material.diffuse";
+    static specularLoc: string = "material.specular";
+    static normalLoc: string = "material.normal";
+    static parallaxLoc: string = "material.parallax";
+    static heightScaleLoc: string = "material.heightScale";
+    static shininessLoc: string = "material.shininess";
+    static scaleUVLoc: string = "mesh.scaleUV";
+
     /**
      * The diffuse texture.
      */
@@ -1423,11 +1441,11 @@ export class Material {
      * @param normalTexture the normal texture.
      * @param shininess the shininess of the material.
      */
-    constructor(diffuseTexture: WebGLTexture = gl.NONE, specularTexture: WebGLTexture = gl.NONE, normalTexture: WebGLTexture = gl.NONE, shininess: number = 0.5) {
+    constructor(diffuseTexture: WebGLTexture = null, specularTexture: WebGLTexture = null, normalTexture: WebGLTexture = null, shininess: number = 0.5) {
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.normalTexture = normalTexture;
-        this.parallaxTexture = gl.NONE;
+        this.parallaxTexture = null;
         this.shininess = shininess;
     }
 
@@ -1443,10 +1461,10 @@ export class Material {
     }
 
     static sendToShader(shader: Shader): void {
-        shader.setUInt("material.diffuse", 0);
-        shader.setUInt("material.specular", 1);
-        shader.setUInt("material.normal", 2);
-        shader.setUInt("material.parallax", 3);
+        shader.setUInt(Material.diffuseLoc, 0);
+        shader.setUInt(Material.specularLoc, 1);
+        shader.setUInt(Material.normalLoc, 2);
+        shader.setUInt(Material.parallaxLoc, 3);
         shader.setUInt("screenTexture", 0);
     }
 }
@@ -1525,17 +1543,22 @@ export class Camera3D extends Position3D {
      */
     clipFar: number;
     /**
+     * The aspect ratio of the camera.
+     */
+    aspect: number;
+    /**
      * Creates a new camera.
      * 
      * @param fov the field of view.
      * @param clipNear the near clip distance.
      * @param clipFar the far clip distance.
      */
-    constructor(fov: number = 75, clipNear: number = 0.1, clipFar: number = 500) {
+    constructor(fov: number = 75, clipNear: number = 0.1, clipFar: number = 500, aspect: number = 9 / 16) {
         super();
         this.FOV = fov;
         this.clipNear = clipNear;
         this.clipFar = clipFar;
+        this.aspect = aspect;
     }
     /**
      * 
@@ -1553,7 +1576,7 @@ export class Camera3D extends Position3D {
      * @returns the perspective projection matrix of the camera.
      */
     perspective(): Mat4 {
-        return Mat4.perspective(this.FOV, IngeniumWeb.window.aspectRatio, this.clipNear, this.clipFar);
+        return Mat4.perspective(this.FOV, this.aspect, this.clipNear, this.clipFar);
     }
     /**
      * 
@@ -1683,6 +1706,11 @@ let loadedReferenceGeometry: { [id: string]: ReferenceGeometry } = {};
  * A 3D object.
  */
 export class Mesh3D extends Position3D {
+    // TODO: dynamic shader location names
+    static modelMatrixLoc: string = "mesh.transform";
+    static invModelMatrixLoc: string = "mesh.inverseTransform";
+    static tintLoc: string = "mesh.tint";
+    static timeLoc: string = "u_time";
 
     /**
      * Relative point the mesh rotates around.
@@ -2068,26 +2096,17 @@ export class Mesh3D extends Position3D {
     static renderAll(shader: Shader, camera: Camera3D, meshes: Mesh3D[], dirLight: DirectionalLight, pointLights: PointLight[] = []) {
         shader.use();
         Material.sendToShader(shader);
-        shader.setUFloat("u_time", (Date.now() - IngeniumWeb.startTime) / 1000);
+        shader.setUFloat(Mesh3D.timeLoc, (Date.now() - IngeniumWeb.startTime) / 1000);
         shader.setUMat4("camera.view", Mat4.inverse(camera.cameraMatrix()));
-        shader.setUVec3("viewPos", camera.position);
         shader.setUMat4("camera.projection", camera.perspective());
+        shader.setUVec3("viewPos", camera.position);
         shader.setUInt("numlights", pointLights.length);
 
-        shader.setUVec3("dirLight.direction", dirLight.direction);
-        shader.setUVec3("dirLight.ambient", dirLight.ambient);
-        shader.setUVec3("dirLight.specular", dirLight.specular.mulFloat(dirLight.intensity));
-        shader.setUVec3("dirLight.diffuse", dirLight.diffuse.mulFloat(dirLight.intensity));
+        dirLight.sendToShader(shader);
 
 
         for (let j: number = 0; j < pointLights.length; j++) {
-            shader.setUVec3("pointLights[" + j + "].position", pointLights[j].position);
-            shader.setUVec3("pointLights[" + j + "].ambient", pointLights[j].ambient);
-            shader.setUVec3("pointLights[" + j + "].diffuse", Vec3.mulFloat(pointLights[j].diffuse, pointLights[j].intensity));
-            shader.setUVec3("pointLights[" + j + "].specular", Vec3.mulFloat(pointLights[j].specular, pointLights[j].intensity));
-            shader.setUFloat("pointLights[" + j + "].constant", pointLights[j].constant);
-            shader.setUFloat("pointLights[" + j + "].linear)", pointLights[j].linear);
-            shader.setUFloat("pointLights[" + j + "].quadratic", pointLights[j].quadratic);
+            pointLights[j].sendToShader(shader, j);
         }
 
         let transparents: Mesh3D[] = [];
@@ -2117,12 +2136,12 @@ export class Mesh3D extends Position3D {
         gl.bindVertexArray(mesh.mVAO);
 
         let model: Mat4 = mesh.modelMatrix();
-        shader.setUMat4("mesh.transform", model);
-        shader.setUMat4("mesh.inverseTransform", Mat4.inverse(model));
-        shader.setUFloat("material.shininess", mesh.material.shininess);
-        shader.setUFloat("material.heightScale", mesh.material.parallaxScale);
-        shader.setUVec4("mesh.tint", mesh.tint);
-        shader.setUVec2("mesh.scaleUV", mesh.material.UVScale);
+        shader.setUMat4(Mesh3D.modelMatrixLoc, model);
+        shader.setUMat4(Mesh3D.invModelMatrixLoc, Mat4.inverse(model));
+        shader.setUVec4(Mesh3D.tintLoc, mesh.tint);
+        shader.setUFloat(Material.shininessLoc, mesh.material.shininess);
+        shader.setUFloat(Material.heightScaleLoc, mesh.material.parallaxScale);
+        shader.setUVec2(Material.scaleUVLoc, mesh.material.UVScale);
         mesh.material.bindTextures();
 
         let verts = mesh.triangles * 3;
@@ -2131,6 +2150,9 @@ export class Mesh3D extends Position3D {
 }
 
 export class Mesh2D extends Position2D {
+    // TODO: dynamic shader location names
+    static renderTranslationName = "translation";
+
     /**
      * Relative point the mesh rotates around.
      */
@@ -2183,7 +2205,6 @@ export class Mesh2D extends Position2D {
      * The z index of the 2D mesh.
      */
     zIndex: number = 0;
-
     /**
      * 
      * @param position      the position
@@ -2198,7 +2219,6 @@ export class Mesh2D extends Position2D {
         this.rotationCenter = rotationPoint;
         this.material = material;
     }
-
     /**
      * Loads all the data onto the GPU
      * 
@@ -2227,11 +2247,9 @@ export class Mesh2D extends Position2D {
             this.loaded = true;
         }
     }
-
     modelMatrix(): Mat2 {
         return Mat2.rotation(this.rotation);
     }
-
     sendToShader(shader: Shader): void {
         shader.setUVec4("model.tint", this.tint);
         shader.setUVec2("model.translation", this.position);
@@ -2242,11 +2260,9 @@ export class Mesh2D extends Position2D {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.material.diffuseTexture);
     }
-
     bindVBO(): void {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
     }
-
     bindVAO(): void {
         gl.bindVertexArray(this.mVAO);
     }
@@ -2306,10 +2322,19 @@ export class Light {
  * A light at a point.
  */
 export class PointLight extends Light {
+    static structName = "pointLights";
+    static positionLoc: string = "position";
+    static ambientLoc: string = "ambient";
+    static diffuseLoc: string = "diffuse";
+    static specularLoc: string = "specular";
+    static constantLoc: string = "constant";
+    static linearLoc: string = "linear";
+    static quadraticLoc: string = "quadratic";
+
+    position: Vec3;
     /**
      * The position of the light.
      */
-    position: Vec3;
     /**
      * The constant in the light attentuation equation.
      */
@@ -2338,12 +2363,25 @@ export class PointLight extends Light {
         super(ambient, diffuse, specular, intensity);
         this.position = position;
     }
+    sendToShader(shader: Shader, index: number): void {
+        shader.setUVec3(PointLight.structName + "[" + index + "]." + PointLight.positionLoc, this.position);
+        shader.setUVec3(PointLight.structName + "[" + index + "]." + PointLight.ambientLoc, this.ambient);
+        shader.setUVec3(PointLight.structName + "[" + index + "]." + PointLight.diffuseLoc, Vec3.mulFloat(this.diffuse, this.intensity));
+        shader.setUVec3(PointLight.structName + "[" + index + "]." + PointLight.specularLoc, Vec3.mulFloat(this.specular, this.intensity));
+        shader.setUFloat(PointLight.structName + "[" + index + "]." + PointLight.constantLoc, this.constant);
+        shader.setUFloat(PointLight.structName + "[" + index + "]." + PointLight.linearLoc, this.linear);
+        shader.setUFloat(PointLight.structName + "[" + index + "]." + PointLight.quadraticLoc, this.quadratic);
+    }
 }
 
 /**
  * A light coming from one direction.
  */
 export class DirectionalLight extends Light {
+    static directionLoc: string = "dirLight.direction";
+    static ambientLoc: string = "dirLight.ambient";
+    static specularLoc: string = "dirLight.specular";
+    static diffuseLoc: string = "dirLight.diffuse";
     /**
      * The direction of the light.
      */
@@ -2364,6 +2402,13 @@ export class DirectionalLight extends Light {
         super(ambient, diffuse, specular, intensity);
         this.direction = direction;
     }
+
+    sendToShader(shader: Shader): void {
+        shader.setUVec3(DirectionalLight.directionLoc, this.direction);
+        shader.setUVec3(DirectionalLight.ambientLoc, this.ambient);
+        shader.setUVec3(DirectionalLight.specularLoc, this.specular.mulFloat(this.intensity));
+        shader.setUVec3(DirectionalLight.diffuseLoc, this.diffuse.mulFloat(this.intensity));
+    }
 }
 
 /**
@@ -2377,6 +2422,11 @@ export class Geometry {
         -1, -1, 0, 0,
         1, -1, 1, 0,
         1, 1, 1, 1
+    ];
+    static triData: number[] = [
+        0, 1, 0.5, 1,
+        -1, -1, 0, 0,
+        1, -1, 1, 0
     ];
 
     /**
@@ -2487,5 +2537,31 @@ export class FrameBuffer {
 
     static bindDefault(): void {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
+    static createRenderTexture (width: number, height: number) : FrameBuffer {
+        let fb: FrameBuffer = new FrameBuffer();
+        fb.bind();
+        fb.properties.width = width;
+        fb.properties.height = height;
+        fb.properties.texture = null;
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, fb.properties.width, fb.properties.height);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, fb.RBO);
+        fb.addTexture("texture", fb.properties.width, fb.properties.height);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        return fb;
+    }
+
+    static renderToRenderTexture (fb: FrameBuffer, onRender: Function) : void {
+        fb.bind();
+        IngeniumWeb.window.clear();
+        gl.viewport(0, 0, fb.properties.width, fb.properties.height);
+        onRender();
+    }
+
+    static setDefaultRenderBuffer () {
+        FrameBuffer.bindDefault();
+        IngeniumWeb.window.clear();
+        gl.viewport(0, 0, IngeniumWeb.window.width, IngeniumWeb.window.height);
     }
 }
