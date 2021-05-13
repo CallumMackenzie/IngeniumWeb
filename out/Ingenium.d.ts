@@ -619,6 +619,45 @@ export declare class Rotation {
     */
     static degToRad(deg: number): number;
 }
+export declare class ShaderUniforms {
+    static material_diffuse: string;
+    static material_specular: string;
+    static material_normal: string;
+    static material_parallax: string;
+    static material_heightScale: string;
+    static material_shininess: string;
+    static material_scaleUV: string;
+    static pointLight_structName: string;
+    static pointLight_position: string;
+    static pointLight_ambient: string;
+    static pointLight_diffuse: string;
+    static pointLight_specular: string;
+    static pointLight_constant: string;
+    static pointLight_linear: string;
+    static pointLight_quadratic: string;
+    static directionalLight_direction: string;
+    static directionalLight_ambient: string;
+    static directionalLight_specular: string;
+    static directionalLight_diffuse: string;
+    static mesh3D_modelMatrix: string;
+    static mesh3D_invModelMatrix: string;
+    static mesh3D_tint: string;
+    static ingenium_time: string;
+    static camera3D_view: string;
+    static camera3D_projection: string;
+    static camera3D_viewPos: string;
+    static shader_numLights: string;
+    static camera2D_translation: string;
+    static camera2D_rotation: string;
+    static camera2D_rotationPoint: string;
+    static camera2D_aspect: string;
+    static mesh2D_tint: string;
+    static mesh2D_translation: string;
+    static mesh2D_rotation: string;
+    static mesh2D_rotationPoint: string;
+    static mesh2D_scale: string;
+    static mesh2D_zIndex: string;
+}
 /**
  * Manage shaders and their uniforms.
  */
@@ -835,13 +874,6 @@ export declare class Tri2D {
  * A material with albedo (diffuse), specular (shininess), normal, and parallax (bump) maps.
  */
 export declare class Material {
-    static diffuseLoc: string;
-    static specularLoc: string;
-    static normalLoc: string;
-    static parallaxLoc: string;
-    static heightScaleLoc: string;
-    static shininessLoc: string;
-    static scaleUVLoc: string;
     /**
      * The diffuse texture.
      */
@@ -1001,10 +1033,6 @@ export declare class Camera2D extends Position2D {
  * A 3D object.
  */
 export declare class Mesh3D extends Position3D {
-    static modelMatrixLoc: string;
-    static invModelMatrixLoc: string;
-    static tintLoc: string;
-    static timeLoc: string;
     /**
      * Relative point the mesh rotates around.
      */
@@ -1085,6 +1113,7 @@ export declare class Mesh3D extends Position3D {
      * @param triangle the triangle to add.
      */
     addTriangle(triangle: Tri3D): void;
+    static createTextureFromImage(image: HTMLImageElement, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
     /**
      * Loads a texture to the GPU from the specified path.
      *
@@ -1096,7 +1125,7 @@ export declare class Mesh3D extends Position3D {
      * @param magFilter the mag filter type of the texture.
      * @returns the texture location on the GPU.
      */
-    createTextureFromPath(path: string, texSlot: number, useRefCache: boolean, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
+    static createTextureFromPath(path: string, texSlot: number, useRefCache: boolean, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
     /**
      * Sets the textures of the mesh.
      *
@@ -1244,14 +1273,6 @@ export declare class Light {
  * A light at a point.
  */
 export declare class PointLight extends Light {
-    static structName: string;
-    static positionLoc: string;
-    static ambientLoc: string;
-    static diffuseLoc: string;
-    static specularLoc: string;
-    static constantLoc: string;
-    static linearLoc: string;
-    static quadraticLoc: string;
     position: Vec3;
     /**
      * The position of the light.
@@ -1284,10 +1305,6 @@ export declare class PointLight extends Light {
  * A light coming from one direction.
  */
 export declare class DirectionalLight extends Light {
-    static directionLoc: string;
-    static ambientLoc: string;
-    static specularLoc: string;
-    static diffuseLoc: string;
     /**
      * The direction of the light.
      */
