@@ -1748,7 +1748,7 @@ export class Mesh3D extends Position3D {
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 0]));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(Mesh3D.defaultColour));
         if (image.complete) {
             gl.activeTexture(texSlot);
             gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -1773,6 +1773,36 @@ export class Mesh3D extends Position3D {
         }
         return tex;
     }
+    static createTextureFromRGBAPixelArray(array, width, height, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
+        let tex = gl.createTexture();
+        gl.activeTexture(texSlot);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(array));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        return tex;
+    }
+    static createTextureFromRGBPixelArray(array, width, height, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
+        let tex = gl.createTexture();
+        gl.activeTexture(texSlot);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array(array));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        return tex;
+    }
+    static createColorTexture(color, alpha = 1, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
+        let r = (color & 0xFF0000) >> 16;
+        let g = (color & 0x00FF00) >> 8;
+        let b = color & 0x0000FF;
+        return Mesh3D.createTextureFromRGBAPixelArray([r, g, b, alpha * 255], 1, 1, texSlot, wrap, minFilter, magFilter);
+    }
     /**
      * Loads a texture to the GPU from the specified path.
      *
@@ -1792,7 +1822,7 @@ export class Mesh3D extends Position3D {
         tex = gl.createTexture();
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([1, 1, 1, 255]));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(Mesh3D.defaultColour));
         if (path != "NONE") {
             let image;
             if (Object.keys(loadedImages).includes(path) && loadedImages[path].complete) {
@@ -1975,6 +2005,7 @@ export class Mesh3D extends Position3D {
         gl.drawArrays(gl.TRIANGLES, 0, verts);
     }
 }
+Mesh3D.defaultColour = [128, 128, 255, 255];
 export class Mesh2D extends Position2D {
     /**
      *

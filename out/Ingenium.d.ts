@@ -1033,6 +1033,7 @@ export declare class Camera2D extends Position2D {
  * A 3D object.
  */
 export declare class Mesh3D extends Position3D {
+    static defaultColour: number[];
     /**
      * Relative point the mesh rotates around.
      */
@@ -1114,6 +1115,9 @@ export declare class Mesh3D extends Position3D {
      */
     addTriangle(triangle: Tri3D): void;
     static createTextureFromImage(image: HTMLImageElement, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
+    static createTextureFromRGBAPixelArray(array: number[], width: number, height: number, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
+    static createTextureFromRGBPixelArray(array: number[], width: number, height: number, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
+    static createColorTexture(color: number, alpha?: number, texSlot?: number, wrap?: number[], minFilter?: number, magFilter?: number): WebGLTexture;
     /**
      * Loads a texture to the GPU from the specified path.
      *

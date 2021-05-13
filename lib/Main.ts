@@ -5,23 +5,12 @@ import * as IW from "./Ingenium.js";
 
 let shaders: { [id: string]: IW.Shader } = {};
 
-class Portal extends IW.Mesh3D  {
-    FBO: IW.FrameBuffer;
-    view: IW.Camera3D = new IW.Camera3D(30, 1, 100, 1);
-    renderView : boolean = true;
-
-    constructor() {
-        super();
-        this.FBO = IW.FrameBuffer.createRenderTexture(250, 250);
-    }
-}
-
 let camera3D: IW.Camera3D = new IW.Camera3D(70, 0.01, 2000);
 let camera2D: IW.Camera2D = new IW.Camera2D(9 / 16);
 let d: IW.DirectionalLight = new IW.DirectionalLight();
 let p: IW.PointLight[] = [new IW.PointLight(new IW.Vec3(0.01, 0.01, 0.01),
     new IW.Vec3(1, 1, 1), new IW.Vec3(1, 1, 1), new IW.Vec3(0, 0, -3))];
-let m: Portal[] = [];
+let m: IW.Mesh3D[] = [];
 let fbMesh: IW.Mesh2D;
 let lowResBuffer: IW.FrameBuffer;
 
@@ -42,20 +31,9 @@ function onGlobalCreate() {
             maxPointLights: 1,
             lightModel: "BLINN",
             parallaxClipEdge: 0,
-            parallaxInvert: 1
+            parallaxInvert: 1,
+            normalMap: 1
         }), IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
-
-    IW.ShaderSource.makeFromFile(
-        {
-            version: "300 es",
-            normalMap: 1,
-            parallaxMap: 0,
-            precision: "mediump",
-            maxPointLights: 0,
-            lightModel: "NONE",
-            parallaxClipEdge: 0,
-            parallaxInvert: 1
-        }, IW.ShaderSource.types.frag, "emission", "./shaders/3D/asn.fs");
 
     IW.ShaderSource.makeFromFile(
         { version: "300 es", precision: "highp" },
@@ -77,8 +55,6 @@ function onGlobalCreate() {
 
     shaders.asn = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
         IW.ShaderSource.shaderWithParams("defFrag"));
-    shaders.emission = new IW.Shader(IW.ShaderSource.shaderWithParams("defVert"),
-        IW.ShaderSource.shaderWithParams("emission"));
     shaders.post = new IW.Shader(IW.ShaderSource.shaderWithParams("postvs"),
         IW.ShaderSource.shaderWithParams("postfs"));
 
@@ -90,14 +66,14 @@ function onGlobalCreate() {
     d.specular = IW.Vec3.filledWith(0.8);
     d.direction = new IW.Vec3(-0.4, -1, 0);
     d.ambient = IW.Vec3.filledWith(0.2);
-    
+
     IW.gl.enable(IW.gl.CULL_FACE);
     IW.gl.cullFace(IW.gl.BACK);
 
     let objPath: string = "./resource/planent.obj";
 
     for (let i: number = 0; i < 3; i++) {
-        let gb: Portal = new Portal();
+        let gb: IW.Mesh3D = new IW.Mesh3D();
         gb.scale = IW.Vec3.filledWith(0.25);
         gb.material.parallaxScale = 0.1;
         gb.material.shininess = 2;
@@ -105,34 +81,19 @@ function onGlobalCreate() {
         gb.material.UVScale = IW.Vec2.filledWith(1);
         gb.position = new IW.Vec3(0, 0, i + 1);
         gb.rotation.x = IW.Rotation.degToRad(-90);
-        // gb.rotation.y = IW.Rotation.degToRad(((i + 1) % 2) * 180);
-        if (Math.random() > 0.5) {
-            gb.make(objPath);
-            gb.material.diffuseTexture = <WebGLTexture>gb.FBO.properties.texture;
-        } else {
-            gb.renderView = false;
-            gb.make("./resource/uvsmoothnt.obj", "./resource/sbrick/b.jpg",
-            "./resource/sbrick/s.jpg",  "./resource/sbrick/n.jpg");
-        }
+        // gb.make("./resource/uvsmoothnt.obj", "./resource/sbrick/b.jpg",
+        // "./resource/sbrick/s.jpg",  "./resource/sbrick/n.jpg");
+        gb.make("./resource/uvsmoothnt.obj");
+        gb.material.diffuseTexture = IW.Mesh3D.createColorTexture(0xffaaff);
+        gb.material.specularTexture = IW.Mesh3D.createColorTexture(0xffffff);
         m.push(gb);
     }
 }
 
 function onUpdate() {
     camera3D.stdControl(1, IW.PI);
-    for (let i: number = 0; i < m.length; i++) {
-        m[i].view.position = m[(i + 1 >= m.length) ? 0 : (i + 1) ].position;
-        // m[i].view.rotation = camera3D.rotation;
-        if (!m[i].renderView)
-            m[i].rotation = m[i].rotation.add(new IW.Vec3(1, 1, 1).mulFloat(IW.Time.deltaTime));
-    }
-    for (let i: number = 0; i < m.length; i++) {
-        if (!m[i].renderView)
-            continue;
-        IW.FrameBuffer.renderToRenderTexture(m[i].FBO, () => {
-            IW.Mesh3D.renderAll(shaders.emission, m[i].view, m, d, p);
-        });
-    }
+    for (let i: number = 0; i < m.length; i++)
+        m[i].rotation = m[i].rotation.add(new IW.Vec3(1, 1, 1).mulFloat(IW.Time.deltaTime));
     IW.FrameBuffer.renderToRenderTexture(lowResBuffer, () => {
         IW.Mesh3D.renderAll(shaders.asn, camera3D, m, d, p);
     });
