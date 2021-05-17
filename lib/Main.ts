@@ -36,10 +36,12 @@ function onGlobalCreate() {
         }), IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
 
     IW.ShaderSource.makeFromFile(
-        { version: "300 es", precision: "highp" },
+        Object.assign(
+            gParams, { precision: "highp" }),
         IW.ShaderSource.types.vert, "postvs", "./shaders/post/fbo.vs");
     IW.ShaderSource.makeFromFile(
-        { version: "300 es", precision: "mediump" },
+        Object.assign(
+            gParams, { precision: "mediump" }),
         IW.ShaderSource.types.frag, "postfs", "./shaders/post/fbo.fs");
 
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");

@@ -120,6 +120,8 @@ export class WebGLWindow {
     }
     setGL() {
         gl = this.canvas.getContext(IngeniumWeb.glVersion);
+        if (!gl)
+            console.error("Selected WebGL version (" + IngeniumWeb.glVersion + ") may not be supported.");
     }
     setClearColour(hex, alpha) {
         gl.clearDepth(1.0);
@@ -2303,4 +2305,3 @@ export class FrameBuffer {
     }
 }
 FrameBuffer.buffers = [];
-//# sourceMappingURL=Ingenium.js.map

@@ -26,8 +26,8 @@ function onGlobalCreate() {
         parallaxInvert: 1,
         normalMap: 1
     }), IW.ShaderSource.types.frag, "defFrag", "./shaders/3D/asn.fs");
-    IW.ShaderSource.makeFromFile({ version: "300 es", precision: "highp" }, IW.ShaderSource.types.vert, "postvs", "./shaders/post/fbo.vs");
-    IW.ShaderSource.makeFromFile({ version: "300 es", precision: "mediump" }, IW.ShaderSource.types.frag, "postfs", "./shaders/post/fbo.fs");
+    IW.ShaderSource.makeFromFile(Object.assign(gParams, { precision: "highp" }), IW.ShaderSource.types.vert, "postvs", "./shaders/post/fbo.vs");
+    IW.ShaderSource.makeFromFile(Object.assign(gParams, { precision: "mediump" }), IW.ShaderSource.types.frag, "postfs", "./shaders/post/fbo.fs");
     IW.IngeniumWeb.createWindow(16, 9, "Gravity Demo");
     IW.IngeniumWeb.defaultSetup();
     IW.IngeniumWeb.window.setClearColour(0x303030, 1);
@@ -78,4 +78,3 @@ function onUpdate() {
 }
 let scene = new IW.Scene(function () { }, onUpdate);
 IW.IngeniumWeb.start([scene], onGlobalCreate);
-//# sourceMappingURL=Main.js.map

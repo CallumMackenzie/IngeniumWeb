@@ -3,9 +3,9 @@
         "target": "es2020",
         "module": "es2020",
         "outDir": "out",
-        "sourceMap": true,
+        "sourceMap": false,
         "rootDir": "lib",
         "esModuleInterop": true,
-        "declaration": true
+        "declaration": false
     }
 }

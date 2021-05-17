@@ -125,6 +125,7 @@ export class WebGLWindow {
     }
     setGL(): void {
         gl = <WebGL2RenderingContext>this.canvas.getContext(IngeniumWeb.glVersion);
+        if (!gl) console.error("Selected WebGL version (" + IngeniumWeb.glVersion + ") may not be supported.");
     }
     setClearColour(hex: number, alpha: number): void {
         gl.clearDepth(1.0);
