@@ -711,6 +711,9 @@ export class Vec3 {
     equals(v2) {
         return this.x == v2.x && this.y == v2.y && this.z == v2.z;
     }
+    static lerp(a, b, t) {
+        return new Vec3(Mathematics.lerp(a.x, b.x, t), Mathematics.lerp(a.y, b.y, t), Mathematics.lerp(a.z, b.z, t));
+    }
 }
 /**
  * Repersents a 2x2 matrix
@@ -1860,6 +1863,30 @@ export class Mesh3D extends Position3D {
             return (loadedReferenceTextures[path] = tex);
         return tex;
     }
+    static createEmpty(numVerts) {
+        let m = new Mesh3D();
+        m.data = [];
+        for (let i = 0; i < numVerts * Vert3D.tSize; i++) {
+            m.data[i] = 0;
+        }
+        m.load();
+        return m;
+    }
+    setRawVertexData(index, data) {
+        for (let i = 0; i < data.length; i++)
+            this.data.push(index + i, data[i]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
+        gl.bufferSubData(gl.ARRAY_BUFFER, index * 4, new Float32Array(this.data));
+    }
+    getRawVertexdata(index, length, stride = 1) {
+        let l = [];
+        let j = 0;
+        for (let i = 0; i < length; i += stride) {
+            l[j] = this.data[index + i];
+            j++;
+        }
+        return l;
+    }
     /**
      * Sets the textures of the mesh.
      *
@@ -2305,3 +2332,62 @@ export class FrameBuffer {
     }
 }
 FrameBuffer.buffers = [];
+export class Mathematics {
+    static lerp(a, b, t) {
+        return (a * (1 - t)) + (b * t);
+    }
+}
+export class AnimatedMesh3D {
+    constructor(base, meshes = [], endFrame = 0, frameTime = 1) {
+        this.meshes = [];
+        this.currentFrame = 0;
+        this.startFrame = 0;
+        this.endFrame = 0;
+        this.frameTime = 1;
+        this.lastFrame = Date.now();
+        this.interpolating = true;
+        this.interpolatingTint = true;
+        this.interpolatingVerticies = true;
+        this.meshes = meshes;
+        this.endFrame = endFrame;
+        this.frameTime = frameTime;
+        this.primaryMesh = base;
+    }
+    checkAdvanceFrame() {
+        if ((Date.now() - this.lastFrame) >= this.frameTime) {
+            if (this.currentFrame < this.endFrame)
+                this.currentFrame++;
+            else
+                this.currentFrame = this.startFrame;
+            this.lastFrame = Date.now();
+            let frame = this.meshes[this.currentFrame];
+            this.primaryMesh.material = frame.material;
+            if (!this.interpolating) {
+                this.primaryMesh.mVAO = frame.mVAO;
+                this.primaryMesh.mVBO = frame.mVBO;
+                this.primaryMesh.data = frame.data;
+                this.primaryMesh.tint = frame.tint;
+            }
+            else {
+                let prevFrame = ((this.currentFrame + 1 > this.endFrame) ? this.startFrame : (this.currentFrame + 1));
+                let f = (Date.now() - this.lastFrame) / this.frameTime;
+                if (this.interpolatingVerticies) {
+                    let prevData = this.meshes[prevFrame].
+                        getRawVertexdata(0, this.meshes[prevFrame].data.length);
+                    let currentData = this.meshes[this.currentFrame].
+                        getRawVertexdata(0, this.meshes[this.currentFrame].data.length);
+                    for (let i = 0; i < currentData.length; i++)
+                        currentData[i] = Mathematics.lerp(currentData[i], prevData[i], f);
+                    this.primaryMesh.setRawVertexData(0, currentData);
+                }
+                else {
+                    this.primaryMesh.setRawVertexData(0, this.meshes[this.currentFrame].getRawVertexdata(0, this.meshes[this.currentFrame].data.length));
+                    if (this.interpolatingTint)
+                        this.primaryMesh.tint = Vec3.lerp(this.meshes[this.currentFrame].tint, this.meshes[prevFrame].tint, f);
+                    else
+                        this.primaryMesh.tint = this.meshes[this.currentFrame].tint;
+                }
+            }
+        }
+    }
+}

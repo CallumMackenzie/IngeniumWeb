@@ -49,27 +49,9 @@ function onGlobalCreate() {
     IW.gl.enable(IW.gl.CULL_FACE);
     IW.gl.cullFace(IW.gl.BACK);
     let objPath = "./resource/planent.obj";
-    for (let i = 0; i < 3; i++) {
-        let gb = new IW.Mesh3D();
-        gb.scale = IW.Vec3.filledWith(0.25);
-        gb.material.parallaxScale = 0.1;
-        gb.material.shininess = 2;
-        // gb.tint = new IW.Vec3(0.7)
-        gb.material.UVScale = IW.Vec2.filledWith(1);
-        gb.position = new IW.Vec3(0, 0, i + 1);
-        gb.rotation.x = IW.Rotation.degToRad(-90);
-        // gb.make("./resource/uvsmoothnt.obj", "./resource/sbrick/b.jpg",
-        // "./resource/sbrick/s.jpg",  "./resource/sbrick/n.jpg");
-        gb.make("./resource/uvsmoothnt.obj");
-        gb.material.diffuseTexture = IW.Mesh3D.createColorTexture(0xffaaff);
-        gb.material.specularTexture = IW.Mesh3D.createColorTexture(0xffffff);
-        m.push(gb);
-    }
 }
 function onUpdate() {
     camera3D.stdControl(1, IW.PI);
-    for (let i = 0; i < m.length; i++)
-        m[i].rotation = m[i].rotation.add(new IW.Vec3(1, 1, 1).mulFloat(IW.Time.deltaTime));
     IW.FrameBuffer.renderToRenderTexture(lowResBuffer, () => {
         IW.Mesh3D.renderAll(shaders.asn, camera3D, m, d, p);
     });
