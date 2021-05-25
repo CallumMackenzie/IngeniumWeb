@@ -4,6 +4,7 @@ let shaders = {};
 let camera3D = new IW.Camera3D(70, 0.01, 2000);
 let d = new IW.DirectionalLight();
 let p = [new IW.PointLight(new IW.Vec3(0.01, 0.01, 0.01), new IW.Vec3(1, 1, 1), new IW.Vec3(1, 1, 1), new IW.Vec3(0, 0, -3))];
+let am = [];
 let m = [];
 function onGlobalCreate() {
     let gParams = {
@@ -36,9 +37,18 @@ function onGlobalCreate() {
     d.ambient = IW.Vec3.filledWith(0.2);
     IW.gl.enable(IW.gl.CULL_FACE);
     IW.gl.cullFace(IW.gl.BACK);
+    let tmpMshs = [];
+    for (let i = 0; i < 2; i++)
+        tmpMshs.push(IW.Mesh3D.createAndMake("./resource/cubeanim/" + i.toString() + ".obj"));
+    am.push(new IW.AnimatedMesh3D(IW.Mesh3D.createEmpty(36), tmpMshs, 1, 300));
+    am[0].primaryMesh.position = new IW.Vec3(0, -2, 5);
 }
 function onUpdate() {
     camera3D.stdControl(1, IW.PI);
+    for (let i = 0; i < am.length; i++) {
+        am[i].checkAdvanceFrame();
+        IW.Mesh3D.renderAll(shaders.asn, camera3D, [am[i].primaryMesh], d, p);
+    }
     IW.Mesh3D.renderAll(shaders.asn, camera3D, m, d, p);
 }
 let scene = new IW.Scene(function () { }, onUpdate);

@@ -2076,16 +2076,20 @@ export class Mesh3D extends Position3D {
     }
     static createEmpty(numVerts: number): Mesh3D {
         let m: Mesh3D = new Mesh3D();
-        m.data = [];
-        for (let i = 0; i < numVerts * Vert3D.tSize; i++) {
-            m.data[i] = 0;
-        }
+        for (let i = 0; i < numVerts * Vert3D.tSize; i++) 
+            m.data.push(0);
         m.load();
+        m.triangles = numVerts / 3;
+        return m;
+    }
+    static createAndMake (obj: string, diff: string = "NONE", spec: string = "NONE", norm: string = "NONE", bump: string = "NONE"): Mesh3D {
+        let m = new Mesh3D;
+        m.make(obj, diff, spec, norm, bump);
         return m;
     }
     setRawVertexData(index: number, data: number[]) {
         for (let i = 0; i < data.length; i++)
-            this.data.push(index + i, data[i]);
+            this.data[index + i] = data[i];
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
         gl.bufferSubData(gl.ARRAY_BUFFER, index * 4, new Float32Array(this.data));
     }
@@ -2708,12 +2712,15 @@ export class AnimatedMesh3D {
             this.lastFrame = Date.now();
             let frame = this.meshes[this.currentFrame];
             this.primaryMesh.material = frame.material;
+            this.primaryMesh.triangles = frame.triangles;
             if (!this.interpolating) {
                 this.primaryMesh.mVAO = frame.mVAO;
                 this.primaryMesh.mVBO = frame.mVBO;
                 this.primaryMesh.data = frame.data;
                 this.primaryMesh.tint = frame.tint;
-            } else {
+            }
+        }
+        if (this.interpolating) {
                 let prevFrame = ((this.currentFrame + 1 > this.endFrame) ? this.startFrame : (this.currentFrame + 1));
                 let f = (Date.now() - this.lastFrame) / this.frameTime;
                 if (this.interpolatingVerticies) {
@@ -2727,13 +2734,11 @@ export class AnimatedMesh3D {
                 } else {
                     this.primaryMesh.setRawVertexData(0, this.meshes[this.currentFrame].getRawVertexdata(0,
                         this.meshes[this.currentFrame].data.length));
-
                     if (this.interpolatingTint)
                         this.primaryMesh.tint = Vec3.lerp(this.meshes[this.currentFrame].tint, this.meshes[prevFrame].tint, f);
                     else
                         this.primaryMesh.tint = this.meshes[this.currentFrame].tint;
                 }
-            }
         }
     }
 }
