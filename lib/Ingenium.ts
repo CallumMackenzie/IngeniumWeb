@@ -15,7 +15,7 @@ export class Input {
     /**
      * Initializes the input system.
      */
-    static setup(): void {
+    static setup() {
         window.addEventListener("keydown", function (event) {
             if (event.ctrlKey == true && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
                 event.preventDefault();
@@ -43,21 +43,21 @@ export class Time {
     static targetFixedDeltaTime = 1000 / 35;
     static lastFrame = Date.now();
     static lastFixedFrame = Date.now();
-    static setFPS(newfps: number): void {
+    static setFPS(newfps: number) {
         if (newfps <= 0)
             IngeniumWeb.terminate("Error: FPS cannot be less than or equal to 0.");
         Time.targetDeltaTime = 1000 / newfps;
     };
-    static setFixedFPS(newfps: number): void {
+    static setFixedFPS(newfps: number) {
         if (newfps <= 0)
             IngeniumWeb.terminate("Error: FPS cannot be less than or equal to 0.");
         Time.targetFixedDeltaTime = 1000 / newfps;
     }
-    static updateDeltaTime(): void {
+    static updateDeltaTime() {
         Time.deltaTime = (Date.now() - Time.lastFrame) / 1000;
         Time.lastFrame = Date.now();
     }
-    static updateFixedDeltaTime(): void {
+    static updateFixedDeltaTime() {
         Time.fixedDeltaTime = (Date.now() - Time.lastFixedFrame) / 1000;
         Time.lastFixedFrame = Date.now();
     }
@@ -123,11 +123,11 @@ export class WebGLWindow {
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         }
     }
-    setGL(): void {
+    setGL() {
         gl = <WebGL2RenderingContext>this.canvas.getContext(IngeniumWeb.glVersion);
         if (!gl) console.error("Selected WebGL version (" + IngeniumWeb.glVersion + ") may not be supported.");
     }
-    setClearColour(hex: number, alpha: number): void {
+    setClearColour(hex: number, alpha: number) {
         gl.clearDepth(1.0);
         let r = (hex & 0xFF0000) >> 16;
         let g = (hex & 0x00FF00) >> 8;
@@ -140,7 +140,7 @@ export class WebGLWindow {
         this.parent.style.setProperty(col.prop, col.val);
         document.body.style.setProperty(col.prop, col.val);
     }
-    clear(): void {
+    clear() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 };
@@ -209,7 +209,7 @@ export class IngeniumWeb {
     static start(scenes: Scene[],
         onCreate: Function = function () { }, onUpdate: Function = function () { },
         onClose: Function = function () { }, onFixedUpdate: Function = function () { },
-        webGL = "webgl2"): void {
+        webGL = "webgl2") {
         this.startTime = Date.now();
         IngeniumWeb.window = null;
         IngeniumWeb.running = true;
@@ -231,7 +231,7 @@ export class IngeniumWeb {
         Time.setFPS(40);
         Time.setFixedFPS(5);
     }
-    static createWindow(width: number, height: number, id: string, parentName: string = "root", takeUpAsepct: boolean = true): void {
+    static createWindow(width: number, height: number, id: string, parentName: string = "root", takeUpAsepct: boolean = true) {
         IngeniumWeb.window = new WebGLWindow(width, height, parentName, id);
         IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
         if (takeUpAsepct)
@@ -239,13 +239,13 @@ export class IngeniumWeb {
                 IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
             });
     };
-    static update(): void {
+    static update() {
         Time.updateDeltaTime();
         IngeniumWeb.onUpdate();
         if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
             IngeniumWeb.scenes[IngeniumWeb.currentScene].onUpdate();
     }
-    static fixedUpdate(): void {
+    static fixedUpdate() {
         Time.updateFixedDeltaTime();
         IngeniumWeb.onFixedUpdate();
         if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
@@ -258,7 +258,7 @@ export class IngeniumWeb {
             clearInterval(IngeniumWeb.fixedIntervalCode);
         }
     }
-    static init(): void {
+    static init() {
         Time.updateDeltaTime();
         Time.updateFixedDeltaTime();
         IngeniumWeb.onCreate();
@@ -269,24 +269,24 @@ export class IngeniumWeb {
             IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
 
     }
-    static refreshLoops(): void {
+    static refreshLoops() {
         clearInterval(IngeniumWeb.intervalCode);
         clearInterval(IngeniumWeb.fixedIntervalCode);
         IngeniumWeb.intervalCode = setInterval(IngeniumWeb.update, Time.targetDeltaTime);
         IngeniumWeb.fixedIntervalCode = setInterval(IngeniumWeb.fixedUpdate, Time.targetFixedDeltaTime);
     }
-    static terminate(message: string): void {
+    static terminate(message: string) {
         console.error("Fatal: " + message);
         IngeniumWeb.running = false;
         clearInterval(IngeniumWeb.intervalCode);
         clearInterval(IngeniumWeb.fixedIntervalCode);
     }
-    static enterScene(index: number): void {
+    static enterScene(index: number) {
         IngeniumWeb.currentScene = index;
         if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
             IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
     }
-    static defaultGLSetup(): void {
+    static defaultGLSetup() {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.enable(gl.BLEND);
         gl.enable(gl.DEPTH_TEST);
@@ -1442,7 +1442,7 @@ void main ()
     /**
      * Sets the shader to be used in rendering.
      */
-    use(): void {
+    use() {
         gl.useProgram(this.program);
     }
     /**
@@ -1453,46 +1453,46 @@ void main ()
     getULoc(name: string): WebGLUniformLocation {
         return gl.getUniformLocation(this.program, name);
     }
-    setUInt(name: string, value: number): void {
+    setUInt(name: string, value: number) {
         gl.uniform1i(this.getULoc(name), value);
     }
-    setUInt2(name: string, value1: number, value2: number): void {
+    setUInt2(name: string, value1: number, value2: number) {
         gl.uniform2i(this.getULoc(name), value1, value2);
     }
-    setUInt3(name: string, value1: number, value2: number, value3: number): void {
+    setUInt3(name: string, value1: number, value2: number, value3: number) {
         gl.uniform3i(this.getULoc(name), value1, value2, value3);
     }
-    setUInt4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+    setUInt4(name: string, value1: number, value2: number, value3: number, value4: number) {
         gl.uniform4i(this.getULoc(name), value1, value2, value3, value4);
     }
-    setUFloat(name: string, value: number): void {
+    setUFloat(name: string, value: number) {
         gl.uniform1f(this.getULoc(name), value);
     }
-    setUFloat2(name: string, value1: number, value2: number): void {
+    setUFloat2(name: string, value1: number, value2: number) {
         gl.uniform2f(this.getULoc(name), value1, value2);
     }
-    setUFloat3(name: string, value1: number, value2: number, value3: number): void {
+    setUFloat3(name: string, value1: number, value2: number, value3: number) {
         gl.uniform3f(this.getULoc(name), value1, value2, value3);
     }
-    setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number): void {
+    setUFloat4(name: string, value1: number, value2: number, value3: number, value4: number) {
         gl.uniform4f(this.getULoc(name), value1, value2, value3, value4);
     }
-    setUMat4(name: string, mat4: Mat4): void {
+    setUMat4(name: string, mat4: Mat4) {
         gl.uniformMatrix4fv(this.getULoc(name), false, mat4.m.flat());
     }
-    setUVec2(name: string, v: Vec2): void {
+    setUVec2(name: string, v: Vec2) {
         this.setUFloat2(name, v.x, v.y);
     }
-    setUVec3(name: string, v: Vec3): void {
+    setUVec3(name: string, v: Vec3) {
         this.setUFloat3(name, v.x, v.y, v.z);
     }
-    setUVec4(name: string, v: Vec3): void {
+    setUVec4(name: string, v: Vec3) {
         this.setUFloat4(name, v.x, v.y, v.z, v.w);
     }
-    setUBool(name: string, b: boolean): void {
+    setUBool(name: string, b: boolean) {
         this.setUInt(name, b ? 1 : 0);
     }
-    setUMat2(name: string, m: Mat2): void {
+    setUMat2(name: string, m: Mat2) {
         gl.uniformMatrix2fv(this.getULoc(name), false, m.flatten());
     }
 }
@@ -1762,7 +1762,7 @@ export class Material {
         this.shininess = shininess;
     }
 
-    bindTextures(): void {
+    bindTextures() {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.diffuseTexture);
         gl.activeTexture(gl.TEXTURE1);
@@ -1773,7 +1773,7 @@ export class Material {
         gl.bindTexture(gl.TEXTURE_2D, this.parallaxTexture);
     }
 
-    static sendToShader(shader: Shader): void {
+    static sendToShader(shader: Shader) {
         shader.setUInt(ShaderUniforms.material_diffuse, 0);
         shader.setUInt(ShaderUniforms.material_specular, 1);
         shader.setUInt(ShaderUniforms.material_normal, 2);
@@ -1912,7 +1912,7 @@ export class Camera3D extends Position3D {
      * @param speed the speed of the camera.
      * @param cameraMoveSpeed the rotation speed of the camera.
      */
-    stdControl(speed: number = 1, cameraMoveSpeed: number = 1): void {
+    stdControl(speed: number = 1, cameraMoveSpeed: number = 1) {
         let p3d: Position3D = Camera3D.stdController(this, this, speed, cameraMoveSpeed);
         this.position = p3d.position;
         this.rotation = p3d.rotation;
@@ -1982,14 +1982,14 @@ export class Camera2D extends Position2D {
         return Mat2.rotation(this.rotation);
     }
 
-    sendToShader(shader: Shader): void {
+    sendToShader(shader: Shader) {
         shader.setUMat2("camera.rotation", this.cameraMatrix());
         shader.setUVec2("camera.translation", this.position);
         shader.setUFloat("camera.aspect", this.aspect);
         shader.setUVec2("camera.rotationPoint", this.rotationPoint);
     }
 
-    stdControl(speed: number, rotateSpeed: number): void {
+    stdControl(speed: number, rotateSpeed: number) {
         let move: Vec2 = new Vec2();
         let cLV: Vec2 = new Vec2(Math.sin(this.rotation), Math.cos(this.rotation));
         let rotate: number = 0;
@@ -2128,7 +2128,7 @@ export class Mesh3D extends Position3D {
      * 
      * @param raw the raw obj data
      */
-    loadFromObjData(raw: string): void {
+    loadFromObjData(raw: string) {
         let verts: Vec3[] = [];
         let normals: Vec3[] = [];
         let texs: Vec2[] = [];
@@ -2197,7 +2197,7 @@ export class Mesh3D extends Position3D {
      * 
      * @param triangle the triangle to add.
      */
-    addTriangle(triangle: Tri3D): void {
+    addTriangle(triangle: Tri3D) {
         let tangent: Vec3[] = Mesh3D.calcTangents(triangle); // Calculate tangent and bittangent
         for (let i = 0; i < 3; i++) {
             this.data.push(triangle.v[i].p.x);
@@ -2390,7 +2390,7 @@ export class Mesh3D extends Position3D {
      * @param parallaxPath the path to the parallax texture
      */
     setTexture(diffusePath: string, specularPath: string = "NONE", normalPath: string = "NONE",
-        parallaxPath: string = "NONE"): void {
+        parallaxPath: string = "NONE") {
         this.material.diffuseTexture = Mesh3D.createTextureFromPath(diffusePath, gl.TEXTURE0, this.useTextureReferenceCache);
         this.material.specularTexture = Mesh3D.createTextureFromPath(specularPath, gl.TEXTURE1, this.useTextureReferenceCache);
         this.material.normalTexture = Mesh3D.createTextureFromPath(normalPath, gl.TEXTURE2, this.useTextureReferenceCache);
@@ -2412,7 +2412,7 @@ export class Mesh3D extends Position3D {
      * 
      * @param drawType the access type of the data on the GPU.
      */
-    load(drawType: number = gl.DYNAMIC_DRAW): void {
+    load(drawType: number = gl.DYNAMIC_DRAW) {
         if (!this.loaded) {
             this.mVBO = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
@@ -2628,7 +2628,7 @@ export class Mesh2D extends Position2D {
      * Loads all the data onto the GPU
      * 
      */
-    load(drawType: number = gl.STATIC_DRAW): void {
+    load(drawType: number = gl.STATIC_DRAW) {
         if (!this.loaded) {
             this.mVBO = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
@@ -2655,7 +2655,7 @@ export class Mesh2D extends Position2D {
     modelMatrix(): Mat2 {
         return Mat2.rotation(this.rotation);
     }
-    sendToShader(shader: Shader): void {
+    sendToShader(shader: Shader) {
         shader.setUVec4("model.tint", this.tint);
         shader.setUVec2("model.translation", this.position);
         shader.setUMat2("model.rotation", this.modelMatrix());
@@ -2665,14 +2665,14 @@ export class Mesh2D extends Position2D {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.material.diffuseTexture);
     }
-    bindVBO(): void {
+    bindVBO() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
     }
-    bindVAO(): void {
+    bindVAO() {
         gl.bindVertexArray(this.mVAO);
     }
 
-    static renderAll(shader: Shader, camera: Camera2D, meshes: Mesh2D[]): void {
+    static renderAll(shader: Shader, camera: Camera2D, meshes: Mesh2D[]) {
         shader.use();
         Material.sendToShader(shader);
         camera.sendToShader(shader);
@@ -2760,7 +2760,7 @@ export class PointLight extends Light {
         super(ambient, diffuse, specular, intensity);
         this.position = position;
     }
-    sendToShader(shader: Shader, index: number): void {
+    sendToShader(shader: Shader, index: number) {
         shader.setUVec3(ShaderUniforms.pointLight_structName + "[" + index + "]." + ShaderUniforms.pointLight_position, this.position);
         shader.setUVec3(ShaderUniforms.pointLight_structName + "[" + index + "]." + ShaderUniforms.pointLight_ambient, this.ambient);
         shader.setUVec3(ShaderUniforms.pointLight_structName + "[" + index + "]." + ShaderUniforms.pointLight_diffuse, Vec3.mulFloat(this.diffuse, this.intensity));
@@ -2796,7 +2796,7 @@ export class DirectionalLight extends Light {
         this.direction = direction;
     }
 
-    sendToShader(shader: Shader): void {
+    sendToShader(shader: Shader) {
         shader.setUVec3(ShaderUniforms.directionalLight_direction, this.direction);
         shader.setUVec3(ShaderUniforms.directionalLight_ambient, this.ambient);
         shader.setUVec3(ShaderUniforms.directionalLight_specular, this.specular.mulFloat(this.intensity));
@@ -2908,13 +2908,13 @@ export class FrameBuffer {
         this.type = gl.FRAMEBUFFER;
     }
 
-    bind(): void {
+    bind() {
         gl.bindFramebuffer(this.type, this.FBO);
         gl.bindRenderbuffer(gl.RENDERBUFFER, this.RBO);
     }
 
     addTexture(name: string, width: number, height: number,
-        slot: number = gl.TEXTURE0, minFilter: number = gl.LINEAR, magFilter: number = gl.LINEAR): void {
+        slot: number = gl.TEXTURE0, minFilter: number = gl.LINEAR, magFilter: number = gl.LINEAR) {
         gl.activeTexture(slot);
         this.bind();
         let tex: WebGLTexture = gl.createTexture();
@@ -2928,7 +2928,7 @@ export class FrameBuffer {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     }
 
-    static bindDefault(): void {
+    static bindDefault() {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
@@ -2945,7 +2945,7 @@ export class FrameBuffer {
         return fb;
     }
 
-    static renderToRenderTexture(fb: FrameBuffer, onRender: Function): void {
+    static renderToRenderTexture(fb: FrameBuffer, onRender: Function) {
         fb.bind();
         IngeniumWeb.window.clear();
         gl.viewport(0, 0, fb.properties.width, fb.properties.height);
