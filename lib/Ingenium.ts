@@ -224,7 +224,7 @@ export class IngeniumWeb {
         Input.setup();
         IngeniumWeb.init();
     };
-    static defaultInit () {
+    static defaultInit() {
         IngeniumWeb.createWindow(16, 9, "Ingenium Web");
         IngeniumWeb.defaultGLSetup();
         IngeniumWeb.window.setClearColour(0x303030, 1);
