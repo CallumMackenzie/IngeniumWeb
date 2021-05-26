@@ -184,27 +184,36 @@ export class IngeniumWeb {
         IngeniumWeb.init();
     }
     ;
+    static defaultInit() {
+        IngeniumWeb.createWindow(16, 9, "Ingenium Web");
+        IngeniumWeb.defaultGLSetup();
+        IngeniumWeb.window.setClearColour(0x303030, 1);
+        Time.setFPS(40);
+        Time.setFixedFPS(5);
+    }
     static createWindow(width, height, id, parentName = "root", takeUpAsepct = true) {
         IngeniumWeb.window = new WebGLWindow(width, height, parentName, id);
         IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
-        if (takeUpAsepct) {
+        if (takeUpAsepct)
             window.addEventListener('resize', function () {
                 IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
             });
-        }
     }
     ;
     static update() {
         Time.updateDeltaTime();
         IngeniumWeb.onUpdate();
-        IngeniumWeb.scenes[IngeniumWeb.currentScene].onUpdate();
+        if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
+            IngeniumWeb.scenes[IngeniumWeb.currentScene].onUpdate();
     }
     static fixedUpdate() {
         Time.updateFixedDeltaTime();
         IngeniumWeb.onFixedUpdate();
-        IngeniumWeb.scenes[IngeniumWeb.currentScene].onFixedUpdate();
+        if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
+            IngeniumWeb.scenes[IngeniumWeb.currentScene].onFixedUpdate();
         if (!IngeniumWeb.running) {
-            IngeniumWeb.scenes[IngeniumWeb.currentScene].onClose();
+            if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
+                IngeniumWeb.scenes[IngeniumWeb.currentScene]?.onClose();
             IngeniumWeb.onClose();
             clearInterval(IngeniumWeb.intervalCode);
             clearInterval(IngeniumWeb.fixedIntervalCode);
@@ -214,11 +223,11 @@ export class IngeniumWeb {
         Time.updateDeltaTime();
         Time.updateFixedDeltaTime();
         IngeniumWeb.onCreate();
-        IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
+        if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
+            IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
         IngeniumWeb.refreshLoops();
-        if (IngeniumWeb.window.takeUpAsepct) {
+        if (IngeniumWeb.window.takeUpAsepct)
             IngeniumWeb.window.sizeToWindow(IngeniumWeb.window.aspectRatio);
-        }
     }
     static refreshLoops() {
         clearInterval(IngeniumWeb.intervalCode);
@@ -234,17 +243,16 @@ export class IngeniumWeb {
     }
     static enterScene(index) {
         IngeniumWeb.currentScene = index;
-        IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
+        if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
+            IngeniumWeb.scenes[IngeniumWeb.currentScene].onCreate();
     }
-    static defaultSetup() {
+    static defaultGLSetup() {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.enable(gl.BLEND);
         gl.enable(gl.DEPTH_TEST);
         gl.depthMask(true);
         gl.depthFunc(gl.LEQUAL);
         gl.depthRange(0.0, 1.0);
-        // gl.enable(gl.CULL_FACE);
-        // gl.cullFace(gl.BACK);
     }
 }
 IngeniumWeb.scenes = [];
@@ -711,6 +719,36 @@ export class Vec3 {
     equals(v2) {
         return this.x == v2.x && this.y == v2.y && this.z == v2.z;
     }
+    assign(v2) {
+        this.x = v2.x;
+        this.y = v2.y;
+        this.z = v2.z;
+        this.w = v2.w;
+    }
+    addEquals(v2) {
+        this.assign(this.add(v2));
+    }
+    subEquals(v2) {
+        this.assign(this.sub(v2));
+    }
+    mulEquals(v2) {
+        this.assign(this.mul(v2));
+    }
+    divEquals(v2) {
+        this.assign(this.div(v2));
+    }
+    addEqualsFloat(v2) {
+        this.assign(this.addFloat(v2));
+    }
+    subEqualsFloat(v2) {
+        this.assign(this.subFloat(v2));
+    }
+    mulEqualsFloat(v2) {
+        this.assign(this.mulFloat(v2));
+    }
+    divEqualsFloat(v2) {
+        this.assign(this.divFloat(v2));
+    }
     static lerp(a, b, t) {
         return new Vec3(Mathematics.lerp(a.x, b.x, t), Mathematics.lerp(a.y, b.y, t), Mathematics.lerp(a.z, b.z, t));
     }
@@ -1114,6 +1152,241 @@ export class Shader {
         }
         return shader;
     }
+    static make3D(params = {}) {
+        let vertSource = `#version $version(300 es)$
+#ifdef GL_ES
+precision $precision(highp)$ float;
+#endif
+#define NORMAL_MAP $normalMap(1)$
+#define PARALLAX_MAP $parallaxMap(0)$
+#define VERTEX_RGB $vertexRGB(0)$
+layout (location = 0) in vec4 vertexPosition;
+layout (location = 1) in vec3 vertexUV;
+layout (location = 2) in vec4 vertexRGB;
+layout (location = 3) in vec3 vertexNormal;
+#if NORMAL_MAP || PARALLAX_MAP
+layout (location = 4) in vec3 vertexTangent;
+#endif
+struct Camera {
+    mat4 projection;
+    mat4 view;
+};
+struct Mesh {
+    mat4 transform;
+    mat4 inverseTransform;
+    vec4 tint;
+    vec2 scaleUV;
+};
+uniform Mesh mesh;
+uniform Camera camera;
+out vec2 UV;
+out vec4 tint;
+out vec3 normal;
+out vec3 fragPos;
+out mat3 TBN;
+mat3 getTBN (vec3 norm, vec3 tangentTheta) {
+    norm = normalize(norm);
+    vec3 tangent = normalize(tangentTheta);
+    tangent = normalize(tangent - dot(tangent, norm) * norm);
+    vec3 bitangent = cross(tangent, norm);
+    return mat3(tangent, bitangent, norm);
+}
+void main () {
+    vec4 transformed = camera.projection * camera.view * mesh.transform * vertexPosition;
+    transformed.x = -transformed.x;
+    gl_Position = transformed;
+    UV = vertexUV.xy * mesh.scaleUV;
+#if VERTEX_RGB
+    tint = vertexRGB * mesh.tint;
+#else
+    tint = mesh.tint;
+#endif
+    normal = mat3(transpose(mesh.inverseTransform)) * vertexNormal;
+    fragPos = vec3(mesh.transform * vertexPosition);
+#if NORMAL_MAP || PARALLAX_MAP
+    vec3 tangentTheta = (mesh.transform * vec4(vertexTangent, 0.0)).xyz;   
+    TBN = getTBN(normal, tangentTheta);
+#endif
+}`;
+        let fragSource = `#version $version(300 es)$
+#ifdef GL_ES
+precision $precision(mediump)$ float;
+#endif
+#define $lightModel(BLINN)$ 1
+#define NORMAL_MAP $normalMap(1)$
+#define PARALLAX_MAP $parallaxMap(0)$
+#define PARALLAX_CLIP_EDGE $parallaxClipEdge(0)$
+#define MIN_PARALLAX_LAYERS $minParallaxLayers(8.0)$
+#define MAX_PARALLAX_LAYERS $maxParallaxLayers(32.0)$
+#define PARALLAX_INVERT $parallaxInvert(0)$
+#define MAX_POINT_LIGHTS $maxPointLights(0)$
+layout (location = 0) out vec4 color;
+struct Material {
+    sampler2D diffuse;
+    sampler2D specular;
+    sampler2D normal;
+    sampler2D parallax;
+    float heightScale;
+    float shininess;
+};
+struct DirLight {
+    vec3 direction;
+  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};  
+struct PointLight {    
+    vec3 position;
+    
+    float constant;
+    float linear;
+    float quadratic;  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};  
+uniform float u_time;
+uniform Material material;
+uniform DirLight dirLight;
+uniform vec3 viewPos;
+uniform int numlights;
+#if (MAX_POINT_LIGHTS > 0)
+uniform PointLight pointLights[MAX_POINT_LIGHTS];
+#endif
+in vec2 UV;
+in vec4 tint;
+in vec3 normal;
+in vec3 fragPos;
+#if PARALLAX_MAP || NORMAL_MAP
+in mat3 TBN;
+#endif
+#if NORMAL_MAP
+vec3 CalcBumpedNormal(vec2 cUV)
+{
+    vec3 BumpMapNormal = texture(material.normal, cUV).xyz;
+    BumpMapNormal = 2.0 * BumpMapNormal - vec3(1.0, 1.0, 1.0);
+    vec3 NewNormal = TBN * BumpMapNormal;
+    NewNormal = normalize(NewNormal);
+    return NewNormal;
+}
+#endif // NORMAL_MAP
+#if !defined(NONE)
+vec4 CalcDirLight(DirLight light, vec3 cnormal, vec3 viewDir, vec2 coordUV)
+{
+    vec3 lightDir = normalize(-light.direction);
+    float diff = max(dot(cnormal, lightDir), 0.0);
+    vec3 reflectDir = reflect(-lightDir, cnormal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    vec4 ambient  = vec4(light.ambient, 1.0)  * (texture(material.diffuse, coordUV).rgba * tint.rgba);
+    vec4 diffuse  = vec4(light.diffuse  * diff, 1.0) * (texture((material.diffuse), coordUV).rgba * tint.rgba);
+    vec4 specular = vec4(light.specular * spec, 1.0) * (texture(material.specular, coordUV).rgba * tint.rgba);
+    return vec4(ambient.rgb + diffuse.rgb + specular.rgb, (ambient.a + diffuse.a + specular.a) * 0.333);
+} 
+vec4 CalcPointLight(PointLight light, vec3 cnormal, vec3 cfragPos, vec3 viewDir, vec2 coordUV)
+{
+    vec3 lightDir = normalize(light.position - cfragPos);
+    float diff = max(dot(cnormal, lightDir), 0.0);
+    #if defined(PHONG)  
+    vec3 reflectDir = reflect(-lightDir, cnormal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    #endif // defined(PHONG)
+    #if defined(BLINN)
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(cnormal, halfwayDir), 0.0), material.shininess);
+    #endif // defined(BLINN)
+    float distance    = length(light.position - cfragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
+    vec4 ambient  = vec4(light.ambient, 1.0)  * texture(material.diffuse, coordUV).rgba * tint.rgba;
+    vec4 diffuse  = vec4(light.diffuse * diff, 1.0) * texture(material.diffuse, coordUV).rgba * tint.rgba;
+    vec4 specular = vec4(light.specular * spec, 1.0) * texture(material.specular, coordUV).rgba * tint.rgba;
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
+    specular *= attenuation;
+    return vec4(ambient.rgb + diffuse.rgb + specular.rgb, (ambient.a * diffuse.a * specular.a) * 0.333);
+}
+#endif // !defined(NONE)
+#if PARALLAX_MAP
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+{ 
+    float numLayers = mix(MAX_PARALLAX_LAYERS, MIN_PARALLAX_LAYERS, abs(dot(normalize(normal), viewDir)));  
+    float layerDepth = 1.0 / numLayers;
+    float currentLayerDepth = 0.0;
+    // vec2 P = viewDir.xy / viewDir.z * material.heightScale; 
+    vec2 P = viewDir.xy * material.heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+    vec2  currentTexCoords     = texCoords;
+    #if PARALLAX_INVERT
+    float currentDepthMapValue = 1.0 - texture(material.parallax, currentTexCoords).r;
+    #else
+    float currentDepthMapValue = texture(material.parallax, currentTexCoords).r;
+    #endif // PARALLAX_INVERT
+    while(currentLayerDepth < currentDepthMapValue)
+    {
+        currentTexCoords -= deltaTexCoords;
+    #if PARALLAX_INVERT
+        currentDepthMapValue = 1.0 - texture(material.parallax, currentTexCoords).r; 
+    #else
+        currentDepthMapValue = texture(material.parallax, currentTexCoords).r; 
+    #endif // PARALLAX_INVERT
+        currentLayerDepth += layerDepth;  
+    }
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+    float afterDepth  = currentDepthMapValue - currentLayerDepth;
+    #if PARALLAX_INVERT
+    float beforeDepth = 1.0 - texture(material.parallax, prevTexCoords).r - currentLayerDepth + layerDepth;
+    #else
+    float beforeDepth = texture(material.parallax, prevTexCoords).r - currentLayerDepth + layerDepth;
+    #endif // PARALLAX_INVERT
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+    return finalTexCoords;
+}
+#endif // PARALLAX_MAP
+void main () 
+{
+    vec2 cUV = UV;
+    vec3 viewDir = normalize(viewPos - fragPos);
+#if PARALLAX_MAP
+    vec3 tangentViewDir = normalize(TBN * viewDir);
+    cUV = ParallaxMapping(cUV, tangentViewDir);
+    #if PARALLAX_CLIP_EDGE
+    if(cUV.x > 1.0 || cUV.y > 1.0 || cUV.x < 0.0 || cUV.y < 0.0)
+        discard;
+    #endif // PARALLAX_CLIP_EDGE
+#endif // PARALLAX_MAP
+#if NORMAL_MAP
+    vec3 norm = CalcBumpedNormal(cUV);
+#else
+    vec3 norm = normalize(normal);
+#endif // NORMAL_MAP
+#if PARALLAX_MAP
+    vec4 result = CalcDirLight(dirLight, norm, tangentViewDir, cUV);
+#else
+    #if !defined(NONE)
+    vec4 result = CalcDirLight(dirLight, norm, viewDir, cUV);
+    #else
+    vec4 result = texture(material.diffuse, cUV).rgba * tint.rgba;
+    #endif // !defined(NONE)
+#endif // PARALLAX_MAP
+#if !defined(NONE)
+    #if MAX_POINT_LIGHTS > 0
+    for(int i = 0; i < numlights; i++) {
+        #if PARALLAX_MAP
+        result += CalcPointLight(pointLights[i], norm, fragPos, tangentViewDir, cUV);
+        #else
+        result += CalcPointLight(pointLights[i], norm, fragPos, viewDir, cUV);
+        #endif // PARALLAX_MAP
+    }
+    result.a /= float(numlights);
+    #endif // MAX_POINT_LIGHTS > 0
+#endif // !defined(NONE)
+    color = result;
+}`;
+        new ShaderSource({}, ShaderSource.types.vert, "defvert", vertSource);
+        new ShaderSource({}, ShaderSource.types.frag, "deffrag", fragSource);
+        return new Shader(ShaderSource.shaderWithParams("defvert", params), ShaderSource.shaderWithParams("deffrag", params));
+    }
     /**
      * Sets the shader to be used in rendering.
      */
@@ -1216,17 +1489,17 @@ export class ShaderSource {
         let keys = Object.keys(paramDict);
         let ss = ShaderSource.shaders[shaderName];
         let src = ss.source;
-        let exp = ss.getExpectedParams();
-        for (let j = 0; j < exp.length; j++) {
-            if (keys.includes(exp[j])) {
-                let pName = keys[keys.indexOf(exp[j])];
-                src = src.replace("$" + pName.toString() + "$", paramDict[pName.toString()].toString());
-            }
-            else {
-                src = src.replace("$" + exp[j].toString() + "$", ss.params[exp[j]].toString());
-            }
+        const svars = src.matchAll(/\$.+\(.*\)\$/gm);
+        for (const svar of svars) {
+            let rawVar = svar[0].replace(/\$/g, "");
+            let varName = rawVar.substring(0, rawVar.indexOf("(")) + rawVar.substring(rawVar.lastIndexOf(")") + 1);
+            let defValue = rawVar.substring(rawVar.indexOf("(") + 1, rawVar.lastIndexOf(")"));
+            if (keys.includes(varName))
+                src = src.replace(rawVar, keys[varName]);
+            else
+                src = src.replace(rawVar, defValue);
         }
-        return src;
+        return src.replace(/\$/g, "");
     }
     /**
      *
@@ -1246,6 +1519,7 @@ export class ShaderSource {
     /**
      *
      * @returns the parameters that this shader expects.
+     * @deprecated
      */
     getExpectedParams() {
         return Object.keys(this.params);
@@ -1748,6 +2022,9 @@ export class Mesh3D extends Position3D {
         }
         this.triangles++;
     }
+    render(s, c, d = new DirectionalLight(), p = []) {
+        Mesh3D.renderAll(s, c, [this], d, p);
+    }
     static createTextureFromImage(image, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
         let tex = gl.NONE;
         tex = gl.createTexture();
@@ -1990,7 +2267,7 @@ export class Mesh3D extends Position3D {
      * @param dirLight the directional light to use.
      * @param pointLights the point lights to use.
      */
-    static renderAll(shader, camera, meshes, dirLight, pointLights = []) {
+    static renderAll(shader, camera, meshes, dirLight = new DirectionalLight(), pointLights = []) {
         shader.use();
         Material.sendToShader(shader);
         shader.setUFloat(ShaderUniforms.ingenium_time, (Date.now() - IngeniumWeb.startTime) / 1000);
@@ -2208,7 +2485,7 @@ export class DirectionalLight extends Light {
      * @param direction the direction the light comes from.
      * @param intensity the intensity of the light.
      */
-    constructor(ambient = new Vec3(0.05, 0.05, 0.05), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), direction = new Vec3(0, -1, 0.2), intensity = 1) {
+    constructor(ambient = new Vec3(0.2, 0.2, 0.2), diffuse = new Vec3(0.8, 0.8, 0.8), specular = new Vec3(0.2, 0.2, 0.2), direction = new Vec3(0, -1, 0.2), intensity = 1) {
         super(ambient, diffuse, specular, intensity);
         this.direction = direction;
     }
@@ -2394,5 +2671,8 @@ export class AnimatedMesh3D {
                     this.primaryMesh.tint = this.meshes[this.currentFrame].tint;
             }
         }
+    }
+    render(s, c, d = new DirectionalLight(), p = []) {
+        this.primaryMesh.render(s, c, d, p);
     }
 }
