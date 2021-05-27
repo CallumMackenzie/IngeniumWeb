@@ -1532,7 +1532,7 @@ export class ShaderSource {
             let varName = rawVar.substring(0, rawVar.indexOf("(")) + rawVar.substring(rawVar.lastIndexOf(")") + 1);
             let defValue = rawVar.substring(rawVar.indexOf("(") + 1, rawVar.lastIndexOf(")"));
             if (keys.includes(varName))
-                src = src.replace(rawVar, keys[varName]);
+                src = src.replace(rawVar, paramDict[varName]);
             else
                 src = src.replace(rawVar, defValue);
         }
