@@ -110,6 +110,7 @@ f 4/12/10 2/14/10 6/8/10`];
                 tmpMesh.loadFromObjData(cubeAnim[i]);
                 tmpMesh.material.diffuseTexture = Mesh3D.createColorTexture(0xffaabb);
                 tmpMesh.material.normalTexture = Mesh3D.createColorTexture(0x8080ff);
+                tmpMesh.material.specularTexture = Mesh3D.createColorTexture(0xababab);
                 tmpMshs.push(tmpMesh);
             }
             am = new AnimatedMesh3D(Mesh3D.createEmpty(36), tmpMshs, 1, 500);
