@@ -11,13 +11,10 @@ export class Input {
      * Initializes the input system.
      */
     static setup() {
-        window.addEventListener("keydown", function (event) {
-            if (event.ctrlKey == true && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
-                event.preventDefault();
-            }
+        window.addEventListener("keydown", event => {
             Input.keys[event.key] = true;
         }, true);
-        window.addEventListener("keyup", function (event) {
+        window.addEventListener("keyup", event => {
             Input.keys[event.key] = false;
         }, true);
     }
@@ -27,7 +24,7 @@ export class Input {
      * @returns whether the key is currently pressed.
      */
     static getKeyState(key) {
-        return (Input.keys[key] === undefined ? false : Input.keys[key]);
+        return Input.keys[key];
     }
 }
 /**
@@ -1726,7 +1723,6 @@ export class Camera3D extends Position3D {
      */
     lookVector() {
         let target = new Vec3(0, 0, 1);
-        let up = new Vec3(0, 1, 0);
         let mRotation = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
         target = Vec3.mulMat(target, mRotation);
         return target;
@@ -1799,8 +1795,6 @@ export class Camera3D extends Position3D {
             rotate.x = -cameraMoveSpeed;
         if (Input.getKeyState('ArrowDown'))
             rotate.x = cameraMoveSpeed;
-        // if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
-        //     speed *= 5;
         p3.rotation = Vec3.add(p3.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
         p3.position = Vec3.add(p3.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
         if (p3.rotation.x >= Rotation.degToRad(87))
@@ -1913,9 +1907,8 @@ export class Mesh3D extends Position3D {
             this.triangles = geom.triangles;
             this.loaded = true;
         }
-        else if (Object.keys(loadedGeometry).includes(objPath)) {
+        else if (Object.keys(loadedGeometry).includes(objPath))
             this.loadFromObjData(loadedGeometry[objPath].data);
-        }
         else {
             let obGeometry = new Geometry(Utils.loadFile(objPath), "USER_GEOMETRY");
             loadedGeometry[objPath] = obGeometry;
@@ -2042,7 +2035,7 @@ export class Mesh3D extends Position3D {
             gl.generateMipmap(gl.TEXTURE_2D);
         }
         else {
-            image.addEventListener('load', function () {
+            image.addEventListener('load', () => {
                 gl.activeTexture(texSlot);
                 gl.bindTexture(gl.TEXTURE_2D, tex);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -2123,7 +2116,7 @@ export class Mesh3D extends Position3D {
                 image.src = path;
                 image.crossOrigin = "anonymous";
                 loadedImages[path] = image;
-                image.addEventListener('load', function () {
+                image.addEventListener('load', () => {
                     gl.activeTexture(texSlot);
                     gl.bindTexture(gl.TEXTURE_2D, tex);
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -2287,15 +2280,13 @@ export class Mesh3D extends Position3D {
             }
             Mesh3D.renderMeshRaw(meshes[i], shader);
         }
-        transparents.sort(function (a, b) {
+        transparents.sort((a, b) => {
             let aDist = camera.position.sub(a.position).len();
             let bDist = camera.position.sub(b.position).len();
-            if (aDist < bDist) {
+            if (aDist < bDist)
                 return 1;
-            }
-            if (aDist > bDist) {
+            if (aDist > bDist)
                 return -1;
-            }
             return 0;
         });
         for (let i = 0; i < transparents.length; i++)

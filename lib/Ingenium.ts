@@ -16,13 +16,10 @@ export class Input {
      * Initializes the input system.
      */
     static setup() {
-        window.addEventListener("keydown", function (event) {
-            if (event.ctrlKey == true && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109 || event.which === 187 || event.which === 189)) {
-                event.preventDefault();
-            }
+        window.addEventListener("keydown", event => {
             Input.keys[event.key] = true;
         }, true);
-        window.addEventListener("keyup", function (event) {
+        window.addEventListener("keyup", event => {
             Input.keys[event.key] = false;
         }, true);
     }
@@ -32,7 +29,7 @@ export class Input {
      * @returns whether the key is currently pressed.
      */
     static getKeyState(key: string): boolean {
-        return (Input.keys[key] === undefined ? false : Input.keys[key]);
+        return Input.keys[key];
     }
 }
 
@@ -966,11 +963,9 @@ export class Mat4 {
     static pointedAt(pos: Vec3, target: Vec3, up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
         let newForward = Vec3.sub(target, pos);
         newForward = Vec3.normalize(newForward);
-
         let a = Vec3.mulFloat(newForward, Vec3.dot(up, newForward));
         let newUp = Vec3.sub(up, a);
         newUp = Vec3.normalize(newUp);
-
         let newRight = Vec3.cross(newUp, newForward);
         let matrix = new Mat4();
         matrix.m[0][0] = newRight.x; matrix.m[0][1] = newRight.y; matrix.m[0][2] = newRight.z; matrix.m[0][3] = 0.0;
@@ -1879,7 +1874,6 @@ export class Camera3D extends Position3D {
      */
     lookVector(): Vec3 {
         let target: Vec3 = new Vec3(0, 0, 1);
-        let up: Vec3 = new Vec3(0, 1, 0);
         let mRotation: Mat4 = Mat4.mul(Mat4.mul(Mat4.rotationX(this.rotation.x), Mat4.rotationY(this.rotation.y)), Mat4.rotationZ(this.rotation.z));
         target = Vec3.mulMat(target, mRotation);
         return target;
@@ -1929,7 +1923,6 @@ export class Camera3D extends Position3D {
     static stdController(cam: Camera3D, pos: Position3D, speed: number = 1, cameraMoveSpeed: number = 1): Position3D {
         let cLV: Vec3 = cam.lookVector();
         let p3: Position3D = pos;
-
         let forward: Vec3 = new Vec3();
         let up: Vec3 = new Vec3(0, 1, 0);
         let rotate: Vec3 = new Vec3();
@@ -1945,7 +1938,6 @@ export class Camera3D extends Position3D {
             forward.y = forward.y + 1;
         if (Input.getKeyState('e'))
             forward.y = forward.y - 1;
-
         if (Input.getKeyState('ArrowLeft'))
             rotate.y = -cameraMoveSpeed;
         if (Input.getKeyState('ArrowRight'))
@@ -1954,12 +1946,8 @@ export class Camera3D extends Position3D {
             rotate.x = -cameraMoveSpeed;
         if (Input.getKeyState('ArrowDown'))
             rotate.x = cameraMoveSpeed;
-        // if (Input.getKeyState('Shift') || Input.getKeyState('ShiftLeft'))
-        //     speed *= 5;
-
         p3.rotation = Vec3.add(p3.rotation, Vec3.mulFloat(rotate, Time.deltaTime));
         p3.position = Vec3.add(p3.position, Vec3.mulFloat(Vec3.normalize(forward), speed * Time.deltaTime));
-
         if (p3.rotation.x >= Rotation.degToRad(87)) p3.rotation.x = Rotation.degToRad(87);
         if (p3.rotation.x <= -Rotation.degToRad(87)) p3.rotation.x = -Rotation.degToRad(87);
         if (Math.abs(p3.rotation.y) >= Rotation.degToRad(360)) p3.rotation.y = 0;
@@ -2106,9 +2094,9 @@ export class Mesh3D extends Position3D {
             this.mVAO = geom.VAO;
             this.triangles = geom.triangles;
             this.loaded = true;
-        } else if (Object.keys(loadedGeometry).includes(objPath)) {
+        } else if (Object.keys(loadedGeometry).includes(objPath)) 
             this.loadFromObjData(loadedGeometry[objPath].data);
-        } else {
+        else {
             let obGeometry: Geometry = new Geometry(Utils.loadFile(objPath), "USER_GEOMETRY");
             loadedGeometry[objPath] = obGeometry;
             this.loadFromObjData(obGeometry.data);
@@ -2244,7 +2232,7 @@ export class Mesh3D extends Position3D {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
             gl.generateMipmap(gl.TEXTURE_2D);
         } else {
-            image.addEventListener('load', function () {
+            image.addEventListener('load', () => {
                 gl.activeTexture(texSlot);
                 gl.bindTexture(gl.TEXTURE_2D, tex);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -2334,7 +2322,7 @@ export class Mesh3D extends Position3D {
                 image.src = path;
                 image.crossOrigin = "anonymous";
                 loadedImages[path] = image;
-                image.addEventListener('load', function () {
+                image.addEventListener('load', () => {
                     gl.activeTexture(texSlot);
                     gl.bindTexture(gl.TEXTURE_2D, tex);
 
@@ -2506,16 +2494,12 @@ export class Mesh3D extends Position3D {
         shader.setUMat4(ShaderUniforms.camera3D_projection, camera.perspective());
         shader.setUVec3(ShaderUniforms.camera3D_viewPos, camera.position);
         shader.setUInt(ShaderUniforms.shader_numLights, pointLights.length);
-
         dirLight.sendToShader(shader);
-
 
         for (let j: number = 0; j < pointLights.length; j++) {
             pointLights[j].sendToShader(shader, j);
         }
-
         let transparents: Mesh3D[] = [];
-
         for (let i: number = 0; i < meshes.length; i++) {
             if (meshes[i].tint.w != 1.0 || meshes[i].renderTransparent) {
                 transparents.push(meshes[i]);
@@ -2523,15 +2507,13 @@ export class Mesh3D extends Position3D {
             }
             Mesh3D.renderMeshRaw(meshes[i], shader);
         }
-        transparents.sort(function (a: Mesh3D, b: Mesh3D): number {
+        transparents.sort((a: Mesh3D, b: Mesh3D): number => {
             let aDist: number = camera.position.sub(a.position).len();
             let bDist: number = camera.position.sub(b.position).len();
-            if (aDist < bDist) {
+            if (aDist < bDist) 
                 return 1;
-            }
-            if (aDist > bDist) {
+            if (aDist > bDist) 
                 return -1;
-            }
             return 0;
         });
         for (let i: number = 0; i < transparents.length; i++)
@@ -2539,7 +2521,6 @@ export class Mesh3D extends Position3D {
     }
     static renderMeshRaw(mesh: Mesh3D, shader: Shader) {
         gl.bindVertexArray(mesh.mVAO);
-
         let model: Mat4 = mesh.modelMatrix();
         shader.setUMat4(ShaderUniforms.mesh3D_modelMatrix, model);
         shader.setUMat4(ShaderUniforms.mesh3D_invModelMatrix, Mat4.inverse(model));
@@ -2548,7 +2529,6 @@ export class Mesh3D extends Position3D {
         shader.setUFloat(ShaderUniforms.material_heightScale, mesh.material.parallaxScale);
         shader.setUVec2(ShaderUniforms.material_scaleUV, mesh.material.UVScale);
         mesh.material.bindTextures();
-
         let verts = mesh.triangles * 3;
         gl.drawArrays(gl.TRIANGLES, 0, verts);
     }
