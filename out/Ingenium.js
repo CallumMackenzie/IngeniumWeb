@@ -210,7 +210,7 @@ export class IngeniumWeb {
             IngeniumWeb.scenes[IngeniumWeb.currentScene].onFixedUpdate();
         if (!IngeniumWeb.running) {
             if (IngeniumWeb.scenes[IngeniumWeb.currentScene])
-                IngeniumWeb.scenes[IngeniumWeb.currentScene]?.onClose();
+                IngeniumWeb.scenes[IngeniumWeb.currentScene].onClose();
             IngeniumWeb.onClose();
             clearInterval(IngeniumWeb.intervalCode);
             clearInterval(IngeniumWeb.fixedIntervalCode);
