@@ -4,8 +4,12 @@ let shader;
 let camera3D = new IW.Camera3D();
 let am;
 function onCreate() {
-    IW.IngeniumWeb.defaultInit();
-    shader = IW.Shader.make3D();
+    IW.IngeniumWeb.defaultInit(0xaabbcc);
+    shader = IW.Shader.make3D({
+        "normalMap": "0",
+        "lightModel": "PHONG"
+    });
+    console.log(IW.Shader.getAllShaderInfo());
     let tmpMshs = [];
     for (let i = 0; i < 2; i++)
         tmpMshs.push(IW.Mesh3D.createAndMake("./resource/cubeanim/" + i.toString() + ".obj"));

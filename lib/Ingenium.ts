@@ -221,11 +221,11 @@ export class IngeniumWeb {
         Input.setup();
         IngeniumWeb.init();
     };
-    static defaultInit() {
-        IngeniumWeb.createWindow(16, 9, "Ingenium Web");
+    static defaultInit(clearColour: number = 0xfafafa, aspect: number = (16 / 9), fps: number = 35) {
+        IngeniumWeb.createWindow(aspect, 1, "Ingenium Web");
         IngeniumWeb.defaultGLSetup();
-        IngeniumWeb.window.setClearColour(0x303030, 1);
-        Time.setFPS(40);
+        IngeniumWeb.window.setClearColour(clearColour, 1);
+        Time.setFPS(fps);
         Time.setFixedFPS(5);
     }
     static createWindow(width: number, height: number, id: string, parentName: string = "root", takeUpAsepct: boolean = true) {
@@ -1252,7 +1252,7 @@ precision $precision(mediump)$ float;
 #define MAX_PARALLAX_LAYERS $maxParallaxLayers(32.0)$
 #define PARALLAX_INVERT $parallaxInvert(0)$
 #define MAX_POINT_LIGHTS $maxPointLights(0)$
-layout (location = 0) out vec4 color;
+layout (location = 0) out vec4 colour;
 struct Material {
     sampler2D diffuse;
     sampler2D specular;
@@ -1413,11 +1413,23 @@ void main ()
     result.a /= float(numlights);
     #endif // MAX_POINT_LIGHTS > 0
 #endif // !defined(NONE)
-    color = result;
+    colour = result;
 }`;
         new ShaderSource({}, ShaderSource.types.vert, "defvert", vertSource);
         new ShaderSource({}, ShaderSource.types.frag, "deffrag", fragSource);
         return new Shader(ShaderSource.shaderWithParams("defvert", params), ShaderSource.shaderWithParams("deffrag", params));
+    }
+
+    static getAllShaderInfo(): string {
+        let result = "";
+        let allShaderNames = ShaderSource.getAllShaderNames();
+        for (let i = 0; i < allShaderNames.length; i++) {
+            let shader = ShaderSource.getShader(allShaderNames[i]);
+            result += allShaderNames[i] + " (" + shader.type + " shader): " + 
+            JSON.stringify(shader.getExpectedParams(), null, 2) +
+            "\n";
+        }
+        return result;
     }
 
     /**
@@ -1583,10 +1595,17 @@ export class ShaderSource {
     /**
      * 
      * @returns the parameters that this shader expects.
-     * @deprecated
      */
-    getExpectedParams(): string[] {
-        return Object.keys(this.params);
+    getExpectedParams(): any {
+        const svars = this.source.matchAll(/\$.+\(.*\)\$/gm);
+        let pairs = {};
+        for (const svar of svars) {
+            let rawVar = svar[0].replace(/\$/g, "");
+            let varName = rawVar.substring(0, rawVar.indexOf("(")) + rawVar.substring(rawVar.lastIndexOf(")") + 1);
+            let defValue = rawVar.substring(rawVar.indexOf("(") + 1, rawVar.lastIndexOf(")"));
+            pairs[varName] = defValue;
+        }
+        return pairs;
     }
     /**
      * 
@@ -1750,10 +1769,16 @@ export class Material {
      * @param shininess the shininess of the material.
      */
     constructor(diffuseTexture: WebGLTexture = null, specularTexture: WebGLTexture = null, normalTexture: WebGLTexture = null, shininess: number = 0.5) {
+        if (!diffuseTexture)
+            diffuseTexture = Mesh3D.createColourTexture(0xfafafa);
+        if (!specularTexture)
+            specularTexture = Mesh3D.createColourTexture(0xbbbbbb);
+       if (!normalTexture) 
+            normalTexture = Mesh3D.createColourTexture(0x8080ff);
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.normalTexture = normalTexture;
-        this.parallaxTexture = null;
+        this.parallaxTexture = Mesh3D.createColourTexture(0x000000);
         this.shininess = shininess;
     }
 
@@ -2094,7 +2119,7 @@ export class Mesh3D extends Position3D {
             this.mVAO = geom.VAO;
             this.triangles = geom.triangles;
             this.loaded = true;
-        } else if (Object.keys(loadedGeometry).includes(objPath)) 
+        } else if (Object.keys(loadedGeometry).includes(objPath))
             this.loadFromObjData(loadedGeometry[objPath].data);
         else {
             let obGeometry: Geometry = new Geometry(Utils.loadFile(objPath), "USER_GEOMETRY");
@@ -2271,11 +2296,11 @@ export class Mesh3D extends Position3D {
         gl.generateMipmap(gl.TEXTURE_2D);
         return tex;
     }
-    static createColorTexture(color: number, alpha: number = 1, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
+    static createColourTexture(colour: number, alpha: number = 1, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
         minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR): WebGLTexture {
-        let r = (color & 0xFF0000) >> 16;
-        let g = (color & 0x00FF00) >> 8;
-        let b = color & 0x0000FF;
+        let r = (colour & 0xFF0000) >> 16;
+        let g = (colour & 0x00FF00) >> 8;
+        let b = colour & 0x0000FF;
         return Mesh3D.createTextureFromRGBAPixelArray([r, g, b, alpha * 255], 1, 1, texSlot, wrap, minFilter, magFilter);
     }
     /**
@@ -2510,9 +2535,9 @@ export class Mesh3D extends Position3D {
         transparents.sort((a: Mesh3D, b: Mesh3D): number => {
             let aDist: number = camera.position.sub(a.position).len();
             let bDist: number = camera.position.sub(b.position).len();
-            if (aDist < bDist) 
+            if (aDist < bDist)
                 return 1;
-            if (aDist > bDist) 
+            if (aDist > bDist)
                 return -1;
             return 0;
         });

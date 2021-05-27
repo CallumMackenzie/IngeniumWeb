@@ -181,11 +181,11 @@ export class IngeniumWeb {
         IngeniumWeb.init();
     }
     ;
-    static defaultInit() {
-        IngeniumWeb.createWindow(16, 9, "Ingenium Web");
+    static defaultInit(clearColour = 0xfafafa, aspect = (16 / 9), fps = 35) {
+        IngeniumWeb.createWindow(aspect, 1, "Ingenium Web");
         IngeniumWeb.defaultGLSetup();
-        IngeniumWeb.window.setClearColour(0x303030, 1);
-        Time.setFPS(40);
+        IngeniumWeb.window.setClearColour(clearColour, 1);
+        Time.setFPS(fps);
         Time.setFixedFPS(5);
     }
     static createWindow(width, height, id, parentName = "root", takeUpAsepct = true) {
@@ -1217,7 +1217,7 @@ precision $precision(mediump)$ float;
 #define MAX_PARALLAX_LAYERS $maxParallaxLayers(32.0)$
 #define PARALLAX_INVERT $parallaxInvert(0)$
 #define MAX_POINT_LIGHTS $maxPointLights(0)$
-layout (location = 0) out vec4 color;
+layout (location = 0) out vec4 colour;
 struct Material {
     sampler2D diffuse;
     sampler2D specular;
@@ -1378,11 +1378,22 @@ void main ()
     result.a /= float(numlights);
     #endif // MAX_POINT_LIGHTS > 0
 #endif // !defined(NONE)
-    color = result;
+    colour = result;
 }`;
         new ShaderSource({}, ShaderSource.types.vert, "defvert", vertSource);
         new ShaderSource({}, ShaderSource.types.frag, "deffrag", fragSource);
         return new Shader(ShaderSource.shaderWithParams("defvert", params), ShaderSource.shaderWithParams("deffrag", params));
+    }
+    static getAllShaderInfo() {
+        let result = "";
+        let allShaderNames = ShaderSource.getAllShaderNames();
+        for (let i = 0; i < allShaderNames.length; i++) {
+            let shader = ShaderSource.getShader(allShaderNames[i]);
+            result += allShaderNames[i] + " (" + shader.type + " shader): " +
+                JSON.stringify(shader.getExpectedParams(), null, 2) +
+                "\n";
+        }
+        return result;
     }
     /**
      * Sets the shader to be used in rendering.
@@ -1492,7 +1503,7 @@ export class ShaderSource {
             let varName = rawVar.substring(0, rawVar.indexOf("(")) + rawVar.substring(rawVar.lastIndexOf(")") + 1);
             let defValue = rawVar.substring(rawVar.indexOf("(") + 1, rawVar.lastIndexOf(")"));
             if (keys.includes(varName))
-                src = src.replace(rawVar, keys[varName]);
+                src = src.replace(rawVar, paramDict[varName]);
             else
                 src = src.replace(rawVar, defValue);
         }
@@ -1516,10 +1527,17 @@ export class ShaderSource {
     /**
      *
      * @returns the parameters that this shader expects.
-     * @deprecated
      */
     getExpectedParams() {
-        return Object.keys(this.params);
+        const svars = this.source.matchAll(/\$.+\(.*\)\$/gm);
+        let pairs = {};
+        for (const svar of svars) {
+            let rawVar = svar[0].replace(/\$/g, "");
+            let varName = rawVar.substring(0, rawVar.indexOf("(")) + rawVar.substring(rawVar.lastIndexOf(")") + 1);
+            let defValue = rawVar.substring(rawVar.indexOf("(") + 1, rawVar.lastIndexOf(")"));
+            pairs[varName] = defValue;
+        }
+        return pairs;
     }
     /**
      *
@@ -1631,10 +1649,16 @@ export class Material {
          * The scale for the UV coordinates.
          */
         this.UVScale = Vec2.filledWith(1);
+        if (!diffuseTexture)
+            diffuseTexture = Mesh3D.createColourTexture(0xfafafa);
+        if (!specularTexture)
+            specularTexture = Mesh3D.createColourTexture(0xbbbbbb);
+        if (!normalTexture)
+            normalTexture = Mesh3D.createColourTexture(0x8080ff);
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
         this.normalTexture = normalTexture;
-        this.parallaxTexture = null;
+        this.parallaxTexture = Mesh3D.createColourTexture(0x000000);
         this.shininess = shininess;
     }
     bindTextures() {
@@ -2072,10 +2096,10 @@ export class Mesh3D extends Position3D {
         gl.generateMipmap(gl.TEXTURE_2D);
         return tex;
     }
-    static createColorTexture(color, alpha = 1, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
-        let r = (color & 0xFF0000) >> 16;
-        let g = (color & 0x00FF00) >> 8;
-        let b = color & 0x0000FF;
+    static createColourTexture(colour, alpha = 1, texSlot = gl.TEXTURE0, wrap = [gl.REPEAT, gl.REPEAT], minFilter = gl.LINEAR_MIPMAP_LINEAR, magFilter = gl.LINEAR) {
+        let r = (colour & 0xFF0000) >> 16;
+        let g = (colour & 0x00FF00) >> 8;
+        let b = colour & 0x0000FF;
         return Mesh3D.createTextureFromRGBAPixelArray([r, g, b, alpha * 255], 1, 1, texSlot, wrap, minFilter, magFilter);
     }
     /**
