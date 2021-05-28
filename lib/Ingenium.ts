@@ -95,7 +95,6 @@ export class WebGLWindow {
         this.width = width;
         this.height = height;
         this.aspectRatio = height / width;
-
         this.setGL();
     };
     sizeToWindow(aspect: number) {
@@ -162,7 +161,6 @@ export class Scene {
      * The function executed when the scene is closed.
      */
     onClose: Function;
-
     /**
      * 
      * @param onCreate the function executed when the scene is created.
@@ -192,7 +190,6 @@ export class IngeniumWeb {
     static scenes: Scene[] = [];
     static currentScene: number = 0;
     static startTime: number = 0;
-
     /**
      * Starts the engine.
      * 
@@ -398,6 +395,8 @@ export class Vec2 {
      */
     static normalize(v: Vec2): Vec2 {
         let l = Vec2.len(v);
+        if (l == 0)
+            return new Vec2(0, 0);
         return new Vec2(v.x / l, v.y / l);
     }
 
@@ -1420,14 +1419,68 @@ void main ()
         return new Shader(ShaderSource.shaderWithParams("defvert", params), ShaderSource.shaderWithParams("deffrag", params));
     }
 
+    static make2D(params: any = {}) {
+        let vertSource = `#version $version(300 es)$
+#ifdef GL_ES
+precision $precision(highp)$ float;
+#endif
+struct Camera2D {
+    mat2 rotation;
+    vec2 translation;
+    float aspect;
+    vec2 rotationPoint;
+};
+struct Mesh2D {
+    mat2 rotation;
+    vec2 scale;
+    vec2 translation;
+    vec2 rotationPoint;
+    float zIndex;
+    vec4 tint;
+};
+layout (location = 0) in vec2 vertexPos;
+layout (location = 1) in vec2 vertexUV;
+uniform Camera2D camera;
+uniform Mesh2D model;
+out vec2 UV;
+out vec4 tint;
+void main () {
+    UV = vertexUV;
+    tint = model.tint;
+    vec2 postRotationTranslation = model.translation + camera.rotationPoint + camera.translation;
+    vec2 transformed =  camera.rotation * (model.rotation * ((model.scale * vertexPos) + model.rotationPoint) + postRotationTranslation);
+    gl_Position = vec4(transformed.x * camera.aspect, transformed.y, model.zIndex, 1.0);
+}`;
+        let fragSource = `#version $version(300 es)$
+#ifdef GL_ES
+precision $precision(mediump)$ float;
+#endif
+struct Material {
+    sampler2D diffuse;
+    sampler2D specular;
+    sampler2D normal;
+    float shininess;
+};
+layout (location = 0) out vec4 color;
+uniform Material material;
+in vec2 UV;
+in vec4 tint;
+void main () {
+    color = tint.rgba * texture((material.diffuse), UV).rgba;
+}`;
+        new ShaderSource({}, ShaderSource.types.vert, "vert2d", vertSource);
+        new ShaderSource({}, ShaderSource.types.frag, "frag2d", fragSource);
+        return new Shader(ShaderSource.shaderWithParams("vert2d", params), ShaderSource.shaderWithParams("frag2d", params));
+    }
+
     static getAllShaderInfo(): string {
         let result = "";
         let allShaderNames = ShaderSource.getAllShaderNames();
         for (let i = 0; i < allShaderNames.length; i++) {
             let shader = ShaderSource.getShader(allShaderNames[i]);
-            result += allShaderNames[i] + " (" + shader.type + " shader): " + 
-            JSON.stringify(shader.getExpectedParams(), null, 2) +
-            "\n";
+            result += allShaderNames[i] + " (" + shader.type + " shader): " +
+                JSON.stringify(shader.getExpectedParams(), null, 2) +
+                "\n";
         }
         return result;
     }
@@ -1773,7 +1826,7 @@ export class Material {
             diffuseTexture = Mesh3D.createColourTexture(0xfafafa);
         if (!specularTexture)
             specularTexture = Mesh3D.createColourTexture(0xbbbbbb);
-       if (!normalTexture) 
+        if (!normalTexture)
             normalTexture = Mesh3D.createColourTexture(0x8080ff);
         this.diffuseTexture = diffuseTexture;
         this.specularTexture = specularTexture;
@@ -1798,7 +1851,6 @@ export class Material {
         shader.setUInt(ShaderUniforms.material_specular, 1);
         shader.setUInt(ShaderUniforms.material_normal, 2);
         shader.setUInt(ShaderUniforms.material_parallax, 3);
-        shader.setUInt("screenTexture", 0);
     }
 }
 
@@ -1985,7 +2037,7 @@ export class Camera2D extends Position2D {
     rotationPoint: Vec2;
     aspect: number;
 
-    constructor(aspect: number, position: Vec2 = new Vec2(), rotation: number = 0) {
+    constructor(aspect: number = 9 / 16, position: Vec2 = new Vec2(), rotation: number = 0) {
         super(position, rotation);
         this.rotationPoint = new Vec2();
         this.aspect = aspect;
@@ -1996,13 +2048,13 @@ export class Camera2D extends Position2D {
     }
 
     sendToShader(shader: Shader) {
-        shader.setUMat2("camera.rotation", this.cameraMatrix());
-        shader.setUVec2("camera.translation", this.position);
-        shader.setUFloat("camera.aspect", this.aspect);
-        shader.setUVec2("camera.rotationPoint", this.rotationPoint);
+        shader.setUMat2(ShaderUniforms.camera2D_rotation, this.cameraMatrix());
+        shader.setUVec2(ShaderUniforms.camera2D_translation, this.position);
+        shader.setUFloat(ShaderUniforms.camera2D_aspect, this.aspect);
+        shader.setUVec2(ShaderUniforms.camera2D_rotationPoint, this.rotationPoint);
     }
 
-    stdControl(speed: number, rotateSpeed: number) {
+    stdControl(speed: number = 1, rotateSpeed: number = 1) {
         let move: Vec2 = new Vec2();
         let cLV: Vec2 = new Vec2(Math.sin(this.rotation), Math.cos(this.rotation));
         let rotate: number = 0;
@@ -2027,6 +2079,14 @@ let loadedImages: { [id: string]: HTMLImageElement } = {};
 let loadedGeometry: { [id: string]: Geometry } = {};
 let loadedReferenceTextures: { [id: string]: WebGLTexture } = {};
 let loadedReferenceGeometry: { [id: string]: ReferenceGeometry } = {};
+
+const setGLTexParameters = (wrap: number[] = [gl.REPEAT, gl.REPEAT], minFilter: number = gl.LINEAR_MIPMAP_LINEAR, magFilter: number = gl.LINEAR) => {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+    gl.generateMipmap(gl.TEXTURE_2D);
+};
 
 /**
  * A 3D object.
@@ -2251,21 +2311,13 @@ export class Mesh3D extends Position3D {
             gl.activeTexture(texSlot);
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-            gl.generateMipmap(gl.TEXTURE_2D);
+            setGLTexParameters(wrap, minFilter, magFilter);
         } else {
             image.addEventListener('load', () => {
                 gl.activeTexture(texSlot);
                 gl.bindTexture(gl.TEXTURE_2D, tex);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-                gl.generateMipmap(gl.TEXTURE_2D);
+                setGLTexParameters(wrap, minFilter, magFilter);
             });
         }
         return tex;
@@ -2276,11 +2328,7 @@ export class Mesh3D extends Position3D {
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(array));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-        gl.generateMipmap(gl.TEXTURE_2D);
+        setGLTexParameters(wrap, minFilter, magFilter);
         return tex;
     }
     static createTextureFromRGBPixelArray(array: number[], width: number, height: number, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
@@ -2289,11 +2337,7 @@ export class Mesh3D extends Position3D {
         gl.activeTexture(texSlot);
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array(array));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-        gl.generateMipmap(gl.TEXTURE_2D);
+        setGLTexParameters(wrap, minFilter, magFilter);
         return tex;
     }
     static createColourTexture(colour: number, alpha: number = 1, texSlot: number = gl.TEXTURE0, wrap: number[] = [gl.REPEAT, gl.REPEAT],
@@ -2335,13 +2379,7 @@ export class Mesh3D extends Position3D {
                 gl.bindTexture(gl.TEXTURE_2D, tex);
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-
-                gl.generateMipmap(gl.TEXTURE_2D);
+                setGLTexParameters(wrap, minFilter, magFilter);
             } else {
                 image = new Image();
                 image.src = path;
@@ -2350,15 +2388,8 @@ export class Mesh3D extends Position3D {
                 image.addEventListener('load', () => {
                     gl.activeTexture(texSlot);
                     gl.bindTexture(gl.TEXTURE_2D, tex);
-
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap[0]);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap[1]);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-
-                    gl.generateMipmap(gl.TEXTURE_2D);
+                    setGLTexParameters(wrap, minFilter, magFilter);
                 })
             };
         }
@@ -2560,9 +2591,6 @@ export class Mesh3D extends Position3D {
 }
 
 export class Mesh2D extends Position2D {
-    // TODO: dynamic shader location names
-    static renderTranslationName = "translation";
-
     /**
      * Relative point the mesh rotates around.
      */
@@ -2614,7 +2642,7 @@ export class Mesh2D extends Position2D {
     /**
      * The z index of the 2D mesh.
      */
-    zIndex: number = 0;
+    zIndex: number = 0.000001;
     /**
      * 
      * @param position      the position
@@ -2638,22 +2666,16 @@ export class Mesh2D extends Position2D {
             this.mVBO = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), drawType);
-
             this.mVAO = gl.createVertexArray();
             gl.bindVertexArray(this.mVAO);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.mVBO);
-
             let size: number = Vert2D.tSize;
-
             let floatSize: number = 4;
             let stride: number = size * floatSize; // Num of array elements resulting from a Vert3D
-
             gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0); // Vertex data
             gl.enableVertexAttribArray(0);
-
             gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 2 * floatSize); // UV data
             gl.enableVertexAttribArray(1);
-
             this.loaded = true;
         }
     }
@@ -2661,12 +2683,12 @@ export class Mesh2D extends Position2D {
         return Mat2.rotation(this.rotation);
     }
     sendToShader(shader: Shader) {
-        shader.setUVec4("model.tint", this.tint);
-        shader.setUVec2("model.translation", this.position);
-        shader.setUMat2("model.rotation", this.modelMatrix());
-        shader.setUVec2("model.rotationPoint", this.rotationCenter);
-        shader.setUVec2("model.scale", this.scale);
-        shader.setUFloat("model.zIndex", this.zIndex);
+        shader.setUVec4(ShaderUniforms.mesh2D_tint, this.tint);
+        shader.setUVec2(ShaderUniforms.mesh2D_translation, this.position);
+        shader.setUMat2(ShaderUniforms.mesh2D_rotation, this.modelMatrix());
+        shader.setUVec2(ShaderUniforms.mesh2D_rotationPoint, this.rotationCenter);
+        shader.setUVec2(ShaderUniforms.mesh2D_scale, this.scale);
+        shader.setUFloat(ShaderUniforms.mesh2D_zIndex, this.zIndex);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.material.diffuseTexture);
     }
@@ -2676,19 +2698,28 @@ export class Mesh2D extends Position2D {
     bindVAO() {
         gl.bindVertexArray(this.mVAO);
     }
-
+    render(shader: Shader, camera: Camera2D) {
+        Mesh2D.renderAll(shader, camera, [this]);
+    }
     static renderAll(shader: Shader, camera: Camera2D, meshes: Mesh2D[]) {
         shader.use();
         Material.sendToShader(shader);
         camera.sendToShader(shader);
-        shader.setUFloat("u_time", Date.now());
-
+        shader.setUFloat(ShaderUniforms.ingenium_time, Date.now());
         for (let i = 0; i < meshes.length; i++) {
             meshes[i].bindVAO();
-            shader.setUVec2("translation", meshes[i].position.add(camera.position));
             meshes[i].sendToShader(shader);
             gl.drawArrays(gl.TRIANGLES, 0, meshes[i].triangles * 3);
         }
+    }
+    static makeQuad(texturePath: string = "NONE"): Mesh2D {
+        let m2 = new Mesh2D();
+        m2.data = Geometry.quadData;
+        m2.triangles = 2;
+        m2.load();
+        if (texturePath != "NONE")
+            m2.material.diffuseTexture = Mesh3D.createTextureFromPath(texturePath, gl.TEXTURE0, true);
+        return m2;
     }
 }
 
@@ -2977,7 +3008,7 @@ export class AnimatedMesh3D {
     startFrame: number = 0;
     endFrame: number = 0;
     frameTime: number = 1;
-    lastFrame: number = Date.now();
+    lastFrame: number = 0;
     interpolating: boolean = true;
     interpolatingTint = true;
     interpolatingVerticies = true;
