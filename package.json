@@ -1,0 +1,9 @@
+{
+	"homepage": "https://callummackenzie.github.io/IngeniumWeb",
+	"devDependencies": {
+		"typescript": "^4.8.4"
+	},
+	"scripts": {
+		"predeploy": "npx tsc"
+	}
+}

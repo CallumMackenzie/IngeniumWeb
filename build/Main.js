@@ -18,6 +18,7 @@ const onCreate = () => {
         am[j].primaryMesh.position = new IW.Vec3((j - (nCubes >> 1)) * 3, 0, 3);
     }
 };
+let ctr = 0;
 const onUpdate = () => {
     camera3D.stdControl(4, IW.PI);
     for (let i = 0; i < am.length; i++) {
