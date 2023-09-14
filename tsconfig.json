@@ -1,11 +1,15 @@
 {
-    "compilerOptions": {
-        "target": "es2020",
-        "module": "es2020",
-        "outDir": "build",
-        "sourceMap": false,
-        "rootDir": "lib",
-        "esModuleInterop": true,
-        "declaration": true
-    }
+	"compilerOptions": {
+		"target": "es2020",
+		"module": "es2020",
+		"outDir": "build",
+		"sourceMap": false,
+		"rootDir": "lib",
+		"esModuleInterop": true,
+		"declaration": true
+	},
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
 }
