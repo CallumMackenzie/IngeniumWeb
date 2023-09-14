@@ -6,6 +6,6 @@
         "sourceMap": false,
         "rootDir": "lib",
         "esModuleInterop": true,
-        "declaration": false
+        "declaration": true
     }
 }

@@ -1,9 +1,16 @@
 {
-	"homepage": "https://callummackenzie.github.io/IngeniumWeb",
+	"name": "ingeniumweb",
+	"version": "1.0.0",
+	"description": "A 3d renderer written in typescript.",
+	"author": "Callum Mackenzie",
+	"license": "MIT",
 	"devDependencies": {
 		"typescript": "^4.8.4"
 	},
 	"scripts": {
-		"predeploy": "npx tsc"
-	}
+		"predeploy": "npx tsc",
+		"prepublish": "npx tsc"
+	},
+	"main": "build/Ingenium.js",
+	"types": "build/Ingenium.d.ts"
 }
