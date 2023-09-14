@@ -1,4 +1,3 @@
-"use strict";
 /**
  * The OpenGL object of the program.
  */
@@ -78,14 +77,11 @@ Time.lastFrame = Date.now();
 Time.lastFixedFrame = Date.now();
 ;
 export class WebGLWindow {
-    constructor(width, height, parentName, name) {
+    constructor(width, height, canvas) {
         this.takeUpAsepct = true;
-        this.parent = document.getElementById(parentName);
         this.canvas = document.createElement("canvas");
         this.canvas.setAttribute("width", width.toString() + "px");
         this.canvas.setAttribute("height", height.toString() + "px");
-        this.canvas.setAttribute("id", name);
-        this.parent.appendChild(this.canvas);
         this.width = width;
         this.height = height;
         this.aspectRatio = height / width;
@@ -130,7 +126,6 @@ export class WebGLWindow {
             prop: "background",
             val: "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")"
         };
-        this.parent.style.setProperty(col.prop, col.val);
         document.body.style.setProperty(col.prop, col.val);
     }
     clear() {
@@ -181,15 +176,15 @@ export class IngeniumWeb {
         IngeniumWeb.init();
     }
     ;
-    static defaultInit(clearColour = 0xfafafa, aspect = (16 / 9), fps = 35) {
-        IngeniumWeb.createWindow(aspect, 1, "Ingenium Web");
-        IngeniumWeb.defaultGLSetup();
+    static defaultInit(canvas, clearColour = 0xfafafa, aspect = (16 / 9), fps = 35) {
+        IngeniumWeb.createWindow(canvas, aspect, 1, "Ingenium Web");
         IngeniumWeb.window.setClearColour(clearColour, 1);
         Time.setFPS(fps);
         Time.setFixedFPS(5);
+        IngeniumWeb.defaultGLSetup();
     }
-    static createWindow(width, height, id, parentName = "root", takeUpAsepct = true) {
-        IngeniumWeb.window = new WebGLWindow(width, height, parentName, id);
+    static createWindow(canvas, width, height, id, takeUpAsepct = true) {
+        IngeniumWeb.window = new WebGLWindow(width, height, canvas);
         IngeniumWeb.window.takeUpAsepct = takeUpAsepct;
         if (takeUpAsepct)
             window.addEventListener('resize', function () {

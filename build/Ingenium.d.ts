@@ -40,13 +40,12 @@ export declare class Time {
     static deltaTimeToFPS(delta: number): number;
 }
 export declare class WebGLWindow {
-    parent: HTMLElement | null;
     canvas: HTMLCanvasElement;
     width: number;
     height: number;
     aspectRatio: number;
     takeUpAsepct: boolean;
-    constructor(width: number, height: number, parentName: string, name: string);
+    constructor(width: number, height: number, canvas: HTMLCanvasElement);
     sizeToWindow(aspect: number): void;
     setGL(): void;
     setClearColour(hex: number, alpha: number): void;
@@ -105,8 +104,8 @@ export declare class IngeniumWeb {
      * @param webGL the WebGl version to use.
      */
     static start(scenes: Scene[], onCreate?: Function, onUpdate?: Function, onClose?: Function, onFixedUpdate?: Function, webGL?: string): void;
-    static defaultInit(clearColour?: number, aspect?: number, fps?: number): void;
-    static createWindow(width: number, height: number, id: string, parentName?: string, takeUpAsepct?: boolean): void;
+    static defaultInit(canvas: HTMLCanvasElement, clearColour?: number, aspect?: number, fps?: number): void;
+    static createWindow(canvas: HTMLCanvasElement, width: number, height: number, id: string, takeUpAsepct?: boolean): void;
     static update(): void;
     static fixedUpdate(): void;
     static init(): void;
