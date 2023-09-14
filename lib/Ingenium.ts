@@ -181,8 +181,8 @@ export class IngeniumWeb {
     static window: WebGLWindow | null;
     static running: boolean;
     static glVersion: string;
-    static intervalCode: number;
-    static fixedIntervalCode: number;
+    static intervalCode: NodeJS.Timeout;
+    static fixedIntervalCode: NodeJS.Timeout;
     static onCreate: Function;
     static onUpdate: Function;
     static onClose: Function;
